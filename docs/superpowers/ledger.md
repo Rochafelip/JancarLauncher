@@ -102,3 +102,25 @@ Rulings:
 - Chip "Câmera de ré" mantido: abre `com.autochips.backcarapp` pelo pacote; se não aceitar abertura manual, vai aparecer toast/falha silenciosa — decisão final depende de testar na central.
 - Não foi feito o soak de 2 h do plano (T7.1): duas rodadas de ~20 min no emulador. Reportado como não confirmado.
 - A janela do emulador foi fechada sem querer durante a 1ª rodada; refiz a rodada com o APK final. Possível causa dos "toques fantasma" de GPS/Wi-Fi vistos na Fase 6 (interação com a janela).
+
+## Fase 8 — Modo noturno automático
+Task completa. TDD: `NightModePolicyTest` (7), `NightModeControllerTest` (4), `SettingsStoreTest` (+4). Suite: 111/111, 0 falhas. Ligado em `AppRoot` via o mesmo tick de minuto do relógio (`rememberClock`), reavaliado também na composição inicial.
+Verificado no emulador `jancar_1024x600`: abertura às 23:45 (dentro da janela 20:00–05:30) — app abriu com tema escuro sem crash (não dá pra isolar visualmente do padrão, que já é escuro). **Não verificado**: cruzar a borda 20:00/05:30 ajustando o relógio do sistema; toggle manual não revertido até a próxima transição; comportamento na central real.
+
+## Fase 9+10 — Card "Tocando agora" + controles de mídia
+Tasks completas, implementadas juntas (fortemente acopladas). TDD: `NowPlayingSessionPickerTest` (6), `NowPlayingMapperTest` (4). Suite: 121/121 após a Fase 9, 0 falhas.
+- `NowPlayingListenerService` (NotificationListenerService) expõe sessões ativas via `StateFlow`; `rememberNowPlaying()` escuta, escolhe a sessão (picker) e mapeia pro estado de UI.
+- Card em `ui/home/NowPlayingCard.kt`: capa/título/artista + aleatório/anterior/play-pause/próxima, `AnimatedVisibility` (some sem sessão ativa).
+- Sem toggle de shuffle real: `MediaController.getShuffleMode()/setShuffleMode()` são API 28/29+, a central roda API 27 de verdade — o botão só habilita/desabilita conforme `PlaybackState.actions`.
+Verificado no emulador: card corretamente **ausente** sem sessão de mídia ativa (nenhum app tocando), sem crash. **Não verificado**: fluxo completo com um player real tocando (capa/título/artista atualizando, comandos de transporte funcionando); permissão de acesso a notificações concedida manualmente; comportamento na central.
+
+## Fase 11 — Indicador de ADB sem fio
+Task completa. TDD: `ProcNetTcpParserTest` (6). Suite: 127/127, 0 falhas.
+Verificado no emulador: indicador **"ADB ativo"** aparece corretamente na Home (ícone USB + texto), confirmando que `Settings.Global.ADB_ENABLED` é lido sem erro. **Não verificado**: estado "conectado" com IP (não testei `adb tcpip`/`adb connect` pra não derrubar a sessão USB do smoke test); leitura de `/proc/net/tcp` na central real (pode ser diferente do emulador).
+
+## Fase 12 — Polimento de UX
+Task completa, sem testes novos (mudanças majoritariamente visuais). `AnimatedContent` com fade (180ms) entre telas em `AppRoot`; feedback de "abrindo" (opacidade 60%) nos 4 blocos principais por até 800ms; `Pressable`/`MainTile` ganharam `onLongClick` opcional (sem ação nos 4 blocos ainda, só o suporte técnico, conforme spec).
+Verificado no emulador: Home→Gaveta com fade visível, sem crash; toque longo num bloco não dispara nada e não quebra o toque curto.
+
+## Smoke test conjunto (Fases 8-12)
+APK instalado e aberto no emulador `jancar_1024x600` (API 35) com todas as 5 fases juntas: Boas-vindas→Home→Gaveta sem crash (`adb logcat -s AndroidRuntime:E *:F` vazio). Capturas conferidas visualmente. **Não testado na central real** (API 27) — fica para quando a central estiver acessível.

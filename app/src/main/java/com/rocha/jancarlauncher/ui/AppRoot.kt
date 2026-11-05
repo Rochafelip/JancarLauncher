@@ -1,6 +1,11 @@
 package com.rocha.jancarlauncher.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,9 +22,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.rocha.jancarlauncher.launch.PackageGateway
+import com.rocha.jancarlauncher.launch.SettingsActions
+import com.rocha.jancarlauncher.media.rememberNowPlaying
 import com.rocha.jancarlauncher.settings.NightModeController
 import com.rocha.jancarlauncher.settings.SettingsStore
 import com.rocha.jancarlauncher.settings.WelcomePolicy
+import com.rocha.jancarlauncher.system.rememberAdbStatus
 import com.rocha.jancarlauncher.ui.drawer.DrawerScreen
 import com.rocha.jancarlauncher.ui.home.BrightnessController
 import com.rocha.jancarlauncher.ui.home.HomeScreen
@@ -47,6 +55,8 @@ fun AppRoot(
     var brightnessPercent by remember { mutableIntStateOf(brightness.currentSystemPercent()) }
     val scope = rememberCoroutineScope()
     val clock by rememberClock()
+    val nowPlaying = rememberNowPlaying()
+    val adbStatus by rememberAdbStatus(tickKey = clock)
 
     // Tela inicial: Boas-vindas na 1ª abertura após reinício (ou quando a ativação por "acordar" pediu).
     LaunchedEffect(Unit) {
@@ -119,7 +129,12 @@ fun AppRoot(
 
     JancarTheme(isDark) {
         val toggleTheme: () -> Unit = { scope.launch { settings.setDark(!isDark) } }
-        when (current) {
+        AnimatedContent(
+            targetState = current,
+            transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(180)) },
+            label = "screen",
+        ) { targetScreen ->
+            when (targetScreen) {
             Screen.Welcome -> WelcomeScreen(clock) {
                 screen = Screen.Home
                 scope.launch { settings.setLastBootCount(bootCount) }
@@ -136,6 +151,13 @@ fun AppRoot(
                 onBrightnessChange = { brightnessPercent = it; brightness.apply(it) },
                 onBrightnessChangeFinished = { scope.launch { settings.setUserBrightness(brightnessPercent) } },
                 onOpenDrawer = { brightnessOpen = false; screen = Screen.Drawer },
+                nowPlaying = nowPlaying.state.value,
+                onPlay = nowPlaying::play,
+                onPause = nowPlaying::pause,
+                onNext = nowPlaying::next,
+                onPrevious = nowPlaying::previous,
+                adbStatus = adbStatus,
+                onOpenAdbSettings = { actions.openSettings(SettingsActions.DEVELOPER_OPTIONS) },
             )
             Screen.Drawer -> DrawerScreen(
                 isDark = isDark,
@@ -144,6 +166,7 @@ fun AppRoot(
                 onToggleTheme = toggleTheme,
                 onBack = { screen = Screen.Home },
             )
+            }
         }
     }
 }

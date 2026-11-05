@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -67,6 +68,7 @@ private fun Pressable(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     description: String? = null,
+    onLongClick: (() -> Unit)? = null,
     content: @Composable (pressed: Boolean, focused: Boolean) -> Unit,
 ) {
     val colors = JTheme.colors
@@ -82,11 +84,12 @@ private fun Pressable(
             .border(1.dp, if (focused) colors.accent else if (pressed) colors.surfaceHoverBorder else colors.surfaceBorder, shape)
             .onFocusChanged { focused = it.isFocused }
             .semantics { if (description != null) contentDescription = description }
-            .clickable(
+            .combinedClickable(
                 interactionSource = source,
                 indication = null,
                 enabled = enabled,
                 role = Role.Button,
+                onLongClick = onLongClick,
                 onClick = onClick,
             ),
         contentAlignment = Alignment.Center,
@@ -130,13 +133,20 @@ fun QuickChip(icon: ImageVector, label: String, onClick: () -> Unit, modifier: M
 
 /** Bloco grande da Home (Auto, Música, Rádio, Vídeo). O ícone vira acento ao pressionar/focar. */
 @Composable
-fun MainTile(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun MainTile(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+) {
     val colors = JTheme.colors
     Pressable(
         onClick = onClick,
         shape = RoundedCornerShape(Dimens.RadiusTile),
         modifier = modifier,
         description = label,
+        onLongClick = onLongClick,
     ) { pressed, focused ->
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 36.dp),
@@ -145,6 +155,34 @@ fun MainTile(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Mo
         ) {
             JIcon(icon, if (pressed || focused) colors.accent else colors.icon, 40.dp)
             BasicText(label, style = JancarType.tileLabel.copy(color = colors.fg))
+        }
+    }
+}
+
+/** Botão circular pequeno do card "Tocando agora" (transporte); [accent]=true para o play/pause central. */
+@Composable
+fun TransportButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    accent: Boolean = false,
+) {
+    val colors = JTheme.colors
+    Pressable(
+        onClick = onClick,
+        shape = CircleShape,
+        modifier = modifier.size(if (accent) 40.dp else Dimens.MinTouch).alpha(if (enabled) 1f else 0.35f),
+        enabled = enabled,
+        description = description,
+    ) { pressed, _ ->
+        if (accent) {
+            Box(Modifier.size(40.dp).clip(CircleShape).background(colors.accent), contentAlignment = Alignment.Center) {
+                JIcon(icon, Color.White, 18.dp)
+            }
+        } else {
+            JIcon(icon, if (pressed) colors.fg else colors.icon, 18.dp)
         }
     }
 }

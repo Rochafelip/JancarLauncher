@@ -120,4 +120,20 @@ object JIcons {
     }
     val Scrcpy = icon("Scrcpy") { rect(2f, 5f, 14f, 10f, 1.5f); line("M18 9l4-2v10l-4-2") }
     val Obd = icon("Obd") { line("M4 15a8 8 0 0 1 16 0"); line("M12 15l4-5"); dot(12f, 15f, 1.3f) }
+
+    // Card "Tocando agora"
+    val Play = icon("Play") { fill("M8 5l12 7-12 7V5z") }
+    val Pause = icon("Pause") { fill("M7 5h4v14H7z"); fill("M13 5h4v14h-4z") }
+    val Previous = icon("Previous") { fill("M6 5h2v14H6z"); fill("M18 5v14l-10-7 10-7z") }
+    val Next = icon("Next") { fill("M16 5h2v14h-2z"); fill("M6 5v14l10-7-10-7z") }
+    val Shuffle = icon("Shuffle") {
+        line("M3 7h4l9 10h5"); line("M16 7h5v5"); line("M21 7l-5 5"); line("M3 17h4l3.5-4")
+    }
+    val NoteMusic = icon("NoteMusic") { circle(7f, 18f, 2.6f); line("M9.6 18V5.5L19.6 3v11.3"); circle(17f, 16f, 2.6f) }
+
+    // Indicador de ADB sem fio
+    val Usb = icon("Usb", 1.7f) {
+        line("M12 2v9"); line("M9 6l3-3 3 3"); circle(12f, 16f, 3f); line("M9 16H7a2 2 0 0 1-2-2v-1")
+        line("M15 16h2a2 2 0 0 0 2-2v-1")
+    }
 }

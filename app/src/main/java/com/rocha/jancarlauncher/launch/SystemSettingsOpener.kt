@@ -9,6 +9,7 @@ object SettingsActions {
     const val BLUETOOTH = "android.settings.BLUETOOTH_SETTINGS"
     const val LOCATION = "android.settings.LOCATION_SOURCE_SETTINGS"
     const val MAIN = "android.settings.SETTINGS"
+    const val DEVELOPER_OPTIONS = "android.settings.APPLICATION_DEVELOPMENT_SETTINGS"
 }
 
 interface SettingsStarter {

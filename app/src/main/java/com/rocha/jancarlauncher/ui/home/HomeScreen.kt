@@ -13,12 +13,19 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import com.rocha.jancarlauncher.launch.AppTargets
 import com.rocha.jancarlauncher.launch.SettingsActions
+import com.rocha.jancarlauncher.media.NowPlayingState
+import com.rocha.jancarlauncher.system.AdbStatus
 import com.rocha.jancarlauncher.ui.UiActions
 import com.rocha.jancarlauncher.ui.components.JIconButton
 import com.rocha.jancarlauncher.ui.components.MainTile
@@ -40,6 +47,13 @@ fun HomeScreen(
     onBrightnessChange: (Int) -> Unit,
     onBrightnessChangeFinished: () -> Unit,
     onOpenDrawer: () -> Unit,
+    nowPlaying: NowPlayingState = NowPlayingState.EMPTY,
+    onPlay: () -> Unit = {},
+    onPause: () -> Unit = {},
+    onNext: () -> Unit = {},
+    onPrevious: () -> Unit = {},
+    adbStatus: AdbStatus = AdbStatus.Disabled,
+    onOpenAdbSettings: () -> Unit = {},
 ) {
     val c = JTheme.colors
     Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -50,7 +64,26 @@ fun HomeScreen(
                     BasicText(clock.date, style = JancarType.date.copy(color = c.muted))
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                    BasicText("MULTIMÍDIA", style = JancarType.caption.copy(color = c.faint), modifier = Modifier.padding(top = 10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (adbStatus != AdbStatus.Disabled) {
+                            Row(
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClick = onOpenAdbSettings,
+                                ),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                com.rocha.jancarlauncher.ui.components.JIcon(com.rocha.jancarlauncher.ui.icons.JIcons.Usb, c.muted, 13.dp)
+                                BasicText(
+                                    if (adbStatus is AdbStatus.EnabledConnected) "ADB conectado" else "ADB ativo",
+                                    style = JancarType.appTag.copy(color = c.muted),
+                                )
+                            }
+                        }
+                        BasicText("MULTIMÍDIA", style = JancarType.caption.copy(color = c.faint))
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme)
                         JIconButton(JIcons.Sliders, "Ajustar brilho", onToggleBrightness)
@@ -58,6 +91,15 @@ fun HomeScreen(
                     }
                 }
             }
+
+            NowPlayingCard(
+                nowPlaying = nowPlaying,
+                onPlay = onPlay,
+                onPause = onPause,
+                onNext = onNext,
+                onPrevious = onPrevious,
+                modifier = Modifier.padding(top = 24.dp),
+            )
 
             Spacer(Modifier.weight(1f))
 
@@ -69,11 +111,38 @@ fun HomeScreen(
                 QuickChip(JIcons.Settings, "Ajustes", { actions.openSettings(SettingsActions.MAIN) })
             }
 
+            var openingTile by remember { mutableStateOf<String?>(null) }
+            LaunchedEffect(openingTile) {
+                if (openingTile != null) {
+                    kotlinx.coroutines.delay(800)
+                    openingTile = null
+                }
+            }
+            fun openTile(key: String, launch: () -> Unit) {
+                openingTile = key
+                launch()
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(18.dp)) {
-                MainTile(JIcons.Auto, "Auto", { actions.openAuto() }, Modifier.weight(1f))
-                MainTile(JIcons.Music, "Música", { actions.open(AppTargets.MUSIC) }, Modifier.weight(1f))
-                MainTile(JIcons.Radio, "Rádio", { actions.open(AppTargets.RADIO) }, Modifier.weight(1f))
-                MainTile(JIcons.Video, "Vídeo", { actions.open(AppTargets.VIDEO) }, Modifier.weight(1f))
+                MainTile(
+                    JIcons.Auto, "Auto", { openTile("auto") { actions.openAuto() } },
+                    Modifier.weight(1f).alpha(if (openingTile == "auto") 0.6f else 1f),
+                    onLongClick = { /* TODO(issue): atalho por bloco */ },
+                )
+                MainTile(
+                    JIcons.Music, "Música", { openTile("music") { actions.open(AppTargets.MUSIC) } },
+                    Modifier.weight(1f).alpha(if (openingTile == "music") 0.6f else 1f),
+                    onLongClick = { /* TODO(issue): atalho por bloco */ },
+                )
+                MainTile(
+                    JIcons.Radio, "Rádio", { openTile("radio") { actions.open(AppTargets.RADIO) } },
+                    Modifier.weight(1f).alpha(if (openingTile == "radio") 0.6f else 1f),
+                    onLongClick = { /* TODO(issue): atalho por bloco */ },
+                )
+                MainTile(
+                    JIcons.Video, "Vídeo", { openTile("video") { actions.open(AppTargets.VIDEO) } },
+                    Modifier.weight(1f).alpha(if (openingTile == "video") 0.6f else 1f),
+                    onLongClick = { /* TODO(issue): atalho por bloco */ },
+                )
             }
         }
 
