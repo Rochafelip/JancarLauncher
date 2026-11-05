@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Galeria de componentes: só no build debug. Abrir com: adb shell am start -n com.rocha.jancarlauncher/.GalleryActivity -->
+        <activity
+            android:name=".GalleryActivity"
+            android:exported="true"
+            android:screenOrientation="landscape" />
+    </application>
+</manifest>
