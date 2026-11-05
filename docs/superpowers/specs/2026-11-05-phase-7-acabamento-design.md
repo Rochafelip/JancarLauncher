@@ -16,7 +16,7 @@ Deixar o launcher estável por semanas na central, leve, polido e com as pendên
 8. **Documentação:** `README.md` (o que é, como compilar, como instalar, link para `INSTALL.md`), `app/CLAUDE.md` atualizado com as decisões fechadas e os pacotes confirmados.
 
 ## Fora de escopo
-Novas funcionalidades (widgets, múltiplas páginas, tema por horário).
+Novas funcionalidades (widgets, múltiplas páginas, tema por horário — **revertido em 2026-11-05**, ver `2026-11-05-phase-8-modo-noturno-design.md`).
 
 ## Aceite = Definição de pronto do plano mestre
 - Roda na central real sem crash após reinício e após desativar um app-alvo.
