@@ -17,6 +17,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.rocha.jancarlauncher.launch.PackageGateway
+import com.rocha.jancarlauncher.settings.NightModeController
 import com.rocha.jancarlauncher.settings.SettingsStore
 import com.rocha.jancarlauncher.settings.WelcomePolicy
 import com.rocha.jancarlauncher.ui.drawer.DrawerScreen
@@ -62,6 +63,43 @@ fun AppRoot(
         }
     }
     LaunchedEffect(events) { events.collect { screen = it } }
+
+    // Modo noturno: reavaliado a cada tick de minuto do relógio (e uma vez na abertura, já cobrindo
+    // o caso de abrir dentro da janela). Toggle manual do usuário não é revertido até a próxima transição.
+    LaunchedEffect(clock) {
+        val now = java.time.LocalTime.now()
+        val wasApplied = settings.nightModeApplied.first()
+        val currentDark = settings.dark.first()
+        val currentBrightness = settings.userBrightness.first()
+        val previousDark = settings.preNightDark.first()
+        val previousBrightness = settings.preNightBrightness.first()
+        when (
+            val action = NightModeController.evaluate(
+                now = now,
+                wasApplied = wasApplied,
+                currentDark = currentDark,
+                currentBrightness = currentBrightness,
+                previousDark = previousDark,
+                previousBrightness = previousBrightness,
+            )
+        ) {
+            is NightModeController.Action.ApplyNight -> {
+                settings.applyNightMode(action.previousDark, action.previousBrightness)
+                if (action.previousBrightness != null) {
+                    brightnessPercent = com.rocha.jancarlauncher.settings.NightModePolicy.NIGHT_BRIGHTNESS
+                    brightness.apply(brightnessPercent)
+                }
+            }
+            is NightModeController.Action.RestoreDay -> {
+                settings.restoreDayMode(action.dark, action.brightness)
+                if (action.brightness != null) {
+                    brightnessPercent = action.brightness
+                    brightness.apply(brightnessPercent)
+                }
+            }
+            NightModeController.Action.NoOp -> {}
+        }
+    }
 
     BackHandler(enabled = true) {
         when {

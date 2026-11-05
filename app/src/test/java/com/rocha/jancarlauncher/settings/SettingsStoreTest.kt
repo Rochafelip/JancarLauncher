@@ -62,4 +62,34 @@ class SettingsStoreTest {
         store.setLastBootCount(12)
         assertEquals(12, store.lastBootCount.first())
     }
+
+    @Test fun nightMode_defaultsToNotApplied() = runBlocking {
+        assertFalse(store.nightModeApplied.first())
+    }
+
+    @Test fun nightMode_applyGuardsPreviousStateAndSwitchesToNight() = runBlocking {
+        store.setDark(false)
+        store.setUserBrightness(80)
+        store.applyNightMode(previousDark = false, previousBrightness = 80)
+
+        assertTrue(store.nightModeApplied.first())
+        assertTrue(store.dark.first())
+        assertEquals(NightModePolicy.NIGHT_BRIGHTNESS, store.userBrightness.first())
+        assertFalse(store.preNightDark.first())
+        assertEquals(80, store.preNightBrightness.first())
+    }
+
+    @Test fun nightMode_applyNeverTouchesBrightnessTheUserNeverChose() = runBlocking {
+        store.applyNightMode(previousDark = false, previousBrightness = null)
+        assertNull(store.userBrightness.first())
+    }
+
+    @Test fun nightMode_restoreBringsBackThePreviousState() = runBlocking {
+        store.applyNightMode(previousDark = false, previousBrightness = 80)
+        store.restoreDayMode(dark = false, brightness = 80)
+
+        assertFalse(store.nightModeApplied.first())
+        assertFalse(store.dark.first())
+        assertEquals(80, store.userBrightness.first())
+    }
 }
