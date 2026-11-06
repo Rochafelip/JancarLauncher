@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.SystemClock
 import androidx.datastore.preferences.preferencesDataStore
 import com.rocha.jancarlauncher.boot.CrashRestarter
+import com.rocha.jancarlauncher.can.CanBusClient
 import com.rocha.jancarlauncher.launch.LaunchController
 import com.rocha.jancarlauncher.power.ScreenStateTracker
 import com.rocha.jancarlauncher.power.SharedPrefsScreenOffStore
@@ -20,6 +21,9 @@ class JancarApp : Application() {
     val wakeTracker: WakeWelcomeTracker by lazy {
         WakeWelcomeTracker(SharedPrefsScreenOffStore(this), SystemClock::elapsedRealtime)
     }
+
+    // Instância única por processo (fase de calibração do CAN bus, ver can/VehicleInfoCard.kt).
+    val canBus: CanBusClient by lazy { CanBusClient(this) }
 
     override fun onCreate() {
         super.onCreate()

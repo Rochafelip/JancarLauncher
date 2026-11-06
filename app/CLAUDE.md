@@ -90,7 +90,7 @@ Nenhuma — Música, Vídeo, Galeria, Arquivos, Música BT, EQ, Veículo, Scrcpy
 
 - Confirmar se `com.autochips.backcarapp` aceita abertura manual (fora da marcha-ré).
 - Confirmar se dá pra desativar a depuração ADB sem fio pelas Configurações da própria central.
-- Mapear as colunas/URIs exatas de `content://com.autoai.canbus.provider` (ContentProvider aberto do app Veículo, `com.can.activity` — testar com `adb shell content query` ou decompilar o `.odex`/`.vdex`, já que o APK pulado não trouxe `classes.dex`) — permitiria mostrar dados reais do carro (velocidade, combustível, portas) no próprio launcher, fora do escopo atual.
+- **Calibrar `can/CanBusClient.kt` na central real** (ver seção "Integração CAN bus" abaixo) — a ordem dos campos do Parcel ainda não foi validada com dados reais.
 
 ## Comando de rollback (guardar antes de testar `set-home-activity`)
 
@@ -107,3 +107,19 @@ Código pronto e testado em emulador (Android 15, 1024×600 @160 dpi); **nada te
 - Todo `startActivity` do app passa por `launch/AppLauncher` (apps), `launch/SystemSettingsOpener` (Settings), `boot/CrashRestarter` e `power/ScreenStateTracker` (reabrir a própria Home).
 - Pacotes confirmados na tabela (`launch/AppTargets.kt`): Android Auto, CarPlay (`carplayapp`), Rádio, Música, Música BT, Vídeo, Galeria, Arquivos, EQ, Veículo, Scrcpy, OBD-II. Pelo nome do pacote: VLC, NewPipe, F-Droid, Lightning (a confirmar na central).
 - Fontes em `ui/theme/Type.kt` revisadas (nov/2026) pra distância de leitura automotiva (ISO 15008, ~50–70cm).
+
+## Integração CAN bus (`can/`, em calibração — não confiar nos valores ainda)
+
+O ContentProvider `content://com.autoai.canbus.provider` **não tem dados ao vivo** (é só banco de
+protocolos/marcas) — descoberta corrigindo a pendência anterior. Os dados reais vêm de um serviço
+exportado sem permissão, `com.can.activity/com.can.ui.CanPopWind` (action
+`autoai.intent.action.CANBUS_SERVICE`), acessado via `Binder.transact` direto (engenharia reversa
+do bytecode, sem AIDL gerado — ver comentários em `can/CanBusClient.kt`).
+
+- `CanBusClient`: instância única em `JancarApp.canBus` (nunca criar uma por tela).
+- `VehicleInfoCard`: card de debug, hoje chamado temporariamente em `HomeScreen.kt` — **remover
+  depois de calibrar**, ou mover pra trás de um gesto de debug.
+- **A ordem dos campos no Parcel foi inferida do bytecode, não validada com o carro ligado.**
+  Calibrar com `adb logcat -s CanBusClient`: se `restante` (bytes sobrando no Parcel) for `0`, a
+  ordem bate; abrir/fechar portas e ligar setas pra conferir se os números mudam como esperado.
+- Usa `kotlinx-coroutines-core` como dependência principal (antes só existia em `testImplementation`).

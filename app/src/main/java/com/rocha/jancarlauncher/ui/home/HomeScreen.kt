@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import com.rocha.jancarlauncher.can.VehicleInfoCard
 import com.rocha.jancarlauncher.launch.AppTargets
 import com.rocha.jancarlauncher.launch.SettingsActions
 import com.rocha.jancarlauncher.media.NowPlayingState
@@ -100,6 +101,10 @@ fun HomeScreen(
                 onPrevious = onPrevious,
                 modifier = Modifier.padding(top = 24.dp),
             )
+
+            // TEMP (calibração do CAN bus): valores crus pra conferir contra o carro real.
+            // Remover (ou esconder atrás de um gesto de debug) depois de validar can/CanBusClient.kt.
+            VehicleInfoCard()
 
             Spacer(Modifier.weight(1f))
 
