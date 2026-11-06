@@ -12,6 +12,8 @@ object JTheme {
 object Dimens {
     /** Toque mínimo (spec: ≥ 44 dp; usamos 48). */
     val MinTouch = 48.dp
+    /** Altura dos chips de atalho da Home: alvo de toque para uso dirigindo (56–64 dp). */
+    val ChipHeight = 60.dp
     val RadiusButton = 14.dp
     val RadiusTile = 22.dp
     val RadiusAppTile = 18.dp

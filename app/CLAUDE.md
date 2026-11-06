@@ -80,7 +80,7 @@ Todo `startActivity` dos botões precisa de `try { } catch (e: ActivityNotFoundE
 - **Boas-vindas** aparece após cada reinício (`BOOT_COUNT`) e ao acordar da suspensão com a tela apagada por ≥ 10 min (a central suspende ao desligar o carro, não reinicia).
 - **Música e Vídeo**: activity **fixa** em `AppTargets` (sem descoberta automática); enquanto não preenchidas mostram o aviso "não configurado".
 - Botão de **Câmera de ré manual** — abre `com.autochips.backcarapp` sob demanda, fora da marcha-ré (não confirmado se o app aceita isso, ver Pendências).
-- Toque mínimo de **44–48px** em todo elemento interativo (ajustado numa revisão de UX; os chips e os controles do player estavam menores que isso na primeira versão).
+- Toque mínimo de **44–48px** em todo elemento interativo (ajustado numa revisão de UX; os chips e os controles do player estavam menores que isso na primeira versão). Os **chips de atalho** da Home têm **60dp** de altura (`Dimens.ChipHeight`, alvo 56–64dp pra uso dirigindo; verificado no emulador 1024×600).
 
 ## Pendências bloqueantes
 
@@ -90,7 +90,6 @@ Nenhuma — Música, Vídeo, Galeria, Arquivos, Música BT, EQ, Veículo, Scrcpy
 
 - Confirmar se `com.autochips.backcarapp` aceita abertura manual (fora da marcha-ré).
 - Confirmar se dá pra desativar a depuração ADB sem fio pelas Configurações da própria central.
-- Aumentar a altura dos **chips de atalho** do topo (Wi-Fi, Bluetooth, GPS, Câmera de ré, Ajustes) — hoje (~40dp) abaixo do alvo de toque recomendado pra uso dirigindo (56–64dp); fica em `HomeScreen.kt`/`Components.kt`, não entrou na última rodada.
 - Mapear as colunas/URIs exatas de `content://com.autoai.canbus.provider` (ContentProvider aberto do app Veículo, `com.can.activity` — testar com `adb shell content query` ou decompilar o `.odex`/`.vdex`, já que o APK pulado não trouxe `classes.dex`) — permitiria mostrar dados reais do carro (velocidade, combustível, portas) no próprio launcher, fora do escopo atual.
 
 ## Comando de rollback (guardar antes de testar `set-home-activity`)
