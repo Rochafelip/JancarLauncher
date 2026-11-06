@@ -1,12 +1,16 @@
 package com.rocha.jancarlauncher.settings
 
+import androidx.datastore.core.okio.OkioStorage
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.PreferencesSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,6 +20,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 
 class SettingsStoreTest {
     @get:Rule val tmp = TemporaryFolder()
@@ -24,9 +29,14 @@ class SettingsStoreTest {
 
     @Before fun setUp() {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-        val ds = PreferenceDataStoreFactory.create(scope = scope) {
-            tmp.newFile("settings.preferences_pb").also { it.delete() }
+        // OkioStorage em vez de create(File): no teste de JVM o SDK_INT do stub android.jar é 0, e o
+        // FileStorage cai em File.renameTo, que no Windows não sobrescreve o arquivo na 2ª gravação.
+        // O Okio usa Files.move(REPLACE_EXISTING) independente do SDK_INT. (No aparelho, API ≥ 26,
+        // o FileStorage já usa Files.move — o problema é só do ambiente de teste.)
+        val storage = OkioStorage(FileSystem.SYSTEM, PreferencesSerializer) {
+            File(tmp.root, "settings.preferences_pb").absolutePath.toPath()
         }
+        val ds = PreferenceDataStoreFactory.create(storage = storage, scope = scope)
         store = SettingsStore(ds)
     }
 
