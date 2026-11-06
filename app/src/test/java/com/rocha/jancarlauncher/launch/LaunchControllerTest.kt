@@ -36,9 +36,11 @@ class LaunchControllerTest {
         assertEquals(listOf(AppTargets.CARPLAY.pkg to AppTargets.CARPLAY.activityClass), starter.components)
     }
 
-    @Test fun open_unconfiguredMusic_returnsNotConfigured_withoutStarting() {
+    @Test fun open_unconfiguredTarget_returnsNotConfigured_withoutStarting() {
         val starter = RecordingStarter()
-        assertEquals(LaunchResult.NotConfigured, controller(starter, emptyList()).open(AppTargets.MUSIC))
+        // Destino sintético: todos os de AppTargets já estão configurados.
+        val unconfigured = AppTarget.unconfigured("music", "Música", Kind.System)
+        assertEquals(LaunchResult.NotConfigured, controller(starter, emptyList()).open(unconfigured))
         assertEquals(emptyList<Pair<String, String>>(), starter.components)
     }
 }
