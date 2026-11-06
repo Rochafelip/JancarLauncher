@@ -5,7 +5,7 @@ Estado em 2026-11-05. **Tudo foi verificado no emulador (Android 15, API 35, 102
 | # | Critério | Estado | Evidência |
 |---|---|---|---|
 | 1 | Roda na central sem crash após reinício e após desativar um app-alvo | ⚠ parcial | Emulador: reboot real (`adb reboot`) abre o launcher como HOME 4 s após o boot, sem crash; alvo ausente/desativado só mostra toast (nenhum `FATAL EXCEPTION`). Central: não testado. |
-| 2 | Os 4 blocos abrem o destino certo sem diálogo de escolha | ⚠ não verificado | Intents explícitos (nunca `ResolverActivity`), testados em unidade (`AppLauncherTest`). Rádio, Android Auto e CarPlay reais não abertos (não existem no emulador). **Música e Vídeo seguem "não configurado"** até o usuário informar as activities. |
+| 2 | Os 4 blocos abrem o destino certo sem diálogo de escolha | ⚠ não verificado | Intents explícitos (nunca `ResolverActivity`), testados em unidade (`AppLauncherTest`). Rádio, Android Auto e CarPlay reais não abertos (não existem no emulador). Música e Vídeo agora apontam para activities confirmadas via `dumpsys` na central (`AppTargets`), mas ainda não foram abertas lá. |
 | 3 | Auto/CarPlay decidido **antes** do `startActivity` | ✅ unidade | `ProjectionChooserTest` (9) e `LaunchControllerTest`: com iPhone pareado só o CarPlay é iniciado, o Android Auto nunca. Leitura real de Bluetooth/USB com celular: ⚠ não testada. |
 | 4 | Tema persiste | ✅ emulador | Alternar → `force-stop` → reabrir mantém o tema (Fase 2). |
 | 4b | Brilho funciona (ou fallback documentado) | ◐ | Janela: slider 40%→88%, persiste após reabrir; teclas D-pad ajustam e **persistem** (86%→100%, mantido após reabrir). Brilho do **sistema** (`WRITE_SETTINGS`) não verificado; fallback de janela documentado em `INSTALL.md` §5. O launcher não mexe no brilho antes de o usuário escolher. |
@@ -16,7 +16,7 @@ Estado em 2026-11-05. **Tudo foi verificado no emulador (Android 15, API 35, 102
 
 ## Qualidade
 
-- `./gradlew testDebugUnitTest` → **127/127**, 0 falhas (96 da Fase 1-7 + 31 das Fases 8-12: modo noturno, Tocando agora, indicador de ADB — ver `ledger.md`).
+- `./gradlew testDebugUnitTest` → **129/129**, 0 falhas (96 da Fase 1-7 + 31 das Fases 8-12: modo noturno, Tocando agora, indicador de ADB — ver `ledger.md`; + 2 do `AppTargetsTest` com os pacotes confirmados na central). Passa também no Windows (`SettingsStoreTest` usa `OkioStorage`).
 - `./gradlew lintDebug` → **0 erros**, 6 avisos (versões novas de AGP/Kotlin/core-ktx, `targetSdk`, e orientação fixa — intencionais para a central).
 - Release minificado (R8 + shrink): **1,5 MB** (debug 10,8 MB), assinado com a chave de debug (a central não valida assinatura).
 - Revisão de código (`/code-review`, 9 achados): 2 corrigidos com teste (D-pad não salvava brilho; Boas-vindas perdida se o processo morrer na suspensão), 7 adiados — ver `ledger.md`.
