@@ -1,6 +1,7 @@
 package com.rocha.jancarlauncher.ui.drawer
 
 import com.rocha.jancarlauncher.launch.AppTarget
+import com.rocha.jancarlauncher.launch.AppTargets
 import com.rocha.jancarlauncher.launch.Kind
 import com.rocha.jancarlauncher.launch.PackageGateway
 import com.rocha.jancarlauncher.launch.SettingsActions
@@ -9,7 +10,7 @@ enum class DrawerIcon { Vlc, NewPipe, FDroid, Lightning, Gallery, Folder, Blueto
 
 /**
  * Um item da gaveta. Exatamente um destes: [target] (app), [settingsAction] (tela de Settings) ou nenhum
- * (ainda não configurado — pacote a descobrir na Fase 0).
+ * (ainda não configurado -- pacote a descobrir na Fase 0).
  */
 data class DrawerEntry(
     val id: String,
@@ -23,20 +24,20 @@ data class DrawerEntry(
 object DrawerCatalog {
     private fun app(id: String, name: String, pkg: String) = AppTarget(id, name, Kind.App, pkg, null)
 
-    /** Ordem e tags do preview visual. Pacotes só onde são conhecidos; o resto fica "não configurado". */
+    /** Ordem e tags do preview visual. Todos os pacotes confirmados via dumpsys na central (Fase 0 concluída). */
     val entries: List<DrawerEntry> = listOf(
         DrawerEntry("vlc", "VLC", Kind.App, DrawerIcon.Vlc, app("vlc", "VLC", "org.videolan.vlc")),
         DrawerEntry("newpipe", "NewPipe", Kind.App, DrawerIcon.NewPipe, app("newpipe", "NewPipe", "org.schabi.newpipe")),
         DrawerEntry("fdroid", "F-Droid", Kind.App, DrawerIcon.FDroid, app("fdroid", "F-Droid", "org.fdroid.fdroid")),
         DrawerEntry("lightning", "Lightning", Kind.App, DrawerIcon.Lightning, app("lightning", "Lightning", "acr.browser.lightning")),
-        DrawerEntry("gallery", "Galeria", Kind.System, DrawerIcon.Gallery),
-        DrawerEntry("files", "Arquivos", Kind.System, DrawerIcon.Folder),
+        DrawerEntry("gallery", "Galeria", Kind.System, DrawerIcon.Gallery, AppTargets.GALLERY),
+        DrawerEntry("files", "Arquivos", Kind.System, DrawerIcon.Folder, AppTargets.FILES),
         DrawerEntry("bluetooth", "Bluetooth", Kind.System, DrawerIcon.Bluetooth, settingsAction = SettingsActions.BLUETOOTH),
-        DrawerEntry("bt_music", "Música BT", Kind.System, DrawerIcon.BtMusic),
-        DrawerEntry("eq", "EQ", Kind.System, DrawerIcon.Eq),
-        DrawerEntry("vehicle", "Veículo", Kind.System, DrawerIcon.Vehicle),
-        DrawerEntry("scrcpy", "Scrcpy", Kind.App, DrawerIcon.Scrcpy),
-        DrawerEntry("obd", "OBD-II", Kind.App, DrawerIcon.Obd),
+        DrawerEntry("bt_music", "Música BT", Kind.System, DrawerIcon.BtMusic, AppTargets.BT_MUSIC),
+        DrawerEntry("eq", "EQ", Kind.System, DrawerIcon.Eq, AppTargets.EQ),
+        DrawerEntry("vehicle", "Veículo", Kind.System, DrawerIcon.Vehicle, AppTargets.VEHICLE),
+        DrawerEntry("scrcpy", "Scrcpy", Kind.App, DrawerIcon.Scrcpy, AppTargets.SCRCPY),
+        DrawerEntry("obd", "OBD-II", Kind.App, DrawerIcon.Obd, AppTargets.OBD),
     )
 
     fun isAvailable(entry: DrawerEntry, gateway: PackageGateway): Boolean {

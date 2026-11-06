@@ -24,11 +24,19 @@ class AppTargetsTest {
         assertEquals("com.jancar.radio.activity.RadioMainActivity", AppTargets.RADIO.activityClass)
     }
 
-    @Test fun musicAndVideo_areUnconfiguredUntilUserProvidesActivities() {
-        assertNull(AppTargets.MUSIC.pkg)
-        assertNull(AppTargets.MUSIC.activityClass)
-        assertNull(AppTargets.VIDEO.pkg)
-        assertNull(AppTargets.VIDEO.activityClass)
+    @Test fun music_pointsToConfirmedActivity() {
+        assertEquals("com.jancar.music", AppTargets.MUSIC.pkg)
+        assertEquals("com.jancar.music.activity.MainActivity", AppTargets.MUSIC.activityClass)
+    }
+
+    @Test fun btMusic_sharesPackageWithMusic_differentActivity() {
+        assertEquals("com.jancar.music", AppTargets.BT_MUSIC.pkg)
+        assertEquals("com.jancar.music.activity.BTMusicActivity", AppTargets.BT_MUSIC.activityClass)
+    }
+
+    @Test fun video_pointsToConfirmedActivity() {
+        assertEquals("com.jancar.video", AppTargets.VIDEO.pkg)
+        assertEquals("com.jancar.video.ui.activity.VideoListActivity", AppTargets.VIDEO.activityClass)
     }
 
     @Test fun backCamera_isLaunchedByPackageOnly() {
