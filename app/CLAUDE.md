@@ -82,17 +82,16 @@ Todo `startActivity` dos botões precisa de `try { } catch (e: ActivityNotFoundE
 - Botão de **Câmera de ré manual** — abre `com.autochips.backcarapp` sob demanda, fora da marcha-ré (não confirmado se o app aceita isso, ver Pendências).
 - Toque mínimo de **44–48px** em todo elemento interativo (ajustado numa revisão de UX; os chips e os controles do player estavam menores que isso na primeira versão).
 
-## Pendências bloqueantes (resolver antes de finalizar os botões correspondentes)
+## Pendências bloqueantes
 
-1. **Activity exata do `com.jancar.music`** — rodar `adb shell dumpsys package com.jancar.music` na central e procurar o bloco `android.intent.action.MAIN`.
-2. **Pacote/activity do app "Vídeo"** nativo — mesma técnica (`dumpsys window` com o app aberto, ou `dumpsys package`).
+Nenhuma — Música, Vídeo, Galeria, Arquivos, Música BT, EQ, Veículo, Scrcpy e OBD-II todos confirmados via `dumpsys` na central e configurados em `AppTargets.kt`/`DrawerCatalog.kt` (ver commit "fix: configura pacotes faltantes...").
 
 ## Pendências não-bloqueantes
 
-- Pacotes exatos do Scrcpy for Android e do Android OBD-II Reader (pra abrir pela Gaveta).
 - Confirmar se `com.autochips.backcarapp` aceita abertura manual (fora da marcha-ré).
-- Pacotes da Gaveta ainda "não configurados": Galeria, Arquivos, Música BT, EQ, Veículo (e Scrcpy/OBD acima). Rodar `adb shell pm list packages` e passar os nomes.
 - Confirmar se dá pra desativar a depuração ADB sem fio pelas Configurações da própria central.
+- Aumentar a altura dos **chips de atalho** do topo (Wi-Fi, Bluetooth, GPS, Câmera de ré, Ajustes) — hoje (~40dp) abaixo do alvo de toque recomendado pra uso dirigindo (56–64dp); fica em `HomeScreen.kt`/`Components.kt`, não entrou na última rodada.
+- Mapear as colunas/URIs exatas de `content://com.autoai.canbus.provider` (ContentProvider aberto do app Veículo, `com.can.activity` — testar com `adb shell content query` ou decompilar o `.odex`/`.vdex`, já que o APK pulado não trouxe `classes.dex`) — permitiria mostrar dados reais do carro (velocidade, combustível, portas) no próprio launcher, fora do escopo atual.
 
 ## Comando de rollback (guardar antes de testar `set-home-activity`)
 
@@ -107,4 +106,5 @@ Código pronto e testado em emulador (Android 15, 1024×600 @160 dpi); **nada te
 - Instalar na central: `docs/INSTALL.md`. Rollback: `adb shell cmd package set-home-activity com.android.launcher3/com.jancar.launcher.act.ActLauncher`.
 - `compileSdk 37`, `minSdk 27`, `targetSdk 36`; Compose `foundation`+`ui` (sem Material3); DataStore para tema/brilho.
 - Todo `startActivity` do app passa por `launch/AppLauncher` (apps), `launch/SystemSettingsOpener` (Settings), `boot/CrashRestarter` e `power/ScreenStateTracker` (reabrir a própria Home).
-- Pacotes confirmados na tabela (`launch/AppTargets.kt`): Android Auto, CarPlay (`carplayapp`), Rádio. Pelo nome do pacote: VLC, NewPipe, F-Droid, Lightning (a confirmar na central).
+- Pacotes confirmados na tabela (`launch/AppTargets.kt`): Android Auto, CarPlay (`carplayapp`), Rádio, Música, Música BT, Vídeo, Galeria, Arquivos, EQ, Veículo, Scrcpy, OBD-II. Pelo nome do pacote: VLC, NewPipe, F-Droid, Lightning (a confirmar na central).
+- Fontes em `ui/theme/Type.kt` revisadas (nov/2026) pra distância de leitura automotiva (ISO 15008, ~50–70cm).
