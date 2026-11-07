@@ -26,7 +26,11 @@ import com.rocha.jancarlauncher.launch.PackageGateway
 import com.rocha.jancarlauncher.launch.SettingsActions
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.rocha.jancarlauncher.media.JancarNowPlaying
+import com.rocha.jancarlauncher.media.NowPlayingSource
 import com.rocha.jancarlauncher.media.rememberNowPlaying
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import com.rocha.jancarlauncher.power.ScreenOffPolicy
 import com.rocha.jancarlauncher.ui.dash.DashRoute
 import com.rocha.jancarlauncher.ui.screenoff.ScreenOffScreen
@@ -64,6 +68,24 @@ fun AppRoot(
     val scope = rememberCoroutineScope()
     val clock by rememberClock()
     val nowPlaying = rememberNowPlaying()
+    // Música da Jancar (IMedia): conexão única enquanto o launcher está aberto.
+    val jancarMedia = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).media
+    androidx.compose.runtime.DisposableEffect(jancarMedia) {
+        jancarMedia.connect()
+        onDispose { jancarMedia.disconnect() }
+    }
+    val jancarInfo by jancarMedia.info.collectAsState()
+    val jancarArt by jancarMedia.artPng.collectAsState()
+    // O serviço manda o estado a cada segundo (posição avançando): só tocando/parado interessa ao card,
+    // então zera posição/duração para não recompor a tela inteira a cada segundo na central.
+    val jancarPlayFlow = remember(jancarMedia) {
+        jancarMedia.playState.map { it?.copy(c = 0, d = 0) }.distinctUntilChanged()
+    }
+    val jancarPlay by jancarPlayFlow.collectAsState(initial = null)
+    val jancarNow = JancarNowPlaying.map(jancarInfo, jancarPlay, jancarArt)
+    val sessionNow = nowPlaying.state.value
+    val nowSource = JancarNowPlaying.pick(sessionNow, jancarNow)
+    val shownNow = if (nowSource == NowPlayingSource.Jancar) jancarNow else sessionNow
     val adbStatus by rememberAdbStatus(tickKey = clock)
 
     // Tela inicial: Boas-vindas na 1ª abertura após reinício (ou quando a ativação por "acordar" pediu).
@@ -183,11 +205,12 @@ fun AppRoot(
                 onBrightnessChange = { brightnessPercent = it; brightness.apply(it) },
                 onBrightnessChangeFinished = { scope.launch { settings.setUserBrightness(brightnessPercent) } },
                 onOpenDrawer = { brightnessOpen = false; screen = Screen.Drawer },
-                nowPlaying = nowPlaying.state.value,
-                onPlay = nowPlaying::play,
-                onPause = nowPlaying::pause,
-                onNext = nowPlaying::next,
-                onPrevious = nowPlaying::previous,
+                nowPlaying = shownNow,
+                // Botões vão para a fonte que o card está mostrando.
+                onPlay = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.play() else nowPlaying.play() },
+                onPause = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.pause() else nowPlaying.pause() },
+                onNext = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.next() else nowPlaying.next() },
+                onPrevious = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.previous() else nowPlaying.previous() },
                 adbStatus = adbStatus,
                 onOpenAdbSettings = { actions.openSettings(SettingsActions.DEVELOPER_OPTIONS) },
                 onScreenOff = { brightnessOpen = false; screen = Screen.Off },
