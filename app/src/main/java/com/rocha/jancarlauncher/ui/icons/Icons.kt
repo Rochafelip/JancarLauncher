@@ -66,6 +66,8 @@ object JIcons {
     val Grid = icon("Grid") {
         for (cy in listOf(6f, 12f, 18f)) for (cx in listOf(6f, 12f, 18f)) dot(cx, cy, 1.6f)
     }
+    /** Botão "Apagar tela": símbolo de energia (arco aberto em cima + traço). */
+    val Power = icon("Power", 1.7f) { line("M12 3.5v7.5"); line("M7.4 6.6a7.5 7.5 0 1 0 9.2 0") }
     val Back = icon("Back", 1.8f) { line("M15 6l-6 6 6 6") }
     val ChevronUp = icon("ChevronUp", 1.8f) { line("M6 15l6-6 6 6") }
 

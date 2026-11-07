@@ -55,6 +55,7 @@ fun HomeScreen(
     onPrevious: () -> Unit = {},
     adbStatus: AdbStatus = AdbStatus.Disabled,
     onOpenAdbSettings: () -> Unit = {},
+    onScreenOff: () -> Unit = {},
 ) {
     val c = JTheme.colors
     Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -89,6 +90,7 @@ fun HomeScreen(
                         JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme)
                         JIconButton(JIcons.Sliders, "Ajustar brilho", onToggleBrightness)
                         JIconButton(JIcons.Grid, "Ver todos os apps", onOpenDrawer)
+                        JIconButton(JIcons.Power, "Apagar tela", onScreenOff)
                     }
                 }
             }

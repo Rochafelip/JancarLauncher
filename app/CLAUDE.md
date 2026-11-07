@@ -29,7 +29,7 @@ Referências vivas (abrir antes de codar):
 1. **Boot/Boas-vindas** — aparece ao ligar o carro: foto do carro do usuário (tratada: desfoque + escurecida + duotone azul-acinzentado) como fundo, relógio centralizado, "toque para continuar". Leva pra tela Principal.
 2. **Principal (Home)** — launcher substituto, abre sozinho no boot:
    - Relógio grande + data, canto superior esquerdo
-   - Ícones no canto superior direito: alternar tema claro/escuro, ajustar brilho (abre painel com slider), abrir gaveta de apps
+   - Ícones no canto superior direito: alternar tema claro/escuro, ajustar brilho (abre painel com slider), abrir gaveta de apps, **apagar tela** (ícone de power)
    - ~~Card "Tocando agora"~~ — **removido** (decisão do usuário: sem acesso a notificações, o mais limpo possível)
    - Fileira de chips minimalistas: Wi-Fi, Bluetooth, GPS, Câmera de ré (manual), Ajustes — cada um abre a tela/app correspondente direto
    - 4 blocos grandes (ação principal): **Auto** (Android Auto/CarPlay), **Música**, **Rádio**, **Vídeo**
@@ -80,6 +80,7 @@ Todo `startActivity` dos botões precisa de `try { } catch (e: ActivityNotFoundE
 - **Boas-vindas** aparece após cada reinício (`BOOT_COUNT`) e ao acordar da suspensão com a tela apagada por ≥ 10 min (a central suspende ao desligar o carro, não reinicia).
 - **Música e Vídeo**: activity **fixa** em `AppTargets` (sem descoberta automática); enquanto não preenchidas mostram o aviso "não configurado".
 - Botão de **Câmera de ré manual** — abre `com.autochips.backcarapp` sob demanda, fora da marcha-ré (não confirmado se o app aceita isso, ver Pendências).
+- **Apagar tela** (decisão do usuário, 2026-11-07): botão na Home que deixa a tela preta e **acorda no toque** direto na Boas-vindas, **sem senha**. Sem root/Device Admin não dá pra desligar o display de verdade (o toque não acenderia), então é tela preta + brilho da janela em 0 + `FLAG_KEEP_SCREEN_ON` + barras escondidas (`power/ScreenOffPolicy`, `ui/screenoff/ScreenOffScreen`). O som continua; volume/mídia passam direto sem acordar; outras teclas acordam; só o brilho da **janela** muda (nunca o do sistema); modo noturno com a tela apagada só grava e aplica ao acordar; outro app por cima (ex.: câmera de ré) → ao voltar, Boas-vindas. A flag de manter acesa vai na janela (`addFlags`/`clearFlags`), **não** em `view.keepScreenOn` — esta ficava presa quando desfeita com a activity parada.
 - Toque mínimo de **44–48px** em todo elemento interativo (ajustado numa revisão de UX; os chips e os controles do player estavam menores que isso na primeira versão). Os **chips de atalho** da Home têm **60dp** de altura (`Dimens.ChipHeight`, alvo 56–64dp pra uso dirigindo; verificado no emulador 1024×600).
 
 ## Pendências bloqueantes
@@ -91,6 +92,7 @@ Nenhuma — Música, Vídeo, Galeria, Arquivos, Música BT, EQ, Veículo, Scrcpy
 - Confirmar se `com.autochips.backcarapp` aceita abertura manual (fora da marcha-ré).
 - Confirmar se dá pra desativar a depuração ADB sem fio pelas Configurações da própria central.
 - **Calibrar `can/CanBusClient.kt` na central real** (ver seção "Integração CAN bus" abaixo) — a ordem dos campos do Parcel ainda não foi validada com dados reais.
+- **Apagar tela na central:** conferir se brilho 0 da janela apaga o backlight por completo (no emulador não dá pra ver) e se a central respeita o `FLAG_KEEP_SCREEN_ON` (não suspende com a tela apagada; o toque precisa acender).
 
 ## Comando de rollback (guardar antes de testar `set-home-activity`)
 

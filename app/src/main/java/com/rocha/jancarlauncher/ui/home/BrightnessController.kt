@@ -21,6 +21,16 @@ class BrightnessController(private val activity: Activity) {
         }
     }
 
+    /**
+     * Só o brilho da janela do launcher (0–1, ou -1 = seguir o sistema), sem tocar no brilho do sistema.
+     * Usado pelo "Apagar tela" (ver `power/ScreenOffPolicy`).
+     */
+    fun applyWindow(value: Float) {
+        val attrs = activity.window.attributes
+        attrs.screenBrightness = value
+        activity.window.attributes = attrs
+    }
+
     /** Brilho atual do sistema em %, usado como posição inicial do slider quando o usuário nunca escolheu. */
     fun currentSystemPercent(): Int = try {
         BrightnessMapper.fromSystem(Settings.System.getInt(activity.contentResolver, Settings.System.SCREEN_BRIGHTNESS))

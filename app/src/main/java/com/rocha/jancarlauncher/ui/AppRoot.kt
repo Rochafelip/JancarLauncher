@@ -23,7 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.rocha.jancarlauncher.launch.PackageGateway
 import com.rocha.jancarlauncher.launch.SettingsActions
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.rocha.jancarlauncher.media.rememberNowPlaying
+import com.rocha.jancarlauncher.power.ScreenOffPolicy
+import com.rocha.jancarlauncher.ui.screenoff.ScreenOffScreen
 import com.rocha.jancarlauncher.settings.NightModeController
 import com.rocha.jancarlauncher.settings.SettingsStore
 import com.rocha.jancarlauncher.settings.WelcomePolicy
@@ -74,6 +78,28 @@ fun AppRoot(
     }
     LaunchedEffect(events) { events.collect { screen = it } }
 
+    // "Apagar tela": ao entrar em Off a janela vai ao brilho mínimo; ao sair, volta o brilho do usuário
+    // (inclusive uma mudança do modo noturno que ficou adiada enquanto a tela estava apagada).
+    var wasOff by remember { mutableStateOf(false) }
+    LaunchedEffect(screen) {
+        val now = screen ?: return@LaunchedEffect
+        val isOff = now == Screen.Off
+        if (isOff || wasOff) {
+            val user = settings.userBrightness.first()
+            if (!isOff && user != null) {
+                brightnessPercent = user
+                brightness.apply(user)
+            } else {
+                brightness.applyWindow(ScreenOffPolicy.windowBrightness(now, user))
+            }
+        }
+        wasOff = isOff
+    }
+    // Outro app passou à frente (ex.: câmera de ré) com a tela apagada: ao voltar, Boas-vindas, não a tela preta.
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        screen = screen?.let(ScreenOffPolicy::afterLeavingForeground)
+    }
+
     // Modo noturno: reavaliado a cada tick de minuto do relógio (e uma vez na abertura, já cobrindo
     // o caso de abrir dentro da janela). Toggle manual do usuário não é revertido até a próxima transição.
     LaunchedEffect(clock) {
@@ -97,14 +123,15 @@ fun AppRoot(
                 settings.applyNightMode(action.previousDark, action.previousBrightness)
                 if (action.previousBrightness != null) {
                     brightnessPercent = com.rocha.jancarlauncher.settings.NightModePolicy.NIGHT_BRIGHTNESS
-                    brightness.apply(brightnessPercent)
+                    // Com a tela apagada só grava; o brilho novo é aplicado ao acordar.
+                    if (ScreenOffPolicy.shouldApplyBrightness(screen ?: Screen.Home)) brightness.apply(brightnessPercent)
                 }
             }
             is NightModeController.Action.RestoreDay -> {
                 settings.restoreDayMode(action.dark, action.brightness)
                 if (action.brightness != null) {
                     brightnessPercent = action.brightness
-                    brightness.apply(brightnessPercent)
+                    if (ScreenOffPolicy.shouldApplyBrightness(screen ?: Screen.Home)) brightness.apply(brightnessPercent)
                 }
             }
             NightModeController.Action.NoOp -> {}
@@ -114,6 +141,7 @@ fun AppRoot(
     BackHandler(enabled = true) {
         when {
             brightnessOpen -> brightnessOpen = false
+            screen == Screen.Off -> screen = ScreenOffPolicy.afterWake(Screen.Off)
             screen == Screen.Drawer -> screen = Screen.Home
             // Home/Boas-vindas: a tela inicial não "sai" com o botão voltar.
         }
@@ -158,7 +186,9 @@ fun AppRoot(
                 onPrevious = nowPlaying::previous,
                 adbStatus = adbStatus,
                 onOpenAdbSettings = { actions.openSettings(SettingsActions.DEVELOPER_OPTIONS) },
+                onScreenOff = { brightnessOpen = false; screen = Screen.Off },
             )
+            Screen.Off -> ScreenOffScreen(onWake = { screen = ScreenOffPolicy.afterWake(Screen.Off) })
             Screen.Drawer -> DrawerScreen(
                 isDark = isDark,
                 gateway = gateway,
