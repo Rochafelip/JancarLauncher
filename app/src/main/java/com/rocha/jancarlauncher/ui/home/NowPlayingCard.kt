@@ -49,40 +49,44 @@ fun NowPlayingCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(Dimens.RadiusTile))
                 .background(c.surface)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .padding(horizontal = 20.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(
+                Modifier.weight(1f),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
                 val artBitmap = remember(nowPlaying.art) {
                     nowPlaying.art?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
                 }
                 Box(
-                    Modifier.size(48.dp).clip(RoundedCornerShape(Dimens.RadiusButton)).background(c.surfaceHover),
+                    Modifier.size(Dimens.NowPlayingArt).clip(RoundedCornerShape(Dimens.RadiusButton)).background(c.surfaceHover),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (artBitmap != null) {
-                        Image(artBitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.size(48.dp))
+                        Image(artBitmap.asImageBitmap(), contentDescription = null, modifier = Modifier.size(Dimens.NowPlayingArt))
                     } else {
-                        JIcon(JIcons.NoteMusic, c.muted, 22.dp)
+                        JIcon(JIcons.NoteMusic, c.muted, 34.dp)
                     }
                 }
-                androidx.compose.foundation.layout.Column {
+                androidx.compose.foundation.layout.Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     BasicText(
                         nowPlaying.title ?: "",
-                        style = JancarType.chip.copy(color = c.fg),
+                        style = JancarType.nowPlayingTitle.copy(color = c.fg),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     BasicText(
                         nowPlaying.artist ?: "",
-                        style = JancarType.appTag.copy(color = c.muted),
+                        style = JancarType.nowPlayingArtist.copy(color = c.muted),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TransportButton(JIcons.Shuffle, "Aleatório", {}, enabled = nowPlaying.supportsShuffle)
                 TransportButton(JIcons.Previous, "Faixa anterior", onPrevious)
                 TransportButton(

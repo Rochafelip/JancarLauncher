@@ -27,6 +27,8 @@ object JancarType {
     val body = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W400, fontSize = 18.sp)
     val tileLabel = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 20.sp, letterSpacing = 0.2.sp)
     val chip = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 16.sp)
+    val nowPlayingTitle = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 22.sp)
+    val nowPlayingArtist = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W400, fontSize = 17.sp)
     val appName = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 18.sp)
     val appTag = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 13.sp, letterSpacing = 0.6.sp)
     val h1 = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 30.sp, letterSpacing = (-0.3).sp)

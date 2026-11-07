@@ -180,16 +180,16 @@ fun TransportButton(
     Pressable(
         onClick = onClick,
         shape = CircleShape,
-        modifier = modifier.size(if (accent) 40.dp else Dimens.MinTouch).alpha(if (enabled) 1f else 0.35f),
+        modifier = modifier.size(if (accent) Dimens.TransportAccent else Dimens.TransportButton).alpha(if (enabled) 1f else 0.35f),
         enabled = enabled,
         description = description,
     ) { pressed, _ ->
         if (accent) {
-            Box(Modifier.size(40.dp).clip(CircleShape).background(colors.accent), contentAlignment = Alignment.Center) {
-                JIcon(icon, Color.White, 18.dp)
+            Box(Modifier.size(Dimens.TransportAccent).clip(CircleShape).background(colors.accent), contentAlignment = Alignment.Center) {
+                JIcon(icon, Color.White, Dimens.TransportAccentIcon)
             }
         } else {
-            JIcon(icon, if (pressed) colors.fg else colors.icon, 18.dp)
+            JIcon(icon, if (pressed) colors.fg else colors.icon, Dimens.TransportIcon)
         }
     }
 }

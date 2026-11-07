@@ -17,6 +17,12 @@ object Dimens {
     /** Botões do canto superior direito da Home (tema, brilho, gaveta, Painel, apagar tela): mesmo alvo dos chips. */
     val TopButton = 60.dp
     val TopButtonIcon = 24.dp
+    /** Card "Tocando agora" da Home (pedido do usuário, 2026-11-07: "muito pequeno"). */
+    val NowPlayingArt = 76.dp
+    val TransportButton = 60.dp
+    val TransportIcon = 26.dp
+    val TransportAccent = 64.dp
+    val TransportAccentIcon = 28.dp
     val RadiusButton = 14.dp
     val RadiusTile = 22.dp
     val RadiusAppTile = 18.dp

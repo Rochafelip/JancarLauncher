@@ -60,7 +60,7 @@ fun HomeScreen(
 ) {
     val c = JTheme.colors
     Box(Modifier.fillMaxSize().background(c.bg)) {
-        Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 52.dp, bottom = 48.dp)) {
+        Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 40.dp, bottom = 36.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     BasicText(clock.time, style = JancarType.clockLarge.copy(color = c.fg))
@@ -103,7 +103,7 @@ fun HomeScreen(
                 onPause = onPause,
                 onNext = onNext,
                 onPrevious = onPrevious,
-                modifier = Modifier.padding(top = 24.dp),
+                modifier = Modifier.padding(top = 20.dp),
             )
 
             // Valores crus de calibração (ICar e CAN bus) ficam no Painel: toque longo → diagnóstico.
@@ -165,7 +165,7 @@ fun HomeScreen(
                 percent = brightnessPercent,
                 onChange = onBrightnessChange,
                 onChangeFinished = onBrightnessChangeFinished,
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 158.dp, end = 64.dp),
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 146.dp, end = 64.dp),
             )
         }
     }
