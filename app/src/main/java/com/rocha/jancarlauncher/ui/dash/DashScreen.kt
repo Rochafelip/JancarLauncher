@@ -45,7 +45,10 @@ import androidx.compose.ui.unit.sp
 import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.CarStateDetails
-import com.rocha.jancarlauncher.can.VehicleInfoCard
+import com.rocha.jancarlauncher.can.Cabin
+import com.rocha.jancarlauncher.can.DashBoard
+import com.rocha.jancarlauncher.can.Lights
+import com.rocha.jancarlauncher.can.VehicleInfoDetails
 import com.rocha.jancarlauncher.ui.components.JIconButton
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.Inter
@@ -88,11 +91,31 @@ fun DashRoute(onBack: () -> Unit) {
     }
     val state by client.state.collectAsState()
     val connected by client.connected.collectAsState()
-    DashScreen(state, connected, onBack)
+
+    // CAN bus: odômetro total (o ICar não tem) + valores crus do diagnóstico. Uma conexão só, aberta aqui.
+    val can = app.canBus
+    DisposableEffect(can) {
+        can.connect()
+        onDispose { can.disconnect() }
+    }
+    val canConnected by can.connected.collectAsState()
+    val canDash by can.dashboard.collectAsState()
+    val canCabin by can.cabin.collectAsState()
+    val canLights by can.lights.collectAsState()
+
+    DashScreen(state, connected, onBack, canConnected, canDash, canCabin, canLights)
 }
 
 @Composable
-fun DashScreen(state: CarState, connected: Boolean, onBack: () -> Unit) {
+fun DashScreen(
+    state: CarState,
+    connected: Boolean,
+    onBack: () -> Unit,
+    canConnected: Boolean = false,
+    canDash: DashBoard? = null,
+    canCabin: Cabin? = null,
+    canLights: Lights? = null,
+) {
     var diagnostics by remember { mutableStateOf(false) }
     BackHandler(enabled = diagnostics) { diagnostics = false }
 
@@ -105,7 +128,8 @@ fun DashScreen(state: CarState, connected: Boolean, onBack: () -> Unit) {
                 .background(c.bg)
                 .pointerInput(Unit) { detectTapGestures(onLongPress = { diagnostics = true }) },
         ) {
-            Column(Modifier.fillMaxSize().padding(start = 40.dp, end = 40.dp, top = 28.dp, bottom = 32.dp)) {
+            // Na central a barra de status da Jancar ocupa ~66px do topo: área útil ~534dp, por isso tudo compacto.
+            Column(Modifier.fillMaxSize().padding(start = 40.dp, end = 40.dp, top = 20.dp, bottom = 24.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     JIconButton(JIcons.Back, "Voltar", onBack)
                     Spacer(Modifier.width(16.dp))
@@ -117,7 +141,7 @@ fun DashScreen(state: CarState, connected: Boolean, onBack: () -> Unit) {
                     )
                 }
 
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(14.dp))
                 RpmBar(state.rpm)
 
                 Row(
@@ -127,7 +151,7 @@ fun DashScreen(state: CarState, connected: Boolean, onBack: () -> Unit) {
                     Column(Modifier.weight(1.4f)) {
                         BasicText(
                             DashModel.speedText(state.speed),
-                            style = digits(190, FontWeight.W600).copy(color = if (state.speed == null) c.faint else c.fg),
+                            style = digits(156, FontWeight.W600).copy(color = if (state.speed == null) c.faint else c.fg),
                         )
                         BasicText("km/h", style = JancarType.tileLabel.copy(color = c.muted))
                     }
@@ -138,21 +162,27 @@ fun DashScreen(state: CarState, connected: Boolean, onBack: () -> Unit) {
                             state.rpm >= DashModel.RPM_WARN -> ZoneWarn
                             else -> c.fg
                         }
-                        BasicText(DashModel.rpmText(state.rpm), style = digits(96, FontWeight.W500).copy(color = rpmColor))
+                        BasicText(DashModel.rpmText(state.rpm), style = digits(84, FontWeight.W500).copy(color = rpmColor))
                         BasicText("rpm", style = JancarType.tileLabel.copy(color = c.muted))
                     }
                 }
 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(36.dp), verticalAlignment = Alignment.Bottom) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.Bottom) {
                     InfoItem("BATERIA", DashModel.valueText(state.batteryVoltage), "V")
                     InfoItem("COMBUSTÍVEL", DashModel.valueText(state.fuelLiters), "L")
                     InfoItem("AUTONOMIA", DashModel.valueText(state.fuelRangeKm), "km")
+                    InfoItem("ODÔMETRO", DashModel.odoText(canDash?.odo), "km")
                     Spacer(Modifier.weight(1f))
                     HandbrakeBadge(state.handbrakeOn)
                 }
             }
 
-            if (diagnostics) DiagnosticsLayer(state, connected, onClose = { diagnostics = false })
+            if (diagnostics) {
+                DiagnosticsLayer(onClose = { diagnostics = false }) {
+                    CarStateDetails(state, connected, Modifier.weight(1f))
+                    VehicleInfoDetails(canConnected, canDash, canCabin, canLights, Modifier.weight(1f))
+                }
+            }
         }
     }
 }
@@ -170,7 +200,7 @@ private fun RpmBar(rpm: Float?) {
         label = "shiftBlink",
     )
     Column {
-        Row(Modifier.fillMaxWidth().height(52.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth().height(44.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             for (i in 0 until DashModel.SEGMENTS) {
                 val on = i < lit
                 val color = when {
@@ -244,7 +274,7 @@ private fun HandbrakeBadge(on: Boolean?) {
 
 /** Valores crus para calibrar na central: ICar (estado do Painel) e CAN bus. Toque fora / voltar fecha. */
 @Composable
-private fun DiagnosticsLayer(state: CarState, connected: Boolean, onClose: () -> Unit) {
+private fun DiagnosticsLayer(onClose: () -> Unit, content: @Composable androidx.compose.foundation.layout.RowScope.() -> Unit) {
     val c = JTheme.colors
     Box(
         Modifier
@@ -259,8 +289,7 @@ private fun DiagnosticsLayer(state: CarState, connected: Boolean, onClose: () ->
                 BasicText("DIAGNÓSTICO (calibração)", style = JancarType.caption.copy(color = c.faint))
             }
             Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                CarStateDetails(state, connected, Modifier.weight(1f))
-                VehicleInfoCard(Modifier.weight(1f))
+                content()
             }
         }
     }

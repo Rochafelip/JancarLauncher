@@ -31,6 +31,7 @@ import com.rocha.jancarlauncher.ui.components.JIconButton
 import com.rocha.jancarlauncher.ui.components.MainTile
 import com.rocha.jancarlauncher.ui.components.QuickChip
 import com.rocha.jancarlauncher.ui.icons.JIcons
+import com.rocha.jancarlauncher.ui.theme.Dimens
 import com.rocha.jancarlauncher.ui.theme.JTheme
 import com.rocha.jancarlauncher.ui.theme.JancarType
 
@@ -87,11 +88,11 @@ fun HomeScreen(
                         BasicText("MULTIMÍDIA", style = JancarType.caption.copy(color = c.faint))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme)
-                        JIconButton(JIcons.Sliders, "Ajustar brilho", onToggleBrightness)
-                        JIconButton(JIcons.Grid, "Ver todos os apps", onOpenDrawer)
-                        JIconButton(JIcons.Gauge, "Painel de velocidade", onOpenDash)
-                        JIconButton(JIcons.Power, "Apagar tela", onScreenOff)
+                        JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
+                        JIconButton(JIcons.Sliders, "Ajustar brilho", onToggleBrightness, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
+                        JIconButton(JIcons.Grid, "Ver todos os apps", onOpenDrawer, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
+                        JIconButton(JIcons.Gauge, "Painel de velocidade", onOpenDash, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
+                        JIconButton(JIcons.Power, "Apagar tela", onScreenOff, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
                     }
                 }
             }
@@ -165,7 +166,7 @@ fun HomeScreen(
                 percent = brightnessPercent,
                 onChange = onBrightnessChange,
                 onChangeFinished = onBrightnessChangeFinished,
-                modifier = Modifier.align(Alignment.TopEnd).padding(top = 146.dp, end = 64.dp),
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 158.dp, end = 64.dp),
             )
         }
     }

@@ -25,7 +25,6 @@ import com.rocha.jancarlauncher.ui.theme.JancarType
 fun VehicleInfoCard(modifier: Modifier = Modifier) {
     val app = LocalContext.current.applicationContext as JancarApp
     val client = app.canBus
-    val colors = JTheme.colors
 
     DisposableEffect(client) {
         client.connect()
@@ -36,7 +35,22 @@ fun VehicleInfoCard(modifier: Modifier = Modifier) {
     val dash by client.dashboard.collectAsState()
     val cabin by client.cabin.collectAsState()
     val lights by client.lights.collectAsState()
+    VehicleInfoDetails(connected, dash, cabin, lights, modifier)
+}
 
+/**
+ * Conteúdo do card sem gerenciar conexão: para quem já mantém o [CanBusClient] conectado (ex.: o Painel).
+ * Um segundo `connect()`/`disconnect()` no cliente compartilhado derrubaria a conexão de quem a abriu.
+ */
+@Composable
+fun VehicleInfoDetails(
+    connected: Boolean,
+    dash: DashBoard?,
+    cabin: Cabin?,
+    lights: Lights?,
+    modifier: Modifier = Modifier,
+) {
+    val colors = JTheme.colors
     Column(modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         BasicText(
             "CAN: ${if (connected) "conectado" else "desconectado"}",

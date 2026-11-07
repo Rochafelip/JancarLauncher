@@ -96,17 +96,24 @@ private fun Pressable(
     ) { content(pressed, focused) }
 }
 
-/** Botão quadrado 48×48 com ícone (tema, brilho, gaveta, voltar). */
+/** Botão quadrado com ícone (padrão 48×48: voltar etc.; a fileira da Home usa [Dimens.TopButton]). */
 @Composable
-fun JIconButton(icon: ImageVector, description: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun JIconButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    size: Dp = Dimens.MinTouch,
+    iconSize: Dp = 18.dp,
+) {
     val colors = JTheme.colors
     Pressable(
         onClick = onClick,
         shape = RoundedCornerShape(Dimens.RadiusButton),
-        modifier = modifier.size(Dimens.MinTouch),
+        modifier = modifier.size(size),
         description = description,
     ) { pressed, _ ->
-        JIcon(icon, if (pressed) colors.fg else colors.muted, 18.dp)
+        JIcon(icon, if (pressed) colors.fg else colors.muted, iconSize)
     }
 }
 

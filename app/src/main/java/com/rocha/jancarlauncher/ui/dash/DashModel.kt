@@ -54,6 +54,9 @@ object DashModel {
     /** Arredonda a dezenas: o valor cru oscila a cada leitura e o número ficaria tremendo. */
     fun rpmText(rpm: Float?): String = rpm?.let { ((it / 10f).roundToInt() * 10).coerceAtLeast(0).toString() } ?: DASH
 
+    /** Odômetro total em km com ponto de milhar; ≤ 0 = CAN sem dado (carro rodado nunca marca 0). */
+    fun odoText(km: Int?): String = km?.takeIf { it > 0 }?.let { String.format(ptBr, "%,d", it) } ?: DASH
+
     /** Uma casa decimal com vírgula (bateria, combustível, autonomia). */
     fun valueText(value: Float?): String = value?.let { String.format(ptBr, "%.1f", it) } ?: DASH
 }

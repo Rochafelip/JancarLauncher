@@ -82,6 +82,21 @@ class DashModelTest {
         assertEquals("850", DashModel.rpmText(851f))
     }
 
+    @Test fun odoText_unknown_isSingleDash() {
+        assertEquals("—", DashModel.odoText(null))
+    }
+
+    @Test fun odoText_zeroOrNegative_isTreatedAsMissingData() {
+        // Odômetro zerado/negativo num carro rodado = CAN sem dado, não "0 km".
+        assertEquals("—", DashModel.odoText(0))
+        assertEquals("—", DashModel.odoText(-1))
+    }
+
+    @Test fun odoText_usesThousandsSeparatorWithDot() {
+        assertEquals("123.456", DashModel.odoText(123456))
+        assertEquals("987", DashModel.odoText(987))
+    }
+
     @Test fun valueText_oneDecimalWithComma_orSingleDash() {
         assertEquals("12,4", DashModel.valueText(12.38f))
         assertEquals("—", DashModel.valueText(null))
