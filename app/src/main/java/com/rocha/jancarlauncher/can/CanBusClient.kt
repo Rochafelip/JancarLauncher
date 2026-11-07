@@ -88,9 +88,18 @@ class CanBusClient(context: Context) {
 
     private val conn = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, service: IBinder) {
-            remote = service
-            _connected.value = true
             bg.post {
+                // O onBind devolve um ICanUI ("porteiro"); o ICanBus vem de getCanService("CanBusManager").
+                val canBus = runCatching { resolveCanBus(service) }
+                    .onFailure { Log.w(TAG, "getCanService falhou", it) }
+                    .getOrNull()
+                if (canBus == null) {
+                    Log.w(TAG, "ICanBus indisponivel; tentando de novo em 3s")
+                    scheduleReconnect()
+                    return@post
+                }
+                remote = canBus
+                _connected.value = true
                 runCatching { transact(T_REGISTER_LISTENER) { it.writeStrongBinder(listener) }?.recycle() }
                     .onFailure { Log.w(TAG, "registerListener falhou", it) }
                 refresh()
@@ -129,6 +138,22 @@ class CanBusClient(context: Context) {
                 .onFailure { Log.w(TAG, "getCabinInfo falhou", it) }
             runCatching { transact(T_GET_LIGHT) {}?.consume { _lights.value = readNullableLights(it) } }
                 .onFailure { Log.w(TAG, "getLightInfo falhou", it) }
+        }
+    }
+
+    /** ICanUI.getCanService(String): IBinder (codigo 1), conferido no com.can.activity descompilado. */
+    private fun resolveCanBus(ui: IBinder): IBinder? {
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
+        try {
+            data.writeInterfaceToken(UI_DESCRIPTOR)
+            data.writeString(CANBUS_SERVICE_NAME)
+            ui.transact(T_GET_CAN_SERVICE, data, reply, 0)
+            reply.readException()
+            return reply.readStrongBinder()
+        } finally {
+            reply.recycle()
+            data.recycle()
         }
     }
 
@@ -211,6 +236,10 @@ class CanBusClient(context: Context) {
         const val PKG = "com.can.activity"
         const val SERVICE = "com.can.ui.CanPopWind"
         const val ACTION = "autoai.intent.action.CANBUS_SERVICE"
+
+        private const val UI_DESCRIPTOR = "com.autoai.canbus.ICanUI"
+        private const val T_GET_CAN_SERVICE = 1
+        private const val CANBUS_SERVICE_NAME = "CanBusManager"
 
         private const val DESCRIPTOR = "com.autoai.canbus.ICanBus"
         private const val LISTENER = "com.autoai.canbus.ICanBusListener"
