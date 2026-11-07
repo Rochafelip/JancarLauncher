@@ -74,6 +74,14 @@ fun AppRoot(
         jancarMedia.connect()
         onDispose { jancarMedia.disconnect() }
     }
+    // Serviço do carro (ICar): conexão única enquanto o launcher está aberto; o farol comanda o modo noturno.
+    val carService = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).carService
+    androidx.compose.runtime.DisposableEffect(carService) {
+        carService.connect()
+        onDispose { carService.disconnect() }
+    }
+    val headlightOn by remember(carService) { carService.state.map { it.headlightOn }.distinctUntilChanged() }
+        .collectAsState(initial = null)
     val jancarInfo by jancarMedia.info.collectAsState()
     val jancarArt by jancarMedia.artPng.collectAsState()
     // O serviço manda o estado a cada segundo (posição avançando): só tocando/parado interessa ao card,
@@ -126,9 +134,11 @@ fun AppRoot(
         screen = screen?.let(ScreenOffPolicy::afterLeavingForeground)
     }
 
-    // Modo noturno: reavaliado a cada tick de minuto do relógio (e uma vez na abertura, já cobrindo
-    // o caso de abrir dentro da janela). Toggle manual do usuário não é revertido até a próxima transição.
-    LaunchedEffect(clock) {
+    // Modo noturno: farol aceso = noite (sem leitura do farol, vale a janela de horário). Reavaliado a cada
+    // tick de minuto e quando o farol muda. A espera de 3 s evita trocar o tema num liga-desliga rápido e dá
+    // tempo do ICar conectar na abertura. Toggle manual do usuário não é revertido até a próxima transição.
+    LaunchedEffect(clock, headlightOn) {
+        kotlinx.coroutines.delay(3_000)
         val now = java.time.LocalTime.now()
         val wasApplied = settings.nightModeApplied.first()
         val currentDark = settings.dark.first()
@@ -143,6 +153,7 @@ fun AppRoot(
                 currentBrightness = currentBrightness,
                 previousDark = previousDark,
                 previousBrightness = previousBrightness,
+                headlightOn = headlightOn,
             )
         ) {
             is NightModeController.Action.ApplyNight -> {

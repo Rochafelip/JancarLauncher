@@ -83,17 +83,14 @@ private fun digits(size: Int, weight: FontWeight) = TextStyle(
 
 /**
  * Painel de velocidade/RPM, alimentado pelo CAN bus ([JancarApp.canBus]) com o ICar da Jancar
- * ([JancarApp.carService]) de reserva; a origem de cada valor fica em [DashModel.reading]. Mantém as únicas
- * conexões enquanto está aberto. Toque longo abre a camada de diagnóstico (valores crus do ICar e do CAN bus).
+ * ([JancarApp.carService]) de reserva; a origem de cada valor fica em [DashModel.reading]. Abre a conexão
+ * única do CAN enquanto está na tela (a do ICar é do AppRoot). Toque longo abre o diagnóstico.
  */
 @Composable
 fun DashRoute(onBack: () -> Unit) {
     val app = LocalContext.current.applicationContext as JancarApp
+    // ICar: conexão aberta pelo AppRoot (o farol comanda o modo noturno); aqui só lê.
     val client = app.carService
-    DisposableEffect(client) {
-        client.connect()
-        onDispose { client.disconnect() }
-    }
     val state by client.state.collectAsState()
     val connected by client.connected.collectAsState()
 
@@ -285,7 +282,6 @@ private fun AlertBanner(alerts: List<DashModel.Alert>, r: DashModel.Reading) {
     }
     val alert = alerts[tick % alerts.size]
     val (icon, title, detail) = when (alert) {
-        DashModel.Alert.HandbrakeWhileMoving -> Triple(JIcons.Handbrake, "FREIO DE MÃO PUXADO", "Carro em movimento")
         DashModel.Alert.LowFuel -> Triple(JIcons.Fuel, "COMBUSTÍVEL NA RESERVA", "${DashModel.valueText(r.fuelLiters)} L no tanque")
     }
     val bg = if (alert.red) ZoneRed else ZoneWarn

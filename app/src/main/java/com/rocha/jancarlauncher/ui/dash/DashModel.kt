@@ -69,7 +69,6 @@ object DashModel {
         val fuelLiters: Float?,
         val outsideTempC: Float?,
         val odoKm: Int?,
-        val handbrakeOn: Boolean?,
     )
 
     /**
@@ -78,8 +77,8 @@ object DashModel {
      * - Velocidade: o app CAN descarta o 0 enquanto ele nunca mudou (`CanPopWind.isSpeedValid`); com
      *   RPM chegando, velocidade ausente é 0.
      * - Temperatura externa: o CAN entrega °C + 40 (74,5 contra 34,5 na tela original, ao mesmo tempo).
-     * - Freio de mão: o CAN não expõe; vem do ICar, que lê o fio do chicote (GPIO). Usado só no aviso.
-     * - Bateria: fora do Painel (decisão do usuário; nenhuma fonte disponível na central).
+     * - Freio de mão e bateria: fora do Painel. O CAN não expõe nenhum dos dois, e o fio do freio de mão
+     *   não está ligado nesta instalação (testado em 2026-11-07: nunca mudou).
      */
     fun reading(car: CarState, can: DashBoard?): Reading {
         val canRpm = can?.rotationRate?.takeIf { it != Int.MIN_VALUE && it >= 0 }?.toFloat()
@@ -93,22 +92,17 @@ object DashModel {
             fuelLiters = canFuel ?: car.fuelLiters,
             outsideTempC = canTemp ?: car.outsideTempC,
             odoKm = can?.odo?.takeIf { it > 0 },
-            handbrakeOn = car.handbrakeOn,
         )
     }
 
     /** Avisos do Painel; a faixa só aparece quando há algum. [red] = grave (vermelho), senão âmbar. */
-    enum class Alert(val red: Boolean) { HandbrakeWhileMoving(true), LowFuel(false) }
+    enum class Alert(val red: Boolean) { LowFuel(false) }
 
     /** Reserva: a partir daqui avisa (rodar com o tanque no fim força a bomba de combustível). */
     const val LOW_FUEL_LITERS = 7f
 
-    /** Velocidade mínima para o aviso de freio de mão (evita disparar manobrando parado). */
-    const val HANDBRAKE_ALERT_KMH = 3f
-
     /** Avisos ativos, o mais grave primeiro; lista vazia = tudo bem, nada aparece. */
     fun alerts(r: Reading): List<Alert> = buildList {
-        if (r.handbrakeOn == true && (r.speed ?: 0f) >= HANDBRAKE_ALERT_KMH) add(Alert.HandbrakeWhileMoving)
         // 0 L costuma ser o CAN ainda sem leitura logo após a partida, não tanque vazio.
         if (r.fuelLiters != null && r.fuelLiters > 0f && r.fuelLiters <= LOW_FUEL_LITERS) add(Alert.LowFuel)
     }

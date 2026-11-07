@@ -46,6 +46,34 @@ class NightModeControllerTest {
     }
 
     @Test
+    fun `farol aceso de dia aplica a noite`() {
+        val action = NightModeController.evaluate(
+            now = LocalTime.of(14, 0),
+            wasApplied = false,
+            currentDark = false,
+            currentBrightness = 80,
+            previousDark = false,
+            previousBrightness = null,
+            headlightOn = true,
+        )
+        assertEquals(NightModeController.Action.ApplyNight(previousDark = false, previousBrightness = 80), action)
+    }
+
+    @Test
+    fun `farol apagado de noite restaura o dia`() {
+        val action = NightModeController.evaluate(
+            now = LocalTime.of(22, 0),
+            wasApplied = true,
+            currentDark = true,
+            currentBrightness = NightModePolicy.NIGHT_BRIGHTNESS,
+            previousDark = false,
+            previousBrightness = 80,
+            headlightOn = false,
+        )
+        assertEquals(NightModeController.Action.RestoreDay(dark = false, brightness = 80), action)
+    }
+
+    @Test
     fun `fora da janela e nao aplicado nao faz nada`() {
         val action = NightModeController.evaluate(
             now = LocalTime.of(12, 0),

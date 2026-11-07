@@ -146,13 +146,6 @@ object JIcons {
         line("M14 14.76V4.5a2 2 0 0 0-4 0v10.26a4 4 0 1 0 4 0z"); line("M12 9v8")
     }
     val Road = icon("Road", 1.7f) { line("M5 21L9 3"); line("M19 21L15 3"); line("M12 5v2.5M12 11v2.5M12 17v2.5") }
-    val Warning = icon("Warning", 1.8f) {
-        line("M12 3.5L2.5 20h19L12 3.5z"); line("M12 9.5v5"); dot(12f, 17.2f, 1.1f)
-    }
-    val Handbrake = icon("Handbrake", 1.8f) {
-        circle(12f, 12f, 6.5f); line("M12 8.5v4.2"); dot(12f, 15.4f, 1f)
-        line("M4.6 6.6a9 9 0 0 0 0 10.8"); line("M19.4 6.6a9 9 0 0 1 0 10.8")
-    }
 
     // Indicador de ADB sem fio
     val Usb = icon("Usb", 1.7f) {

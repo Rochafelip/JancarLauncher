@@ -21,6 +21,7 @@ object NightModeController {
      * @param currentBrightness brilho atual escolhido pelo usuário (null = nunca escolheu).
      * @param previousDark tema salvo de antes da última entrada na janela (só relevante se [wasApplied]).
      * @param previousBrightness brilho salvo de antes da última entrada (só relevante se [wasApplied]).
+     * @param headlightOn farol aceso/apagado; null = sem leitura (aí vale o horário). Ver [NightModePolicy].
      */
     fun evaluate(
         now: LocalTime,
@@ -29,8 +30,9 @@ object NightModeController {
         currentBrightness: Int?,
         previousDark: Boolean,
         previousBrightness: Int?,
+        headlightOn: Boolean? = null,
     ): Action {
-        val isNight = NightModePolicy.isNight(now)
+        val isNight = NightModePolicy.isNight(headlightOn, now)
         return when {
             isNight && !wasApplied -> Action.ApplyNight(previousDark = currentDark, previousBrightness = currentBrightness)
             !isNight && wasApplied -> Action.RestoreDay(dark = previousDark, brightness = previousBrightness)
