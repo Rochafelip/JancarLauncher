@@ -27,8 +27,10 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -49,7 +52,9 @@ import com.rocha.jancarlauncher.can.Cabin
 import com.rocha.jancarlauncher.can.DashBoard
 import com.rocha.jancarlauncher.can.Lights
 import com.rocha.jancarlauncher.can.VehicleInfoDetails
+import com.rocha.jancarlauncher.ui.components.JIcon
 import com.rocha.jancarlauncher.ui.components.JIconButton
+import kotlinx.coroutines.delay
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.Inter
 import com.rocha.jancarlauncher.ui.theme.JTheme
@@ -119,7 +124,11 @@ fun DashScreen(
     var diagnostics by remember { mutableStateOf(false) }
     BackHandler(enabled = diagnostics) { diagnostics = false }
     val r = DashModel.reading(state, canDash)
-    val anyConnected = canConnected || connected
+    val alerts = DashModel.alerts(r)
+    // Conectar leva um instante: só avisa a falta de dados depois de alguns segundos.
+    var graceOver by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { delay(4_000); graceOver = true }
+    val noCarData = graceOver && !canConnected
 
     // Painel é sempre escuro, independente do tema da Home.
     JancarTheme(dark = true) {
@@ -137,10 +146,8 @@ fun DashScreen(
                     Spacer(Modifier.width(16.dp))
                     BasicText("PAINEL", style = JancarType.caption.copy(color = c.faint))
                     Spacer(Modifier.weight(1f))
-                    BasicText(
-                        if (anyConnected) "Serviço do carro conectado" else "Serviço do carro desconectado",
-                        style = JancarType.appTag.copy(color = if (anyConnected) c.muted else ZoneWarn),
-                    )
+                    // Tudo certo = nada escrito aqui.
+                    if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = ZoneWarn))
                 }
 
                 Spacer(Modifier.height(14.dp))
@@ -169,14 +176,24 @@ fun DashScreen(
                     }
                 }
 
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.Bottom) {
-                    InfoItem("BATERIA", DashModel.valueText(r.batteryVoltage), "V")
-                    InfoItem("COMBUSTÍVEL", DashModel.valueText(r.fuelLiters), "L")
-                    // Autonomia saiu: o CAN do Fox (protocolo PQ) não tem esse campo e o ICar vem vazio.
-                    InfoItem("TEMP. EXTERNA", DashModel.valueText(r.outsideTempC), "°C")
-                    InfoItem("ODÔMETRO", DashModel.odoText(r.odoKm), "km")
-                    Spacer(Modifier.weight(1f))
-                    HandbrakeBadge(r.handbrakeOn)
+                // Faixa de aviso: só existe quando algo acontece.
+                if (alerts.isNotEmpty()) {
+                    AlertBanner(alerts, r)
+                    Spacer(Modifier.height(16.dp))
+                }
+
+                // Ícones no lugar de rótulos: bomba = combustível, termômetro = temperatura externa, estrada = odômetro.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(56.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    InfoItem(
+                        JIcons.Fuel, DashModel.valueText(r.fuelLiters), "L",
+                        highlight = if (DashModel.Alert.LowFuel in alerts) ZoneWarn else null,
+                    )
+                    InfoItem(JIcons.Thermometer, DashModel.valueText(r.outsideTempC), "°C")
+                    InfoItem(JIcons.Road, DashModel.odoText(r.odoKm), "km")
                 }
             }
 
@@ -245,33 +262,43 @@ private fun Color.compositeOver(background: Color): Color {
     )
 }
 
+/** Valor com ícone grande à esquerda; [highlight] pinta ícone e número (ex.: reserva em âmbar). */
 @Composable
-private fun InfoItem(label: String, value: String, unit: String) {
+private fun InfoItem(icon: ImageVector, value: String, unit: String, highlight: Color? = null) {
     val c = JTheme.colors
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        BasicText(label, style = JancarType.appTag.copy(color = c.faint))
-        Row(verticalAlignment = Alignment.Bottom) {
-            BasicText(value, style = digits(30, FontWeight.W500).copy(color = if (value == DashModel.DASH) c.faint else c.fg))
-            Spacer(Modifier.width(6.dp))
-            BasicText(unit, style = JancarType.body.copy(color = c.muted), modifier = Modifier.padding(bottom = 3.dp))
-        }
+    val unknown = value == DashModel.DASH
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        JIcon(icon, tint = highlight ?: c.muted, size = 36.dp)
+        Spacer(Modifier.width(14.dp))
+        BasicText(value, style = digits(36, FontWeight.W500).copy(color = highlight ?: if (unknown) c.faint else c.fg))
+        Spacer(Modifier.width(6.dp))
+        BasicText(unit, style = JancarType.body.copy(color = c.muted), modifier = Modifier.padding(top = 8.dp))
     }
 }
 
-/** Freio de mão: pílula vermelha quando puxado; discreta quando solto ou desconhecido. */
+/** Faixa de aviso (vermelha = grave, âmbar = atenção). Com mais de um aviso, alterna a cada 3 s. */
 @Composable
-private fun HandbrakeBadge(on: Boolean?) {
-    val c = JTheme.colors
-    val (bg, fg, text) = when (on) {
-        true -> Triple(ZoneRed, Color.White, "FREIO DE MÃO")
-        false -> Triple(c.surface, c.faint, "FREIO SOLTO")
-        null -> Triple(c.surface, c.faint, "FREIO --")
+private fun AlertBanner(alerts: List<DashModel.Alert>, r: DashModel.Reading) {
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(alerts.size) {
+        while (alerts.size > 1) { delay(3_000); tick++ }
     }
-    Box(
-        Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 18.dp, vertical = 10.dp),
-        contentAlignment = Alignment.Center,
+    val alert = alerts[tick % alerts.size]
+    val (icon, title, detail) = when (alert) {
+        DashModel.Alert.HandbrakeWhileMoving -> Triple(JIcons.Handbrake, "FREIO DE MÃO PUXADO", "Carro em movimento")
+        DashModel.Alert.LowFuel -> Triple(JIcons.Fuel, "COMBUSTÍVEL NA RESERVA", "${DashModel.valueText(r.fuelLiters)} L no tanque")
+    }
+    val bg = if (alert.red) ZoneRed else ZoneWarn
+    val fg = if (alert.red) Color.White else Color(0xFF0A0B0F)
+    Row(
+        Modifier.fillMaxWidth().height(72.dp).clip(RoundedCornerShape(16.dp)).background(bg).padding(horizontal = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        BasicText(text, style = JancarType.caption.copy(color = fg, letterSpacing = 1.5.sp))
+        JIcon(icon, tint = fg, size = 44.dp)
+        Spacer(Modifier.width(18.dp))
+        BasicText(title, style = JancarType.panelTitle.copy(color = fg, fontWeight = FontWeight.W600, letterSpacing = 1.sp))
+        Spacer(Modifier.weight(1f))
+        BasicText(detail, style = JancarType.body.copy(color = fg))
     }
 }
 

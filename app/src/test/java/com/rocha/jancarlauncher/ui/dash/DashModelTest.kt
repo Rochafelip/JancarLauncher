@@ -156,10 +156,45 @@ class DashModelTest {
         assertNull(r.odoKm)
     }
 
-    @Test fun reading_batteryOnlyFromICar_handbrakeUnavailable() {
-        val r = DashModel.reading(CarState(batteryVoltage = 13.8f, handbrakeOn = false), canDash(rpm = 873))
-        assertEquals(13.8f, r.batteryVoltage!!, 0.001f)
-        // ICar entrega o fio do chicote (GPIO), não validado no Fox: não mostrar como fato.
-        assertNull(r.handbrakeOn)
+    @Test fun reading_handbrakeComesFromICarWire() {
+        // O CAN não expõe o freio de mão; o ICar lê o fio do chicote (GPIO), que respondeu no Fox.
+        assertEquals(true, DashModel.reading(CarState(handbrakeOn = true), canDash(rpm = 873)).handbrakeOn)
+        assertNull(DashModel.reading(CarState(), canDash(rpm = 873)).handbrakeOn)
+    }
+
+    // --- avisos: só aparecem quando algo acontece ---
+
+    private fun reading(speed: Float? = 0f, fuel: Float? = 40f, handbrake: Boolean? = false) =
+        DashModel.Reading(speed = speed, rpm = 900f, fuelLiters = fuel, outsideTempC = 25f, odoKm = 68039, handbrakeOn = handbrake)
+
+    @Test fun alerts_allGood_isEmpty() {
+        assertTrue(DashModel.alerts(reading()).isEmpty())
+    }
+
+    @Test fun alerts_handbrakePulledWhileMoving() {
+        assertEquals(listOf(DashModel.Alert.HandbrakeWhileMoving), DashModel.alerts(reading(speed = 20f, handbrake = true)))
+    }
+
+    @Test fun alerts_handbrakePulledWhenStopped_isNormal() {
+        assertTrue(DashModel.alerts(reading(speed = 0f, handbrake = true)).isEmpty())
+        assertTrue(DashModel.alerts(reading(speed = null, handbrake = true)).isEmpty())
+    }
+
+    @Test fun alerts_lowFuel_atOrBelowReserve() {
+        assertEquals(listOf(DashModel.Alert.LowFuel), DashModel.alerts(reading(fuel = DashModel.LOW_FUEL_LITERS)))
+        assertTrue(DashModel.alerts(reading(fuel = DashModel.LOW_FUEL_LITERS + 1f)).isEmpty())
+    }
+
+    @Test fun alerts_fuelZeroOrUnknown_isNotAWarning() {
+        // 0 L costuma ser o CAN ainda sem leitura logo após a partida, não tanque vazio.
+        assertTrue(DashModel.alerts(reading(fuel = 0f)).isEmpty())
+        assertTrue(DashModel.alerts(reading(fuel = null)).isEmpty())
+    }
+
+    @Test fun alerts_mostSevereFirst() {
+        assertEquals(
+            listOf(DashModel.Alert.HandbrakeWhileMoving, DashModel.Alert.LowFuel),
+            DashModel.alerts(reading(speed = 30f, fuel = 5f, handbrake = true)),
+        )
     }
 }
