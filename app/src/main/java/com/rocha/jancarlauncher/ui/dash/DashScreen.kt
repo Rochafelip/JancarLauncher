@@ -77,9 +77,9 @@ private fun digits(size: Int, weight: FontWeight) = TextStyle(
 )
 
 /**
- * Painel de velocidade/RPM, alimentado pelo serviço ICar da Jancar ([JancarApp.carService]). Mantém a única
- * conexão enquanto está aberto. Toque longo abre a camada de diagnóstico (valores crus do ICar e do CAN bus,
- * para a calibração na central).
+ * Painel de velocidade/RPM, alimentado pelo CAN bus ([JancarApp.canBus]) com o ICar da Jancar
+ * ([JancarApp.carService]) de reserva; a origem de cada valor fica em [DashModel.reading]. Mantém as únicas
+ * conexões enquanto está aberto. Toque longo abre a camada de diagnóstico (valores crus do ICar e do CAN bus).
  */
 @Composable
 fun DashRoute(onBack: () -> Unit) {
@@ -92,7 +92,7 @@ fun DashRoute(onBack: () -> Unit) {
     val state by client.state.collectAsState()
     val connected by client.connected.collectAsState()
 
-    // CAN bus: odômetro total (o ICar não tem) + valores crus do diagnóstico. Uma conexão só, aberta aqui.
+    // CAN bus: fonte principal do Painel + valores crus do diagnóstico. Uma conexão só, aberta aqui.
     val can = app.canBus
     DisposableEffect(can) {
         can.connect()
@@ -118,6 +118,8 @@ fun DashScreen(
 ) {
     var diagnostics by remember { mutableStateOf(false) }
     BackHandler(enabled = diagnostics) { diagnostics = false }
+    val r = DashModel.reading(state, canDash)
+    val anyConnected = canConnected || connected
 
     // Painel é sempre escuro, independente do tema da Home.
     JancarTheme(dark = true) {
@@ -136,13 +138,13 @@ fun DashScreen(
                     BasicText("PAINEL", style = JancarType.caption.copy(color = c.faint))
                     Spacer(Modifier.weight(1f))
                     BasicText(
-                        if (connected) "Serviço do carro conectado" else "Serviço do carro desconectado",
-                        style = JancarType.appTag.copy(color = if (connected) c.muted else ZoneWarn),
+                        if (anyConnected) "Serviço do carro conectado" else "Serviço do carro desconectado",
+                        style = JancarType.appTag.copy(color = if (anyConnected) c.muted else ZoneWarn),
                     )
                 }
 
                 Spacer(Modifier.height(14.dp))
-                RpmBar(state.rpm)
+                RpmBar(r.rpm)
 
                 Row(
                     Modifier.fillMaxWidth().weight(1f),
@@ -150,30 +152,31 @@ fun DashScreen(
                 ) {
                     Column(Modifier.weight(1.4f)) {
                         BasicText(
-                            DashModel.speedText(state.speed),
-                            style = digits(156, FontWeight.W600).copy(color = if (state.speed == null) c.faint else c.fg),
+                            DashModel.speedText(r.speed),
+                            style = digits(156, FontWeight.W600).copy(color = if (r.speed == null) c.faint else c.fg),
                         )
                         BasicText("km/h", style = JancarType.tileLabel.copy(color = c.muted))
                     }
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                         val rpmColor = when {
-                            state.rpm == null -> c.faint
-                            DashModel.shiftLight(state.rpm) -> ZoneRed
-                            state.rpm >= DashModel.RPM_WARN -> ZoneWarn
+                            r.rpm == null -> c.faint
+                            DashModel.shiftLight(r.rpm) -> ZoneRed
+                            r.rpm >= DashModel.RPM_WARN -> ZoneWarn
                             else -> c.fg
                         }
-                        BasicText(DashModel.rpmText(state.rpm), style = digits(84, FontWeight.W500).copy(color = rpmColor))
+                        BasicText(DashModel.rpmText(r.rpm), style = digits(84, FontWeight.W500).copy(color = rpmColor))
                         BasicText("rpm", style = JancarType.tileLabel.copy(color = c.muted))
                     }
                 }
 
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(32.dp), verticalAlignment = Alignment.Bottom) {
-                    InfoItem("BATERIA", DashModel.valueText(state.batteryVoltage), "V")
-                    InfoItem("COMBUSTÍVEL", DashModel.valueText(state.fuelLiters), "L")
-                    InfoItem("AUTONOMIA", DashModel.valueText(state.fuelRangeKm), "km")
-                    InfoItem("ODÔMETRO", DashModel.odoText(canDash?.odo), "km")
+                    InfoItem("BATERIA", DashModel.valueText(r.batteryVoltage), "V")
+                    InfoItem("COMBUSTÍVEL", DashModel.valueText(r.fuelLiters), "L")
+                    // Autonomia saiu: o CAN do Fox (protocolo PQ) não tem esse campo e o ICar vem vazio.
+                    InfoItem("TEMP. EXTERNA", DashModel.valueText(r.outsideTempC), "°C")
+                    InfoItem("ODÔMETRO", DashModel.odoText(r.odoKm), "km")
                     Spacer(Modifier.weight(1f))
-                    HandbrakeBadge(state.handbrakeOn)
+                    HandbrakeBadge(r.handbrakeOn)
                 }
             }
 

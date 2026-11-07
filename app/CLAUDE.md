@@ -93,7 +93,7 @@ Nenhuma — Música, Vídeo, Galeria, Arquivos, Música BT, EQ, Veículo, Scrcpy
 
 - Confirmar se `com.autochips.backcarapp` aceita abertura manual (fora da marcha-ré).
 - Confirmar se dá pra desativar a depuração ADB sem fio pelas Configurações da própria central.
-- **Calibrar `can/CanBusClient.kt` na central real** (ver seção "Integração CAN bus" abaixo) — a ordem dos campos do Parcel ainda não foi validada com dados reais.
+- **Painel em movimento:** CAN validado só com o carro parado (velocidade 0); conferir velocidade e RPM rodando. Bateria e freio de mão ainda sem fonte confiável.
 - **Apagar tela na central:** conferir se brilho 0 da janela apaga o backlight por completo (no emulador não dá pra ver) e se a central respeita o `FLAG_KEEP_SCREEN_ON` (não suspende com a tela apagada; o toque precisa acender).
 
 ## Comando de rollback (guardar antes de testar `set-home-activity`)
@@ -112,22 +112,29 @@ Código pronto e testado em emulador (Android 15, 1024×600 @160 dpi); **nada te
 - Pacotes confirmados na tabela (`launch/AppTargets.kt`): Android Auto, CarPlay (`carplayapp`), Rádio, Música, Música BT, Vídeo, Galeria, Arquivos, EQ, Veículo, Scrcpy, OBD-II. Pelo nome do pacote: VLC, NewPipe, F-Droid, Lightning (a confirmar na central).
 - Fontes em `ui/theme/Type.kt` revisadas (nov/2026) pra distância de leitura automotiva (ISO 15008, ~50–70cm).
 
-## Integração CAN bus (`can/`, em calibração — não confiar nos valores ainda)
+## Integração CAN bus (`can/`, validada com o motor ligado em 2026-11-07)
 
 O ContentProvider `content://com.autoai.canbus.provider` **não tem dados ao vivo** (é só banco de
-protocolos/marcas) — descoberta corrigindo a pendência anterior. Os dados reais vêm de um serviço
-exportado sem permissão, `com.can.activity/com.can.ui.CanPopWind` (action
-`autoai.intent.action.CANBUS_SERVICE`), acessado via `Binder.transact` direto (engenharia reversa
-do bytecode, sem AIDL gerado — ver comentários em `can/CanBusClient.kt`).
+protocolos/marcas). Os dados reais vêm de um serviço exportado sem permissão,
+`com.can.activity/com.can.ui.CanPopWind` (action `autoai.intent.action.CANBUS_SERVICE`), acessado via
+`Binder.transact` direto. O `onBind` devolve um `ICanUI`; o `ICanBus` vem de
+`ICanUI.getCanService("CanBusManager")` (código 1) — sem esse passo o serviço recusa com
+"Binder invocation to an incorrect interface". Interfaces, códigos e ordem dos campos conferidos no
+`com.can.activity` descompilado (APKs extraídos ficam fora do repo, em `../jancar-apks/`).
 
-- `CanBusClient`: instância única em `JancarApp.canBus` (nunca criar uma por tela).
-- `VehicleInfoCard` (CAN) e `CarStateDetails` (ICar): cards de debug, **fora da Home** — abrem
-  num toque longo no **Painel** (camada "Diagnóstico"). Remover depois de calibrar.
-- `JancarCarClient` (serviço `ICar` da Jancar, `JancarApp.carService`): via principal de velocidade/RPM/
-  bateria/combustível; **somente leitura** (nunca códigos `set*`/`send*`/`upgrade*`). Uma única conexão,
-  aberta pelo Painel enquanto ele está na tela — quem só exibe dados usa `CarStateDetails`, nunca um
-  segundo `connect()`/`disconnect()` (derrubaria a conexão de quem abriu).
-- **A ordem dos campos no Parcel foi inferida do bytecode, não validada com o carro ligado.**
-  Calibrar com `adb logcat -s CanBusClient`: se `restante` (bytes sobrando no Parcel) for `0`, a
-  ordem bate; abrir/fechar portas e ligar setas pra conferir se os números mudam como esperado.
+Origem dos dados (lido no código descompilado): CAN do Fox → caixa Raise (`VW-RZ`) → serial →
+`RePQProtocol` (VW plataforma PQ, comando `0x41`) → `CanBusService` → `ICanBusListener`.
+
+- **O Painel usa o CAN como fonte principal** e o ICar de reserva (`DashModel.reading`). Testado na
+  central: 0 km/h, 870 rpm, 49,0 L, 34,5 °C, 68.039 km — bate com a tela "Detalhes" original.
+- **O `ICar` vem vazio nesta central** (bind ok, mas tudo -1/255: a MCU não publica dados do carro).
+  `JancarCarClient` (`JancarApp.carService`) fica só de reserva e diagnóstico; **somente leitura**
+  (nunca códigos `set*`/`send*`/`upgrade*`).
+- Particularidades do CAN: temperatura externa = `ambientTemp − 40`; velocidade fica
+  `Int.MIN_VALUE` enquanto nunca saiu de 0 (`CanPopWind.isSpeedValid`), tratada como 0 se o RPM chega;
+  `Int.MIN_VALUE` = sem dado; o `DashBoard` **não tem bateria** e o RePQ não preenche autonomia.
+- Freio de mão: o do ICar vem do fio do chicote (GPIO), não validado — o Painel mostra "FREIO --".
+- `CanBusClient` (`JancarApp.canBus`) e `JancarCarClient`: instâncias únicas, conexões abertas pelo
+  Painel; quem só exibe dados usa `CarStateDetails`/`VehicleInfoDetails`, nunca um segundo
+  `connect()`/`disconnect()` (derrubaria a conexão de quem abriu). Diagnóstico: toque longo no Painel.
 - Usa `kotlinx-coroutines-core` como dependência principal (antes só existia em `testImplementation`).

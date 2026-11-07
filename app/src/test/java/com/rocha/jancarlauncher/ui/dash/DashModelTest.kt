@@ -1,7 +1,10 @@
 package com.rocha.jancarlauncher.ui.dash
 
+import com.rocha.jancarlauncher.can.CarState
+import com.rocha.jancarlauncher.can.DashBoard
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -100,5 +103,63 @@ class DashModelTest {
     @Test fun valueText_oneDecimalWithComma_orSingleDash() {
         assertEquals("12,4", DashModel.valueText(12.38f))
         assertEquals("—", DashModel.valueText(null))
+    }
+
+    // --- origem dos dados: CAN primeiro, ICar de reserva ---
+
+    private val noInt = Int.MIN_VALUE
+    private val noFloat = Int.MIN_VALUE.toFloat()
+
+    /** DashBoard como o CAN do Fox entrega: só odo/rpm/velocidade/combustível/temperatura preenchidos. */
+    private fun canDash(odo: Int = noInt, rpm: Int = noInt, speed: Int = noInt, fuel: Float = noFloat, ambient: Float = noFloat) =
+        DashBoard(
+            gearShiftPosition = 0, odo = odo, cruisingRange = noInt, rotationRate = rpm, speed = speed,
+            runningTime = noInt, fuelTankage = noInt, fuel = fuel, fuelPercentage = noFloat, avgFuelCont = noFloat,
+            instFuelCont = noFloat, coolantTemp = noFloat, engineOilTemp = noFloat, inletTemp = noFloat,
+            ambientTemp = ambient, accPedal = noInt, brakePedal = noInt, throttlePos = noInt,
+        )
+
+    @Test fun reading_usesCanValues_measuredOnTheFox() {
+        // Leitura real na central (2026-11-07, motor em marcha lenta, tela original: 34,5 °C).
+        val r = DashModel.reading(CarState(), canDash(odo = 68039, rpm = 873, fuel = 50f, ambient = 74.5f))
+        assertEquals(873f, r.rpm!!, 0.001f)
+        assertEquals(50f, r.fuelLiters!!, 0.001f)
+        assertEquals(34.5f, r.outsideTempC!!, 0.001f)
+        assertEquals(68039, r.odoKm)
+    }
+
+    @Test fun reading_canSpeedMissingWithLiveRpm_isZero() {
+        // O app CAN descarta a velocidade 0 enquanto ela nunca mudou (CanPopWind.isSpeedValid).
+        assertEquals(0f, DashModel.reading(CarState(), canDash(rpm = 873)).speed!!, 0.001f)
+    }
+
+    @Test fun reading_canSpeed_whenPresent() {
+        assertEquals(62f, DashModel.reading(CarState(), canDash(rpm = 2500, speed = 62)).speed!!, 0.001f)
+    }
+
+    @Test fun reading_fallsBackToICar_whenCanHasNoData() {
+        val car = CarState(speed = 40f, rpm = 2000f, fuelLiters = 30f, outsideTempRaw = (120 shl 8))
+        val r = DashModel.reading(car, null)
+        assertEquals(40f, r.speed!!, 0.001f)
+        assertEquals(2000f, r.rpm!!, 0.001f)
+        assertEquals(30f, r.fuelLiters!!, 0.001f)
+        assertEquals(20f, r.outsideTempC!!, 0.001f)
+        assertNull(r.odoKm)
+    }
+
+    @Test fun reading_missingEverywhere_isUnknown() {
+        val r = DashModel.reading(CarState(), canDash())
+        assertNull(r.speed)
+        assertNull(r.rpm)
+        assertNull(r.fuelLiters)
+        assertNull(r.outsideTempC)
+        assertNull(r.odoKm)
+    }
+
+    @Test fun reading_batteryOnlyFromICar_handbrakeUnavailable() {
+        val r = DashModel.reading(CarState(batteryVoltage = 13.8f, handbrakeOn = false), canDash(rpm = 873))
+        assertEquals(13.8f, r.batteryVoltage!!, 0.001f)
+        // ICar entrega o fio do chicote (GPIO), não validado no Fox: não mostrar como fato.
+        assertNull(r.handbrakeOn)
     }
 }
