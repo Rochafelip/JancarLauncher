@@ -65,6 +65,9 @@ fun CarStateDetails(s: CarState, connected: Boolean, modifier: Modifier = Modifi
                 "   (mask=${s.doorMask})",
             style = style,
         )
-        BasicText("Luzes mask=${s.lightMask}   Temp externa (raw)=${s.outsideTempRaw}", style = style)
+        BasicText(
+            "Luzes mask=${s.lightMask}   Temp externa: ${f(s.outsideTempC)} °C (raw=${s.outsideTempRaw})",
+            style = style,
+        )
     }
 }

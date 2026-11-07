@@ -33,13 +33,16 @@ data class CarState(
     val batteryVoltage: Float? = null,   // volts
     val fuelLiters: Float? = null,
     val fuelRangeKm: Float? = null,      // unidade a confirmar
-    val outsideTempRaw: Int? = null,     // valor cru (255 = desconhecido)
+    val outsideTempRaw: Int? = null,     // valor cru (255 = desconhecido); em °C: [outsideTempC]
     val handbrakeOn: Boolean? = null,    // HOLD=1
     val accOn: Boolean? = null,
     val doorMask: Int? = null,           // bit por indice de porta (a confirmar)
     val lightMask: Int? = null,          // bit por indice de luz (a confirmar)
     val powerStatus: Int? = null,        // POWER_ON=1, POWER_OFF=2, ...
 ) {
+    /** Temperatura externa em °C, decodificada de [outsideTempRaw] (ver [decodeOutsideTempC]). */
+    val outsideTempC: Float? get() = decodeOutsideTempC(outsideTempRaw)
+
     /** FRONT_LEFT=0, FRONT_RIGHT=1, REAR_LEFT=2, REAR_RIGHT=3, HOOD=4, FUEL_CAP=5, TRUNK=6 */
     fun isDoorOpen(index: Int): Boolean? = doorMask?.let { (it shr index) and 1 == 1 }
 
@@ -209,7 +212,7 @@ class JancarCarClient(context: Context) {
                 Log.d(
                     TAG,
                     "state=${_state.value} raw[speed=$speed rpm=$rpm batt=$batt fuel=$fuel range=$range " +
-                        "hb=$hb acc=$acc doors=$doors lights=$lights temp=$temp power=$power]",
+                        "hb=$hb acc=$acc doors=$doors lights=$lights temp=$temp(${_state.value.outsideTempC}°C) power=$power]",
                 )
             }
         }.onFailure { Log.w(TAG, "refreshSnapshot falhou", it) }
