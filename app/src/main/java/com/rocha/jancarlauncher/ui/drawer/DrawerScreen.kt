@@ -61,7 +61,7 @@ fun DrawerScreen(
                     BasicText(DrawerCatalog.installedLabel(installed), style = JancarType.body.copy(color = c.muted), modifier = Modifier.padding(top = 2.dp))
                 }
             }
-            JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme)
+            JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro", onToggleTheme)
         }
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
             DrawerCatalog.entries.chunked(6).forEach { row ->

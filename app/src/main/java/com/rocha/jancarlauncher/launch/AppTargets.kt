@@ -66,11 +66,8 @@ object AppTargets {
         "com.github.pires.obd.reader", "com.github.pires.obd.reader.activity.MainActivity",
     )
 
-    // Câmera de ré manual: aberta pelo pacote (activity desconhecida; não confirmado que aceita abertura manual).
-    val BACK_CAMERA = AppTarget("back_camera", "Câmera de ré", Kind.System, "com.autochips.backcarapp", null)
-
     val all: List<AppTarget> = listOf(
-        ANDROID_AUTO, CARPLAY, RADIO, MUSIC, BT_MUSIC, VIDEO, GALLERY, FILES, EQ, VEHICLE, SCRCPY, OBD, BACK_CAMERA,
+        ANDROID_AUTO, CARPLAY, RADIO, MUSIC, BT_MUSIC, VIDEO, GALLERY, FILES, EQ, VEHICLE, SCRCPY, OBD,
     )
 
     fun byId(id: String): AppTarget? = all.firstOrNull { it.id == id }

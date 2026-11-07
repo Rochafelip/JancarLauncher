@@ -117,7 +117,7 @@ fun JIconButton(
     }
 }
 
-/** Chip em pílula (Wi-Fi, Bluetooth, GPS, Câmera de ré, Ajustes), com altura mínima [Dimens.ChipHeight]. */
+/** Chip em pílula (Wi-Fi, Bluetooth, GPS, Ajustes), com altura mínima [Dimens.ChipHeight]. */
 @Composable
 fun QuickChip(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val colors = JTheme.colors

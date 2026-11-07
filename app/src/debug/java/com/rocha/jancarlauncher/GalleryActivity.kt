@@ -49,7 +49,6 @@ class GalleryActivity : ComponentActivity() {
             "Rádio" to { tryLaunch(AppTargets.RADIO) { controller.open(AppTargets.RADIO) } },
             "Música" to { tryLaunch(AppTargets.MUSIC) { controller.open(AppTargets.MUSIC) } },
             "Vídeo" to { tryLaunch(AppTargets.VIDEO) { controller.open(AppTargets.VIDEO) } },
-            "Câmera de ré" to { tryLaunch(AppTargets.BACK_CAMERA) { controller.open(AppTargets.BACK_CAMERA) } },
             "Ajustes (existe)" to { tryLaunch(settingsApp) { controller.open(settingsApp) } },
             // Só debug: testa o reinício automático após crash (Fase 6).
             "Forçar crash" to { throw IllegalStateException("crash de teste (galeria debug)") },
@@ -86,8 +85,8 @@ private fun Panel(dark: Boolean, launchTests: List<Pair<String, () -> Unit>>, mo
             BasicText("18:37", style = JancarType.clockLarge.copy(color = c.fg))
             BasicText("Quinta-feira, 5 de novembro", style = JancarType.date.copy(color = c.muted))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                JIconButton(if (dark) JIcons.Sun else JIcons.Moon, "tema", {})
-                JIconButton(JIcons.Sliders, "brilho", {})
+                JIconButton(JIcons.ThemeToggle, "tema", {})
+                JIconButton(JIcons.Brightness, "brilho", {})
                 JIconButton(JIcons.Grid, "gaveta", {})
                 JIconButton(JIcons.Back, "voltar", {})
             }
@@ -97,7 +96,6 @@ private fun Panel(dark: Boolean, launchTests: List<Pair<String, () -> Unit>>, mo
                 QuickChip(JIcons.Gps, "GPS", {})
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                QuickChip(JIcons.Camera, "Câmera de ré", {})
                 QuickChip(JIcons.Settings, "Ajustes", {})
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

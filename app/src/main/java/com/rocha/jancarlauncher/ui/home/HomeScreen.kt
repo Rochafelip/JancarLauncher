@@ -88,8 +88,8 @@ fun HomeScreen(
                         BasicText("MULTIMÍDIA", style = JancarType.caption.copy(color = c.faint))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
-                        JIconButton(JIcons.Sliders, "Ajustar brilho", onToggleBrightness, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
+                        JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro", onToggleTheme, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
+                        JIconButton(JIcons.Brightness, "Ajustar brilho", onToggleBrightness, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
                         JIconButton(JIcons.Grid, "Ver todos os apps", onOpenDrawer, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
                         JIconButton(JIcons.Gauge, "Painel de velocidade", onOpenDash, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
                         JIconButton(JIcons.Power, "Apagar tela", onScreenOff, size = Dimens.TopButton, iconSize = Dimens.TopButtonIcon)
@@ -114,7 +114,6 @@ fun HomeScreen(
                 QuickChip(JIcons.Wifi, "Wi-Fi", { actions.openSettings(SettingsActions.WIFI) })
                 QuickChip(JIcons.Bluetooth, "Bluetooth", { actions.openSettings(SettingsActions.BLUETOOTH) })
                 QuickChip(JIcons.Gps, "GPS", { actions.openSettings(SettingsActions.LOCATION) })
-                QuickChip(JIcons.Camera, "Câmera de ré", { actions.open(AppTargets.BACK_CAMERA) })
                 QuickChip(JIcons.Settings, "Ajustes", { actions.openSettings(SettingsActions.MAIN) })
             }
 

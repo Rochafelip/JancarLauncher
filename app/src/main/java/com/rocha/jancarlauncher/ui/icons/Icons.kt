@@ -53,15 +53,16 @@ private fun icon(name: String, stroke: Float = 1.6f, block: IconScope.() -> Unit
 }
 
 object JIcons {
-    val Sun = icon("Sun") {
-        circle(12f, 12f, 4.2f)
-        line("M12 3v2.2M12 18.8V21M21 12h-2.2M5.2 12H3M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6M18.4 18.4l-1.6-1.6M7.2 7.2L5.6 5.6")
+    /** Alternar tema: metade sol (contorno + raios, à esquerda) e metade lua crescente (cheia, à direita). */
+    val ThemeToggle = icon("ThemeToggle", 1.8f) {
+        line("M12 6a6 6 0 0 0 0 12")
+        line("M12 3.6V1.6M12 20.4v2M3.6 12h-2M6.1 6.1L4.7 4.7M6.1 17.9l-1.4 1.4")
+        fill("M12 6a6 6 0 0 1 0 12a9 9 0 0 0 0-12z")
     }
-    val Moon = icon("Moon") { line("M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z") }
-    val Sliders = icon("Sliders") {
-        line("M4 7h10"); circle(17f, 7f, 2f)
-        line("M4 12h4"); circle(11f, 12f, 2f); line("M15 12h5")
-        line("M4 17h10"); circle(17f, 17f, 2f)
+    /** Brilho: sol inteiro com 8 raios (o de tema é meio sol / meio lua, não confundem). */
+    val Brightness = icon("Brightness", 1.7f) {
+        circle(12f, 12f, 4f)
+        line("M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7")
     }
     val Grid = icon("Grid") {
         for (cy in listOf(6f, 12f, 18f)) for (cx in listOf(6f, 12f, 18f)) dot(cx, cy, 1.6f)
@@ -85,10 +86,6 @@ object JIcons {
     val Bluetooth = icon("Bluetooth", 1.7f) { line("M7 7l10 10-5 4V3l5 4L7 17") }
     val Gps = icon("Gps", 1.7f) {
         line("M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12z"); circle(12f, 9f, 2.3f)
-    }
-    val Camera = icon("Camera", 1.7f) {
-        line("M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z")
-        circle(12f, 13f, 3.2f)
     }
     val Settings = icon("Settings") {
         circle(12f, 12f, 3f)
@@ -139,6 +136,23 @@ object JIcons {
         line("M3 7h4l9 10h5"); line("M16 7h5v5"); line("M21 7l-5 5"); line("M3 17h4l3.5-4")
     }
     val NoteMusic = icon("NoteMusic") { circle(7f, 18f, 2.6f); line("M9.6 18V5.5L19.6 3v11.3"); circle(17f, 16f, 2.6f) }
+
+    // Painel
+    val Fuel = icon("Fuel", 1.7f) {
+        rect(4f, 3f, 10f, 18f, 1.5f); line("M4 10h10")
+        line("M14 8h2a2 2 0 0 1 2 2v6a1.5 1.5 0 0 0 3 0V9l-3-3")
+    }
+    val Thermometer = icon("Thermometer", 1.7f) {
+        line("M14 14.76V4.5a2 2 0 0 0-4 0v10.26a4 4 0 1 0 4 0z"); line("M12 9v8")
+    }
+    val Road = icon("Road", 1.7f) { line("M5 21L9 3"); line("M19 21L15 3"); line("M12 5v2.5M12 11v2.5M12 17v2.5") }
+    val Warning = icon("Warning", 1.8f) {
+        line("M12 3.5L2.5 20h19L12 3.5z"); line("M12 9.5v5"); dot(12f, 17.2f, 1.1f)
+    }
+    val Handbrake = icon("Handbrake", 1.8f) {
+        circle(12f, 12f, 6.5f); line("M12 8.5v4.2"); dot(12f, 15.4f, 1f)
+        line("M4.6 6.6a9 9 0 0 0 0 10.8"); line("M19.4 6.6a9 9 0 0 1 0 10.8")
+    }
 
     // Indicador de ADB sem fio
     val Usb = icon("Usb", 1.7f) {

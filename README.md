@@ -52,7 +52,7 @@ Nenhuma operação lê ou grava fora da sandbox do próprio app, nem depende de 
 <td width="33%">
 
 **Home**
-<br>Relógio, tema claro/escuro, brilho, chips de atalho (Wi-Fi, Bluetooth, GPS, câmera de ré, Ajustes) e 4 blocos principais: **Android Auto/CarPlay**, **Música**, **Rádio**, **Vídeo**.
+<br>Relógio, tema claro/escuro, brilho, chips de atalho (Wi-Fi, Bluetooth, GPS, Ajustes) e 4 blocos principais: **Android Auto/CarPlay**, **Música**, **Rádio**, **Vídeo**.
 
 <img src="docs/screenshots/home.jpg" alt="Tela Home do JancarLauncher" width="100%">
 

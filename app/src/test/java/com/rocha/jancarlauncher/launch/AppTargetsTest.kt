@@ -39,11 +39,6 @@ class AppTargetsTest {
         assertEquals("com.jancar.video.ui.activity.VideoListActivity", AppTargets.VIDEO.activityClass)
     }
 
-    @Test fun backCamera_isLaunchedByPackageOnly() {
-        assertEquals("com.autochips.backcarapp", AppTargets.BACK_CAMERA.pkg)
-        assertNull(AppTargets.BACK_CAMERA.activityClass)
-    }
-
     @Test fun ids_areUnique_andLookupWorks() {
         assertEquals(AppTargets.all.size, AppTargets.all.map { it.id }.toSet().size)
         assertNotNull(AppTargets.byId("radio"))
