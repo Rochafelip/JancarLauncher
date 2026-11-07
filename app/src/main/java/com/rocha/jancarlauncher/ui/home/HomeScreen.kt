@@ -22,8 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
-import com.rocha.jancarlauncher.can.CarStateCard
-import com.rocha.jancarlauncher.can.VehicleInfoCard
 import com.rocha.jancarlauncher.launch.AppTargets
 import com.rocha.jancarlauncher.launch.SettingsActions
 import com.rocha.jancarlauncher.media.NowPlayingState
@@ -57,6 +55,7 @@ fun HomeScreen(
     adbStatus: AdbStatus = AdbStatus.Disabled,
     onOpenAdbSettings: () -> Unit = {},
     onScreenOff: () -> Unit = {},
+    onOpenDash: () -> Unit = {},
 ) {
     val c = JTheme.colors
     Box(Modifier.fillMaxSize().background(c.bg)) {
@@ -91,6 +90,7 @@ fun HomeScreen(
                         JIconButton(if (isDark) JIcons.Sun else JIcons.Moon, "Alternar tema claro/escuro", onToggleTheme)
                         JIconButton(JIcons.Sliders, "Ajustar brilho", onToggleBrightness)
                         JIconButton(JIcons.Grid, "Ver todos os apps", onOpenDrawer)
+                        JIconButton(JIcons.Gauge, "Painel de velocidade", onOpenDash)
                         JIconButton(JIcons.Power, "Apagar tela", onScreenOff)
                     }
                 }
@@ -105,10 +105,7 @@ fun HomeScreen(
                 modifier = Modifier.padding(top = 24.dp),
             )
 
-            // TEMP (calibração do CAN bus): valores crus pra conferir contra o carro real.
-            // Remover (ou esconder atrás de um gesto de debug) depois de validar can/CanBusClient.kt.
-            CarStateCard()
-            VehicleInfoCard()
+            // Valores crus de calibração (ICar e CAN bus) ficam no Painel: toque longo → diagnóstico.
 
             Spacer(Modifier.weight(1f))
 

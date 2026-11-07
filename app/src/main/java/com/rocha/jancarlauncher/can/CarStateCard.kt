@@ -23,8 +23,6 @@ import com.rocha.jancarlauncher.ui.theme.JancarType
 fun CarStateCard(modifier: Modifier = Modifier) {
     val app = LocalContext.current.applicationContext as JancarApp
     val client = app.carService
-    val colors = JTheme.colors
-    val style = JancarType.body.copy(color = colors.fg)
 
     DisposableEffect(client) {
         client.connect()
@@ -33,6 +31,17 @@ fun CarStateCard(modifier: Modifier = Modifier) {
 
     val connected by client.connected.collectAsState()
     val s by client.state.collectAsState()
+    CarStateDetails(s, connected, modifier)
+}
+
+/**
+ * Conteúdo do card sem gerenciar conexão: para quem já mantém o [JancarCarClient] conectado (ex.: o Painel).
+ * Um segundo `connect()`/`disconnect()` no cliente compartilhado derrubaria a conexão de quem a abriu.
+ */
+@Composable
+fun CarStateDetails(s: CarState, connected: Boolean, modifier: Modifier = Modifier) {
+    val colors = JTheme.colors
+    val style = JancarType.body.copy(color = colors.fg)
 
     fun f(v: Float?) = v?.let { "%.1f".format(it) } ?: "--"
 

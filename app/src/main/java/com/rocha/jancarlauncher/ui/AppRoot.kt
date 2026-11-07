@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -27,6 +28,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.rocha.jancarlauncher.media.rememberNowPlaying
 import com.rocha.jancarlauncher.power.ScreenOffPolicy
+import com.rocha.jancarlauncher.ui.dash.DashRoute
 import com.rocha.jancarlauncher.ui.screenoff.ScreenOffScreen
 import com.rocha.jancarlauncher.settings.NightModeController
 import com.rocha.jancarlauncher.settings.SettingsStore
@@ -37,6 +39,7 @@ import com.rocha.jancarlauncher.ui.home.BrightnessController
 import com.rocha.jancarlauncher.ui.home.HomeScreen
 import com.rocha.jancarlauncher.ui.home.rememberClock
 import com.rocha.jancarlauncher.ui.nav.Screen
+import com.rocha.jancarlauncher.ui.nav.ScreenRestore
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
 import com.rocha.jancarlauncher.ui.welcome.WelcomeScreen
 import kotlinx.coroutines.flow.Flow
@@ -54,7 +57,8 @@ fun AppRoot(
     forceWelcome: Boolean,
 ) {
     val dark by settings.dark.collectAsState(initial = null)
-    var screen by rememberSaveable { mutableStateOf<Screen?>(null) }
+    // Ao recriar a activity, nunca volta direto no Painel/Gaveta/tela apagada (ver ScreenRestore).
+    var screen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen?>(null) }
     var brightnessOpen by rememberSaveable { mutableStateOf(false) }
     var brightnessPercent by remember { mutableIntStateOf(brightness.currentSystemPercent()) }
     val scope = rememberCoroutineScope()
@@ -142,7 +146,7 @@ fun AppRoot(
         when {
             brightnessOpen -> brightnessOpen = false
             screen == Screen.Off -> screen = ScreenOffPolicy.afterWake(Screen.Off)
-            screen == Screen.Drawer -> screen = Screen.Home
+            screen == Screen.Drawer || screen == Screen.Dash -> screen = Screen.Home
             // Home/Boas-vindas: a tela inicial não "sai" com o botão voltar.
         }
     }
@@ -187,7 +191,9 @@ fun AppRoot(
                 adbStatus = adbStatus,
                 onOpenAdbSettings = { actions.openSettings(SettingsActions.DEVELOPER_OPTIONS) },
                 onScreenOff = { brightnessOpen = false; screen = Screen.Off },
+                onOpenDash = { brightnessOpen = false; screen = Screen.Dash },
             )
+            Screen.Dash -> DashRoute(onBack = { screen = Screen.Home })
             Screen.Off -> ScreenOffScreen(onWake = { screen = ScreenOffPolicy.afterWake(Screen.Off) })
             Screen.Drawer -> DrawerScreen(
                 isDark = isDark,
@@ -200,3 +206,8 @@ fun AppRoot(
         }
     }
 }
+
+private val ScreenSaver = Saver<Screen?, String>(
+    save = { ScreenRestore.save(it) },
+    restore = { ScreenRestore.restore(it) },
+)

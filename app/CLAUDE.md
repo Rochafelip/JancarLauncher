@@ -29,7 +29,7 @@ Referências vivas (abrir antes de codar):
 1. **Boot/Boas-vindas** — aparece ao ligar o carro: foto do carro do usuário (tratada: desfoque + escurecida + duotone azul-acinzentado) como fundo, relógio centralizado, "toque para continuar". Leva pra tela Principal.
 2. **Principal (Home)** — launcher substituto, abre sozinho no boot:
    - Relógio grande + data, canto superior esquerdo
-   - Ícones no canto superior direito: alternar tema claro/escuro, ajustar brilho (abre painel com slider), abrir gaveta de apps, **apagar tela** (ícone de power)
+   - Ícones no canto superior direito: alternar tema claro/escuro, ajustar brilho (abre painel com slider), abrir gaveta de apps, **Painel** (velocímetro), **apagar tela** (ícone de power)
    - ~~Card "Tocando agora"~~ — **removido** (decisão do usuário: sem acesso a notificações, o mais limpo possível)
    - Fileira de chips minimalistas: Wi-Fi, Bluetooth, GPS, Câmera de ré (manual), Ajustes — cada um abre a tela/app correspondente direto
    - 4 blocos grandes (ação principal): **Auto** (Android Auto/CarPlay), **Música**, **Rádio**, **Vídeo**
@@ -81,6 +81,8 @@ Todo `startActivity` dos botões precisa de `try { } catch (e: ActivityNotFoundE
 - **Música e Vídeo**: activity **fixa** em `AppTargets` (sem descoberta automática); enquanto não preenchidas mostram o aviso "não configurado".
 - Botão de **Câmera de ré manual** — abre `com.autochips.backcarapp` sob demanda, fora da marcha-ré (não confirmado se o app aceita isso, ver Pendências).
 - **Apagar tela** (decisão do usuário, 2026-11-07): botão na Home que deixa a tela preta e **acorda no toque** direto na Boas-vindas, **sem senha**. Sem root/Device Admin não dá pra desligar o display de verdade (o toque não acenderia), então é tela preta + brilho da janela em 0 + `FLAG_KEEP_SCREEN_ON` + barras escondidas (`power/ScreenOffPolicy`, `ui/screenoff/ScreenOffScreen`). O som continua; volume/mídia passam direto sem acordar; outras teclas acordam; só o brilho da **janela** muda (nunca o do sistema); modo noturno com a tela apagada só grava e aplica ao acordar; outro app por cima (ex.: câmera de ré) → ao voltar, Boas-vindas. A flag de manter acesa vai na janela (`addFlags`/`clearFlags`), **não** em `view.keepScreenOn` — esta ficava presa quando desfeita com a activity parada.
+- **Painel** (pedido do usuário, 2026-11-07: "velocidade e RPM grandes, estilo FuelTech"; resto decidido por mim): tela `Screen.Dash` (`ui/dash`), sempre escura — barra de RPM segmentada (35 × 200 rpm; azul-aço → âmbar ≥ 4500 → vermelho ≥ 5500, pisca ≥ 5800 = troca), velocidade gigante, RPM, e bateria/combustível/autonomia/freio de mão embaixo. Faixas em `DashModel` (pensadas pro Fox, ajustar lá). Valor desconhecido = "—" em cinza. Inspiração de estilo apenas — sem logo/identidade da FuelTech.
+- **Restauração de tela** (`ui/nav/ScreenRestore`): ao recriar a activity, nunca volta no Painel/Gaveta (→ Home) nem na tela apagada (→ Boas-vindas). Motivo: no emulador o app abriu sozinho no Painel ~4 vezes em ~50 aberturas logo após reinstalar/forçar fechamento; **causa não confirmada** (o roteiro HOME + `am kill` não reproduz nem sem a regra). Se voltar a acontecer na central, investigar de novo.
 - Toque mínimo de **44–48px** em todo elemento interativo (ajustado numa revisão de UX; os chips e os controles do player estavam menores que isso na primeira versão). Os **chips de atalho** da Home têm **60dp** de altura (`Dimens.ChipHeight`, alvo 56–64dp pra uso dirigindo; verificado no emulador 1024×600).
 
 ## Pendências bloqueantes
@@ -119,8 +121,12 @@ exportado sem permissão, `com.can.activity/com.can.ui.CanPopWind` (action
 do bytecode, sem AIDL gerado — ver comentários em `can/CanBusClient.kt`).
 
 - `CanBusClient`: instância única em `JancarApp.canBus` (nunca criar uma por tela).
-- `VehicleInfoCard`: card de debug, hoje chamado temporariamente em `HomeScreen.kt` — **remover
-  depois de calibrar**, ou mover pra trás de um gesto de debug.
+- `VehicleInfoCard` (CAN) e `CarStateDetails` (ICar): cards de debug, **fora da Home** — abrem
+  num toque longo no **Painel** (camada "Diagnóstico"). Remover depois de calibrar.
+- `JancarCarClient` (serviço `ICar` da Jancar, `JancarApp.carService`): via principal de velocidade/RPM/
+  bateria/combustível; **somente leitura** (nunca códigos `set*`/`send*`/`upgrade*`). Uma única conexão,
+  aberta pelo Painel enquanto ele está na tela — quem só exibe dados usa `CarStateDetails`, nunca um
+  segundo `connect()`/`disconnect()` (derrubaria a conexão de quem abriu).
 - **A ordem dos campos no Parcel foi inferida do bytecode, não validada com o carro ligado.**
   Calibrar com `adb logcat -s CanBusClient`: se `restante` (bytes sobrando no Parcel) for `0`, a
   ordem bate; abrir/fechar portas e ligar setas pra conferir se os números mudam como esperado.

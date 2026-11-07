@@ -66,6 +66,13 @@ object JIcons {
     val Grid = icon("Grid") {
         for (cy in listOf(6f, 12f, 18f)) for (cx in listOf(6f, 12f, 18f)) dot(cx, cy, 1.6f)
     }
+    /** Botão "Painel": velocímetro (arco com marcas + ponteiro). */
+    val Gauge = icon("Gauge", 1.7f) {
+        line("M3.5 17a8.5 8.5 0 1 1 17 0")
+        line("M6 9.8l1.3 1.1M12 5.5v1.7M18 9.8l-1.3 1.1")
+        line("M12 17l3.5-5")
+        dot(12f, 17f, 1.4f)
+    }
     /** Botão "Apagar tela": símbolo de energia (arco aberto em cima + traço). */
     val Power = icon("Power", 1.7f) { line("M12 3.5v7.5"); line("M7.4 6.6a7.5 7.5 0 1 0 9.2 0") }
     val Back = icon("Back", 1.8f) { line("M15 6l-6 6 6 6") }
