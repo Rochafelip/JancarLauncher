@@ -6,6 +6,7 @@ import android.os.SystemClock
 import androidx.datastore.preferences.preferencesDataStore
 import com.rocha.jancarlauncher.boot.CrashRestarter
 import com.rocha.jancarlauncher.can.CanBusClient
+import com.rocha.jancarlauncher.can.JancarCarClient
 import com.rocha.jancarlauncher.launch.LaunchController
 import com.rocha.jancarlauncher.power.ScreenStateTracker
 import com.rocha.jancarlauncher.power.SharedPrefsScreenOffStore
@@ -24,6 +25,9 @@ class JancarApp : Application() {
 
     // Instância única por processo (fase de calibração do CAN bus, ver can/VehicleInfoCard.kt).
     val canBus: CanBusClient by lazy { CanBusClient(this) }
+
+    // Via principal (servico ICar da Jancar, somente leitura); instancia unica, ver can/CarStateCard.kt.
+    val carService: JancarCarClient by lazy { JancarCarClient(this) }
 
     override fun onCreate() {
         super.onCreate()
