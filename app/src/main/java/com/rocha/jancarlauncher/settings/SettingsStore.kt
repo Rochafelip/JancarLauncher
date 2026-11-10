@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -17,7 +18,12 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     private val preNightDarkKey = booleanPreferencesKey("pre_night_dark")
     private val preNightBrightnessKey = intPreferencesKey("pre_night_brightness")
 
+    private val driveModeKey = stringPreferencesKey("drive_mode")
+
     val dark: Flow<Boolean> = ds.data.map { it[darkKey] ?: true }
+    /** Modo do aviso de troca do Painel (nome do `DashModel.DriveMode`); null = nunca escolheu. */
+    val driveMode: Flow<String?> = ds.data.map { it[driveModeKey] }
+    suspend fun setDriveMode(name: String) { ds.edit { it[driveModeKey] = name } }
     /** Brilho (%) escolhido pelo usuário no launcher; null = nunca escolheu (não mexer no brilho da central). */
     val userBrightness: Flow<Int?> = ds.data.map { it[userBrightnessKey] }
     val lastBootCount: Flow<Int?> = ds.data.map { it[bootCountKey] }

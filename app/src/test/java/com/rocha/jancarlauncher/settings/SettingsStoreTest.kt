@@ -42,6 +42,12 @@ class SettingsStoreTest {
 
     @After fun tearDown() { scope.cancel() }
 
+    @Test fun driveMode_defaultsToNull_andPersists() = runBlocking {
+        assertNull(store.driveMode.first())
+        store.setDriveMode("Sport")
+        assertEquals("Sport", store.driveMode.first())
+    }
+
     @Test fun darkTheme_defaultsToTrue() = runBlocking {
         assertTrue(store.dark.first())
     }

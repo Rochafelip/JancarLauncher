@@ -19,3 +19,6 @@ app/*.docx
 /.idea/
 *.apk
 docs/releases/
+
+# Rascunhos do brainstorm (servidor de mockups)
+.superpowers/

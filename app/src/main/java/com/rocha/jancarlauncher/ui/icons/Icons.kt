@@ -146,6 +146,17 @@ object JIcons {
         line("M14 14.76V4.5a2 2 0 0 0-4 0v10.26a4 4 0 1 0 4 0z"); line("M12 9v8")
     }
     val Road = icon("Road", 1.7f) { line("M5 21L9 3"); line("M19 21L15 3"); line("M12 5v2.5M12 11v2.5M12 17v2.5") }
+    /** Farol baixo (símbolo do painel do carro): lente + fachos inclinados para baixo. */
+    val Headlight = icon("Headlight", 1.7f) {
+        line("M13.5 5c4.4 0 7.5 3.1 7.5 7s-3.1 7-7.5 7c-1 0-1.5-3.1-1.5-7s.5-7 1.5-7z")
+        line("M3 8.5l6 1.5M3 12.5l6 1.5M3 16.5l6 1.5")
+    }
+    val TurnLeft = icon("TurnLeft") { fill("M2 12l8-7.5V9h12v6H10v4.5z") }
+    val TurnRight = icon("TurnRight") { fill("M22 12l-8-7.5V9H2v6h12v4.5z") }
+    /** Porta aberta (vista de lado), usada no aviso de porta aberta andando. */
+    val DoorOpen = icon("DoorOpen", 1.7f) {
+        line("M4 20V8l6-5h9v17H4z"); line("M4 11h15"); line("M15 14h2")
+    }
 
     // Indicador de ADB sem fio
     val Usb = icon("Usb", 1.7f) {

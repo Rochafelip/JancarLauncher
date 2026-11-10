@@ -6,5 +6,11 @@
             android:name=".GalleryActivity"
             android:exported="true"
             android:screenOrientation="landscape" />
+        <!-- Prévia do Painel com dados falsos: só no build debug (ver DashPreviewActivity). -->
+        <activity
+            android:name=".DashPreviewActivity"
+            android:exported="true"
+            android:taskAffinity="com.rocha.jancarlauncher.dashpreview"
+            android:screenOrientation="landscape" />
     </application>
 </manifest>
