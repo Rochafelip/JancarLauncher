@@ -16,23 +16,17 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LifecycleEventEffect
 import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.ui.components.JIcon
 import com.rocha.jancarlauncher.ui.components.JIconButton
@@ -47,17 +41,12 @@ import com.rocha.jancarlauncher.ui.dash.shiftBlink
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.JTheme
 import com.rocha.jancarlauncher.ui.theme.JancarType
-import com.rocha.jancarlauncher.ui.theme.LightColors
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-
-/** Modelo do carro dentro do APK. Trocar o arquivo (mesmos nomes de nós) troca o carro, sem mexer no código. */
-const val CAR_MODEL_ASSET = "car/fox.glb"
 
 /**
- * Carro 3D (aberto pelo Painel): o Fox fixo em 3/4 pela frente (pedido do dono), com portas, porta-malas e luzes seguindo o
- * carro de verdade. Mesmos dados e mesma conexão do Painel ([DashModel.reading]); nada aqui é simulado.
+ * Tela do Carro (aberta pelo Painel): a FOTO real do Fox do dono no meio ([CarPhoto]), com faróis, setas e portas
+ * abertas desenhados por cima a partir dos sinais reais, e os números do layout "C" em volta. Mesmos dados e mesma
+ * conexão do Painel ([DashModel.reading]); nada aqui é simulado.
  */
 @Composable
 fun CarRoute(onBack: () -> Unit) {
@@ -90,10 +79,11 @@ fun CarScreen(
 ) {
     val c = JTheme.colors
     val p = dash
-    val load by rememberCarScene(CAR_MODEL_ASSET)
+    // Foto real do carro (escolha do dono, 2026-11-13: o 3D gerado por código não ficava realista).
+    val photo by rememberCarPhoto()
     val r = reading
 
-    // Setas: mesmo pisca do Painel (o CAN manda a alavanca fixa em 1); ícone e lanterna 3D piscam juntos.
+    // Setas: mesmo pisca do Painel (o CAN manda a alavanca fixa em 1); ícone e seta na foto piscam juntos.
     val left = latched(r.turnLeft == true)
     val right = latched(r.turnRight == true)
     val blinking = left || right
@@ -109,16 +99,6 @@ fun CarScreen(
     LaunchedEffect(Unit) { delay(4_000); graceOver = true }
     val noCarData = graceOver && !canConnected
 
-    val dark = c != LightColors
-    val renderState = CarRenderState(
-        doors = r.doors,
-        headlights = r.headlightOn == true,
-        turnLeftLit = left && lit,
-        turnRightLit = right && lit,
-        dark = dark,
-        background = c.bg.toArgb(),
-    )
-
     Box(Modifier.fillMaxSize().background(c.bg)) {
         // Mesma moldura do Painel (área útil da central ~534dp de altura).
         Column(Modifier.fillMaxSize().padding(start = 40.dp, end = 40.dp, top = 20.dp, bottom = 24.dp)) {
@@ -128,10 +108,10 @@ fun CarScreen(
                 BasicText("FOX", style = JancarType.caption.copy(color = c.faint))
                 Spacer(Modifier.weight(1f))
                 if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = p.warn))
-                // Honestidade: enquanto o modelo comprado não chega, avisa que o desenho é provisório.
-                if ((load as? SceneLoad.Ready)?.scene?.placeholder == true) {
+                // Honestidade: foto de teste (ex.: faróis acesos nela) é avisada.
+                if (photo is PhotoLoad.Ready && CarPhoto.SPEC.provisional) {
                     Spacer(Modifier.width(20.dp))
-                    BasicText("MODELO PROVISÓRIO", style = JancarType.appTag.copy(color = c.faint))
+                    BasicText("FOTO PROVISÓRIA", style = JancarType.appTag.copy(color = c.faint))
                 }
                 Spacer(Modifier.width(20.dp))
                 BasicText(
@@ -141,7 +121,7 @@ fun CarScreen(
             }
 
             // Layout "C" (escolhido no Claude Design): faixa de RPM no topo, velocidade grande à esquerda, giro à
-            // direita e o carro 3D fixo no meio (3/4 pela frente, como nas fotos do dono).
+            // direita e a foto do carro no meio.
             val stage = DashModel.shiftStage(r.rpm, mode)
             val blink = if (stage == DashModel.ShiftStage.Shift) shiftBlink() else null
             Spacer(Modifier.height(12.dp))
@@ -155,11 +135,18 @@ fun CarScreen(
                     Spacer(Modifier.height(18.dp))
                     FuelBar(r.fuelLiters, low = DashModel.Alert.LowFuel in DashModel.alerts(r))
                 }
-                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                    when (val l = load) {
-                        is SceneLoad.Ready -> Car3D(l.scene, renderState, Modifier.fillMaxSize())
-                        is SceneLoad.Failed -> BasicText("Modelo 3D não carregou", style = JancarType.body.copy(color = c.faint))
-                        SceneLoad.Loading -> {}
+                Box(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+                    when (val ph = photo) {
+                        is PhotoLoad.Ready -> CarPhotoView(
+                            ph.image, CarPhoto.SPEC,
+                            headlights = r.headlightOn == true,
+                            turnLeftLit = left && lit,
+                            turnRightLit = right && lit,
+                            doors = r.doors,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                        PhotoLoad.Missing -> BasicText("Foto do carro não encontrada", style = JancarType.body.copy(color = c.faint))
+                        PhotoLoad.Loading -> {}
                     }
                 }
                 Column(Modifier.width(SIDE_W), horizontalAlignment = Alignment.End) {
@@ -242,33 +229,3 @@ private fun DoorsStatus(d: DashModel.Doors, modifier: Modifier = Modifier) {
     }
 }
 
-
-@Composable
-private fun Car3D(scene: GlbScene, state: CarRenderState, modifier: Modifier) {
-    var view by remember { mutableStateOf<CarGlView?>(null) }
-    LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { view?.onPause() }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { view?.onResume() }
-    AndroidView(
-        factory = { ctx -> CarGlView(ctx, scene).also { view = it } },
-        update = { it.update(state) },
-        modifier = modifier,
-    )
-}
-
-sealed interface SceneLoad {
-    data object Loading : SceneLoad
-    class Ready(val scene: GlbScene) : SceneLoad
-    class Failed(val message: String?) : SceneLoad
-}
-
-/** Lê o .glb fora da thread da tela (o modelo comprado pode ter alguns MB). */
-@Composable
-private fun rememberCarScene(asset: String): State<SceneLoad> {
-    val context = LocalContext.current.applicationContext
-    return produceState<SceneLoad>(SceneLoad.Loading, asset) {
-        value = withContext(Dispatchers.IO) {
-            runCatching { Glb.parse(context.assets.open(asset).use { it.readBytes() }) }
-                .fold({ SceneLoad.Ready(it) }, { SceneLoad.Failed(it.message) })
-        }
-    }
-}

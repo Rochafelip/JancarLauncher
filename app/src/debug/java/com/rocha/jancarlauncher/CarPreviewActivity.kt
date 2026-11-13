@@ -8,7 +8,7 @@ import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
 
 /**
- * Prévia do carro 3D com estados falsos (só debug), para testar as animações sem o carro.
+ * Prévia da tela do Carro com estados falsos (só debug), para testar luzes, setas e portas sem o carro.
  * `adb shell am start -n com.rocha.jancarlauncher/.CarPreviewActivity --es open fl,rr,trunk --ez lights true --es turn left`
  * - open: portas abertas, separadas por vírgula (fl, fr, rl, rr, trunk, hood); sem o extra, tudo fechado.
  * - lights: farol aceso. turn: left | right | hazard. light: tema claro.

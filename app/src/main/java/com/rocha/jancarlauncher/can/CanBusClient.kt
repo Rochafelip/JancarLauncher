@@ -64,7 +64,7 @@ class CanBusClient(context: Context) {
     @Volatile private var remote: IBinder? = null
     @Volatile private var wantConnected = false
     /**
-     * Quantas telas pediram a conexão (Painel e Carro 3D). Na troca entre as duas, a nova conecta antes da
+     * Quantas telas pediram a conexão (Painel e Carro). Na troca entre as duas, a nova conecta antes da
      * antiga sair; sem a contagem, o `disconnect()` da que sai derrubaria a conexão da que entrou.
      * Só na thread principal (efeitos do Compose).
      */

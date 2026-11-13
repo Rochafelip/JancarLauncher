@@ -171,7 +171,7 @@ fun DashScreen(
     canLights: Lights? = null,
     mode: DashModel.DriveMode = DashModel.DriveMode.Daily,
     onModeChange: (DashModel.DriveMode) -> Unit = {},
-    /** Abre o carro 3D (botão do topo ou toque no desenho das portas). */
+    /** Abre a tela do Carro (botão do topo ou toque no desenho das portas). */
     onOpenCar: () -> Unit = {},
 ) {
     var diagnostics by remember { mutableStateOf(false) }
@@ -205,7 +205,7 @@ fun DashScreen(
                 // Tudo certo = nada escrito aqui.
                 if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = p.warn))
                 Spacer(Modifier.width(20.dp))
-                JIconButton(JIcons.Vehicle, "Carro 3D", onOpenCar)
+                JIconButton(JIcons.Vehicle, "Carro", onOpenCar)
                 Spacer(Modifier.width(12.dp))
                 ModeButton(mode) { onModeChange(mode.next()) }
             }
@@ -263,7 +263,7 @@ fun DashScreen(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(Dimens.RadiusButton))
-                        .clickable(onClickLabel = "Abrir carro 3D", role = Role.Button, onClick = onOpenCar)
+                        .clickable(onClickLabel = "Abrir carro", role = Role.Button, onClick = onOpenCar)
                         .padding(6.dp),
                 ) { DoorsDiagram(r.doors) }
             }
