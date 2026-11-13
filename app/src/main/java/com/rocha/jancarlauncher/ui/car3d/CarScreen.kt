@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
@@ -152,8 +153,8 @@ fun CarScreen(reading: DashModel.Reading, canConnected: Boolean, onBack: () -> U
                     Lamp(JIcons.TurnRight, right && lit)
                 }
                 Spacer(Modifier.width(40.dp))
-                DoorsStatus(r.doors)
-                Spacer(Modifier.weight(1f))
+                DoorsStatus(r.doors, Modifier.weight(1f))
+                Spacer(Modifier.width(24.dp))
                 // O que o visor do painel original mostra: temperatura externa e hodômetro.
                 SmallStat(JIcons.Thermometer, DashModel.valueText(r.outsideTempC), "°C")
                 Spacer(Modifier.width(36.dp))
@@ -184,7 +185,7 @@ private fun SmallStat(icon: ImageVector?, value: String, unit: String) {
 
 /** Situação das portas por extenso: só ganha cor quando algo está aberto. */
 @Composable
-private fun DoorsStatus(d: DashModel.Doors) {
+private fun DoorsStatus(d: DashModel.Doors, modifier: Modifier = Modifier) {
     val c = JTheme.colors
     val open = d.anyOpen
     val color = when {
@@ -192,7 +193,7 @@ private fun DoorsStatus(d: DashModel.Doors) {
         d.known -> c.muted
         else -> c.faint
     }
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         JIcon(JIcons.DoorOpen, tint = color, size = 36.dp)
         Spacer(Modifier.width(14.dp))
         val text = when {
@@ -200,7 +201,8 @@ private fun DoorsStatus(d: DashModel.Doors) {
             d.known -> "Tudo fechado"
             else -> "Portas sem dado"
         }
-        BasicText(text, style = JancarType.body.copy(color = color))
+        // Tudo aberto não cabe ao lado da temperatura e do hodômetro: corta com "…" em vez de espremer o resto.
+        BasicText(text, style = JancarType.body.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

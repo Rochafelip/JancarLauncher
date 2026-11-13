@@ -2,7 +2,8 @@
 
 O app desenha o arquivo `app/src/main/assets/car/fox.glb`. Trocar esse arquivo troca o carro, **sem mexer no
 código**, desde que o modelo siga as regras abaixo. Hoje o arquivo é a maquete provisória gerada por
-`tools/car3d/make-placeholder-fox.mjs` (a tela mostra "MODELO PROVISÓRIO" enquanto o arquivo tiver
+`tools/car3d/make-placeholder-fox.mjs`, com o perfil traçado da foto lateral do carro (a tela mostra
+"MODELO PROVISÓRIO" enquanto o arquivo tiver
 `asset.extras.placeholder = true`).
 
 ## Por que essas regras

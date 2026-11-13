@@ -1,5 +1,6 @@
 // Gera o modelo PROVISÓRIO do Fox (app/src/main/assets/car/fox.glb) até chegar o modelo comprado.
-// Maquete low-poly com as medidas do Fox G2 (3,823 × 1,640 × 1,544 m, entre-eixos 2,465 m) e as peças
+// Maquete low-poly com o perfil traçado da foto lateral do Fox do dono, nas medidas do Fox G2
+// (3,823 × 1,640 × 1,544 m, entre-eixos 2,465 m), com as peças
 // móveis separadas com os nomes do contrato (docs/car3d/contrato-do-modelo.md): o app anima pelos nomes.
 //
 // Uso: node tools/car3d/make-placeholder-fox.mjs [saída.glb]
@@ -214,30 +215,43 @@ function table(t, x) {
 }
 
 // ---------- medidas ----------
+// Perfil TRAÇADO da foto lateral do carro do dono (docs/Fox-photos/IMG_20261113_150109828_HDR_PCT.jpg.jpeg,
+// lado direito, frente à direita da foto). Escala: na horizontal, os centros das rodas (entre-eixos real
+// 2,465 m) e o comprimento total (3,823 m) repartido nos balanços como na foto; na vertical, o teto em 1,544 m
+// com o chão na base dos pneus. Largura e cantos pela foto de frente e pela traseira 3/4.
 const FRONT_AXLE = 1.165, REAR_AXLE = -1.3; // entre-eixos 2,465
-const TRACK_HALF = 0.70, WHEEL_R = 0.30, WHEEL_W = 0.19, ARCH_R = 0.36;
-/** Cantos arredondados vistos de cima: estreita perto da frente e da traseira. */
-const taper = (z) => 1 - 0.09 * smooth(1.5, 1.95, Math.abs(z));
-const bodyHalf = (y, z) => (y < 0.85 ? 0.8 : 0.8 - (y - 0.85) * 0.17) * taper(z);
-const glassHalf = (y, z) => (0.77 - (y - 0.98) * 0.236) * taper(z);
+const TRACK_HALF = 0.70, WHEEL_R = 0.272, WHEEL_W = 0.19, ARCH_R = 0.315, RIM_R = 0.205;
+/** Cantos arredondados vistos de cima: a frente arredonda mais que a traseira (fotos de frente/traseira). */
+const taper = (z) => (z > 0 ? 1 - 0.11 * smooth(1.35, 1.97, z) : 1 - 0.07 * smooth(1.45, 1.86, -z));
+const bodyHalf = (y, z) => (y < 0.75 ? 0.8 : 0.8 - (y - 0.75) * 0.12) * taper(z);
+const glassHalf = (y, z) => (0.765 - (y - 0.95) * 0.3) * taper(z);
 
 function arch(zc, from, to, steps = 10) {
   const pts = [];
   for (let i = 0; i <= steps; i++) {
     const a = ((from + (to - from) * (i / steps)) * Math.PI) / 180;
-    pts.push([zc + ARCH_R * Math.cos(a), 0.3 + ARCH_R * Math.sin(a)]);
+    pts.push([zc + ARCH_R * Math.cos(a), WHEEL_R + ARCH_R * Math.sin(a)]);
   }
   return pts;
 }
 
-// Perfil lateral (z, y) da carroceria abaixo da linha de cintura, com as caixas de roda.
+/** Linha de cintura (base dos vidros), descendo para a frente como no Fox: (z, y). */
+const BELT = [[0.905, 0.99], [0.546, 0.93], [-0.26, 0.978], [-0.42, 1.0], [-1.246, 1.063], [-1.748, 1.067]];
+const beltY = (z) => table([...BELT].reverse(), z);
+
+// Perfil lateral (z, y) da carroceria abaixo da cintura, com capô, para-choques e caixas de roda.
 const bodyProfile = chaikin([
-  [1.8, 0.22], [1.9, 0.32], [1.93, 0.55], [1.88, 0.68], [1.78, 0.8], [1.3, 0.9], [0.95, 0.98],
-  [-1.6, 1.01], [-1.88, 1.03], [-1.94, 0.75], [-1.93, 0.45], [-1.88, 0.26], [-1.75, 0.22],
-  ...arch(REAR_AXLE, 190, -10), ...arch(FRONT_AXLE, 190, -10),
+  [1.859, 0.235], [1.941, 0.364], [1.965, 0.549], [1.941, 0.697], [1.883, 0.789], [1.777, 0.845],
+  [1.53, 0.919], [1.294, 0.958], [1.013, 0.985], ...BELT,
+  [-1.785, 1.011], [-1.823, 0.919], [-1.84, 0.789], [-1.86, 0.66], [-1.86, 0.475], [-1.823, 0.364],
+  [-1.76, 0.281], [-1.7, 0.245],
+  ...arch(REAR_AXLE, 190, -10), ...arch(FRONT_AXLE, 190, -10), [1.65, 0.235],
 ], 2);
+// Estufa (vidros) acima da cintura: para-brisa, teto, vigia traseira.
+const ROOF = [[0.26, 1.473], [0.009, 1.5], [-0.529, 1.535], [-0.888, 1.53], [-1.157, 1.5], [-1.4, 1.473]];
 const glassProfile = chaikin([
-  [0.95, 0.97], [0.25, 1.48], [0.05, 1.53], [-1.5, 1.54], [-1.8, 1.4], [-1.9, 1.04], [-1.6, 0.97],
+  [0.905, 0.985], ...ROOF, [-1.462, 1.455], [-1.599, 1.27], [-1.698, 1.14], [-1.748, 1.06],
+  ...[...BELT].reverse().slice(1).map(([z, y]) => [z, y - 0.01]),
 ], 1);
 
 /** Extrusão do perfil (z, y) na largura, meia-largura [half](y, z). */
@@ -275,104 +289,121 @@ function extrude(mesh, mat, profile, half) {
 const body = new Mesh();
 extrude(body, M.paint, bodyProfile, bodyHalf);
 extrude(body, M.glass, glassProfile, glassHalf);
-// Teto pintado por cima do vidro.
-extrude(body, M.paint, [[0.22, 1.49], [0.1, 1.548], [-1.5, 1.558], [-1.63, 1.5]], () => 0.648);
-// Coluna C pintada (cada lado), sobre o vidro.
+// Teto pintado por cima do vidro: vai até o alto das janelas (1,44–1,455 m na foto).
+extrude(body, M.paint, chaikin([
+  [0.24, 1.466], ...ROOF.slice(1).map(([z, y]) => [z, y + 0.006]), [-1.45, 1.462],
+  [-1.4, 1.44], [-0.977, 1.455], [-0.422, 1.455], [-0.26, 1.452], [0.188, 1.442],
+], 1), (y, z) => glassHalf(y, z) + 0.003);
 for (const s of [1, -1]) {
-  body.slab(M.paint, chaikin([[-1.08, 0.98], [-1.02, 1.5], [-1.55, 1.53], [-1.83, 1.37], [-1.91, 1.02]], 1),
-    (z, y, o) => [s * (glassHalf(y, z) + 0.004 + o * 0.012), y, z], () => [s, 0, 0], true);
+  const onGlass = (extra) => (z, y, o) => [s * (glassHalf(y, z) + extra + o * 0.012), y, z];
+  // Coluna A (cor do carro) acompanhando o para-brisa.
+  body.slab(M.paint, [[0.905, 0.985], [0.26, 1.473], [0.2, 1.452], [0.85, 0.99]], onGlass(0.004), () => [s, 0, 0], true);
+  // Coluna C larga, pintada, entre o vidro fixo da porta traseira e a traseira.
+  body.slab(M.paint, chaikin([[-1.192, 1.44], [-1.4, 1.475], [-1.462, 1.455], [-1.599, 1.27], [-1.698, 1.14],
+    [-1.748, 1.06], [-1.264, 1.06], [-1.24, 1.3]], 1), onGlass(0.004), () => [s, 0, 0], true);
 }
-// Frente: grade preta com dois frisos cromados, emblema (disco genérico), colmeia embaixo, neblina
-// redonda em moldura preta (apagada: não há sinal da neblina) e placa em branco (decisão do dono).
-body.box(M.trim, [0, 0.7, 1.865], [0.7, 0.1, 0.06]);
-for (const y of [0.725, 0.68]) body.box(M.chrome, [0, y, 1.897], [0.7, 0.008, 0.006]);
-body.discZ(M.chrome, [0, 0.705], 0.055, 1.902, 1, 20);
-body.box(M.trim, [0, 0.42, 1.915], [1.0, 0.16, 0.05]);
+// Frente: grade preta com dois frisos cromados na altura dos faróis, emblema (disco genérico), colmeia
+// embaixo, neblina redonda em moldura preta (apagada: não há sinal da neblina) e placa em branco.
+body.box(M.trim, [0, 0.72, 1.925], [0.62, 0.1, 0.06]);
+for (const y of [0.745, 0.7]) body.box(M.chrome, [0, y, 1.957], [0.62, 0.008, 0.006]);
+body.discZ(M.chrome, [0, 0.722], 0.055, 1.962, 1, 20);
+body.box(M.trim, [0, 0.42, 1.945], [1.0, 0.16, 0.04]);
 for (const s of [1, -1]) {
-  body.box(M.trim, [s * 0.585, 0.4, 1.9], [0.2, 0.11, 0.03]);
-  body.discZ(M.lamp_fog, [s * 0.585, 0.4], 0.038, 1.918, 1);
+  body.box(M.trim, [s * 0.6, 0.4, 1.925], [0.2, 0.11, 0.03]);
+  body.discZ(M.lamp_fog, [s * 0.6, 0.4], 0.038, 1.942, 1);
 }
-body.box(M.plate, [0, 0.55, 1.94], [0.4, 0.13, 0.012]);
+body.box(M.plate, [0, 0.55, 1.972], [0.4, 0.13, 0.012]);
 // Traseira: placa em branco, engate com bola (o Fox do dono tem), sensores de ré e refletores no para-choque.
-body.box(M.plate, [0, 0.6, -1.945], [0.4, 0.13, 0.012]);
-body.box(M.trim, [0, 0.3, -1.99], [0.08, 0.06, 0.14]);
-body.box(M.chrome, [0, 0.36, -2.04], [0.05, 0.05, 0.05]);
+body.box(M.plate, [0, 0.6, -1.866], [0.4, 0.13, 0.012]);
+body.box(M.trim, [0, 0.3, -1.9], [0.08, 0.06, 0.14]);
+body.box(M.chrome, [0, 0.36, -1.95], [0.05, 0.05, 0.05]);
 for (const s of [1, -1]) {
-  for (const x of [0.36, 0.56]) body.discZ(M.trim, [s * x, 0.47], 0.013, -1.952, -1, 10);
-  body.box(M.lamp_tail, [s * 0.6, 0.33, -1.915], [0.13, 0.025, 0.01]);
+  for (const x of [0.36, 0.56]) body.discZ(M.trim, [s * x, 0.5], 0.013, -1.868, -1, 10);
+  body.box(M.lamp_tail, [s * 0.6, 0.36, -1.83], [0.13, 0.025, 0.01]);
 }
-// Teto: antena "barbatana" preta.
-body.slab(M.trim, [[-1.12, 1.556], [-1.36, 1.556], [-1.32, 1.625], [-1.26, 1.632]],
+// Teto: antena "barbatana" preta (na foto, sobre a porta traseira).
+body.slab(M.trim, [[-0.84, 1.531], [-1.0, 1.531], [-0.96, 1.6], [-0.92, 1.605]],
   (z, y, o) => [(o - 0.5) * 0.05, y, z], () => [1, 0, 0]);
-// Portinhola de combustível: lado direito (−X), entre a caixa de roda e a lanterna.
-body.slab(M.paint, chaikin([[-1.4, 0.8], [-1.55, 0.8], [-1.55, 0.94], [-1.4, 0.94]], 2),
+// Portinhola de combustível: lado direito (−X), entre a caixa de roda e a lanterna (foto lateral).
+body.slab(M.paint, chaikin([[-1.44, 0.82], [-1.6, 0.82], [-1.6, 0.96], [-1.44, 0.96]], 2),
   (z, y, o) => [-(bodyHalf(y, z) + 0.002 + o * 0.004), y, z], () => [-1, 0, 0], true);
 
 /**
- * Porta do lado esquerdo (+X), coordenadas do mundo: chapa pintada embaixo + janela escura em cima.
- * [win] = [z da janela na cintura, z da janela no alto, altura do alto].
+ * Porta do lado esquerdo (+X), coordenadas do mundo, desenhada pela foto: [panel] = chapa (borda de cima na
+ * cintura), [glass] = janela, [black] = plásticos pretos por cima do vidro (película escura + molduras).
  */
-function door(zFront, zRear, zRearTop, win, opts) {
+function door(opts) {
   const m = new Mesh();
   const outer = (half, extra = 0) => (z, y, o) => [half(y, z) + 0.006 + extra + o * 0.022, y, z];
-  m.slab(M.paint, [[zFront, 0.3], [zFront, 0.99], [zRearTop, 0.99], [zRear, 0.3]], outer(bodyHalf), () => [1, 0, 0], true);
-  m.slab(M.glass, [[win[0], 0.99], [win[1], win[2]], [zRearTop, win[2]], [zRearTop, 0.99]], outer(glassHalf), () => [1, 0, 0], true);
-  // Plásticos pretos por cima do vidro (película escura + molduras do Fox): coluna B, triângulo do
-  // retrovisor, divisão do vidro da porta traseira.
-  const black = (poly) => m.slab(M.trim, poly, outer(glassHalf, 0.003), () => [1, 0, 0], true);
-  for (const poly of opts.black ?? []) black(poly);
+  m.slab(M.paint, opts.panel, outer(bodyHalf), () => [1, 0, 0], true);
+  m.slab(M.glass, opts.glass, outer(glassHalf), () => [1, 0, 0], true);
+  for (const poly of opts.black) m.slab(M.trim, poly, outer(glassHalf, 0.003), () => [1, 0, 0], true);
   // Friso lateral fino na cor do carro e maçaneta na cor do carro.
-  m.slab(M.paint, [[zFront - 0.03, 0.535], [zRear + 0.03, 0.535], [zRear + 0.03, 0.555], [zFront - 0.03, 0.555]],
-    outer(bodyHalf, 0.022), () => [1, 0, 0], true);
-  m.box(M.paint, [bodyHalf(0.86, opts.handleZ) + 0.035, 0.86, opts.handleZ], [0.022, 0.03, 0.13]);
+  const [z0, z1] = opts.molding;
+  m.slab(M.paint, [[z0, 0.44], [z1, 0.44], [z1, 0.46], [z0, 0.46]], outer(bodyHalf, 0.022), () => [1, 0, 0], true);
+  const [hz, hy] = opts.handle;
+  m.box(M.paint, [bodyHalf(hy, hz) + 0.035, hy, hz], [0.022, 0.03, 0.13]);
   if (opts.mirror) {
-    const x = bodyHalf(1, zFront);
-    m.box(M.trim, [x + 0.03, 1.0, zFront - 0.12], [0.05, 0.05, 0.08]); // base
-    m.box(M.paint, [x + 0.1, 1.035, zFront - 0.14], [0.13, 0.09, 0.11]); // concha na cor do carro
+    const x = bodyHalf(1, 0.64);
+    m.box(M.trim, [x + 0.03, 0.975, 0.7], [0.05, 0.05, 0.08]); // base
+    m.box(M.paint, [x + 0.1, 0.995, 0.64], [0.13, 0.12, 0.18]); // concha na cor do carro
   }
   return m;
 }
-// Porta dianteira: da dobradiça (z 0,78) até a coluna B; a janela acompanha o para-brisa.
-const doorFront = door(0.78, -0.17, -0.17, [0.76, 0.27, 1.44], {
-  mirror: true, handleZ: -0.02,
-  black: [[[0.76, 0.99], [0.54, 0.99], [0.62, 1.12]], [[-0.09, 0.99], [-0.17, 0.99], [-0.17, 1.44], [-0.09, 1.44]]],
+const FRONT_HINGE_Z = 0.771, REAR_HINGE_Z = -0.314;
+const doorFront = door({
+  panel: [[0.744, 0.262], [FRONT_HINGE_Z, beltY(FRONT_HINGE_Z)], [0.546, 0.93], [-0.287, beltY(-0.287)], [-0.287, 0.262]],
+  glass: [[0.88, 0.988], [0.224, 1.436], [-0.26, 1.448], [-0.26, 0.975], [0.546, 0.928]],
+  black: [
+    [[0.905, 0.99], [0.72, 0.965], [0.737, 1.1]], // triângulo do retrovisor
+    [[-0.2, 0.975], [-0.26, 0.976], [-0.26, 1.448], [-0.2, 1.446]], // coluna B
+  ],
+  molding: [0.7, -0.25], handle: [-0.171, 0.817], mirror: true,
 });
-const doorRear = door(-0.19, -0.92, -1.05, [-0.19, -0.19, 1.45], {
-  handleZ: -0.72,
-  black: [[[-0.19, 0.99], [-0.27, 0.99], [-0.27, 1.45], [-0.19, 1.45]], [[-0.79, 0.99], [-0.82, 0.99], [-0.82, 1.45], [-0.79, 1.45]]],
+const doorRear = door({
+  panel: [[REAR_HINGE_Z, 0.262], [REAR_HINGE_Z, beltY(REAR_HINGE_Z)], [-1.246, 1.063], [-1.264, 1.063],
+    [-1.32, 0.919], [-1.291, 0.771], [-1.21, 0.622], [-1.067, 0.492], [-0.941, 0.381], [-0.888, 0.272]],
+  glass: [[REAR_HINGE_Z, beltY(REAR_HINGE_Z) - 0.01], [REAR_HINGE_Z, 1.455], [-0.977, 1.455], [-1.192, 1.43],
+    [-1.24, 1.3], [-1.264, 1.055], [-0.42, 0.99]],
+  black: [
+    [[REAR_HINGE_Z, 0.995], [-0.36, 0.998], [-0.36, 1.455], [REAR_HINGE_Z, 1.455]], // coluna B
+    [[-0.995, 1.03], [-1.022, 1.035], [-1.022, 1.455], [-0.995, 1.455]], // divisão do vidro fixo
+  ],
+  molding: [-0.33, -0.94], handle: [-1.148, 0.86],
 });
 /** Repetidor de seta embaixo do retrovisor (coordenadas do mundo, lado esquerdo). */
-const mirrorRepeater = [bodyHalf(1, 0.78) + 0.12, 0.992, 0.78 - 0.1];
+const mirrorRepeater = [bodyHalf(1, 0.64) + 0.14, 0.94, 0.6];
 
-const hoodY = (z) => table([[0.95, 0.98], [1.3, 0.9], [1.78, 0.8]], z);
+// Capô: da base do para-brisa até a grade, na altura do perfil.
+const hoodY = (z) => table([[0.905, 0.99], [1.013, 0.985], [1.294, 0.958], [1.53, 0.919], [1.777, 0.845], [1.87, 0.8]], z);
 const hood = new Mesh();
-hood.slab(M.paint, [[-0.74, 0.97], [0.74, 0.97], [0.7, 1.76], [-0.7, 1.76]],
-  (x, z, o) => [x, hoodY(z) + 0.012 + o * 0.018, z], () => [0, 1, 0]);
+hood.slab(M.paint, [[-0.7, 0.95], [0.7, 0.95], [0.64, 1.86], [-0.64, 1.86]],
+  (x, z, o) => [x, hoodY(z) + 0.008 + o * 0.016, z], () => [0, 1, 0]);
 
-const rearZ = (y) => table([[0.55, -1.945], [0.75, -1.952], [1.04, -1.918], [1.4, -1.818], [1.47, -1.76]], y);
+// Tampa traseira: chapa e vigia seguindo o caimento da traseira (perfil da foto).
+const rearZ = (y) => table([[0.475, -1.86], [0.66, -1.86], [0.789, -1.84], [0.919, -1.823], [1.011, -1.785],
+  [1.067, -1.748], [1.14, -1.698], [1.27, -1.599], [1.455, -1.462]], y);
 const tailgate = new Mesh();
-tailgate.slab(M.paint, [[-0.56, 0.55], [0.56, 0.55], [0.58, 1.03], [-0.58, 1.03]],
-  (x, y, o) => [x, y, rearZ(y) - 0.006 - o * 0.02], () => [0, 0, -1]);
-tailgate.slab(M.glass, [[-0.58, 1.03], [0.58, 1.03], [0.5, 1.42], [-0.5, 1.42]],
-  (x, y, o) => [x, y, rearZ(y) - 0.006 - o * 0.02], () => [0, 0, -1]);
+const onRear = (x, y, o) => [x, y, rearZ(y) - 0.006 - o * 0.02];
+tailgate.slab(M.paint, [[-0.56, 0.66], [0.56, 0.66], [0.6, 1.06], [-0.6, 1.06]], onRear, () => [0, 0, -1]);
+tailgate.slab(M.glass, [[-0.6, 1.06], [0.6, 1.06], [0.5, 1.43], [-0.5, 1.43]], onRear, () => [0, 0, -1]);
 // Limpador traseiro: eixo + palheta deitada no vidro.
 tailgate.box(M.trim, [0, 1.12, rearZ(1.12) - 0.04], [0.04, 0.03, 0.04]);
 tailgate.box(M.trim, [0.17, 1.15, rearZ(1.15) - 0.03], [0.36, 0.012, 0.012]);
 // Emblema (disco genérico) e a câmera de ré logo abaixo (confirmada pelo dono).
-tailgate.discZ(M.chrome, [0, 0.96], 0.055, rearZ(0.96) - 0.028, -1, 20);
-tailgate.discZ(M.trim, [0, 0.865], 0.014, rearZ(0.865) - 0.028, -1, 10);
-// Aerofólio no teto (preso na tampa, sobe junto) com a luz de freio alta. A luz de freio fica apagada:
-// não há sinal do pedal de freio.
-tailgate.slab(M.paint, chaikin([[-1.5, 1.566], [-1.64, 1.562], [-1.85, 1.5], [-1.87, 1.475], [-1.68, 1.505], [-1.52, 1.548]], 1),
+tailgate.discZ(M.chrome, [0, 0.93], 0.055, rearZ(0.93) - 0.028, -1, 20);
+tailgate.discZ(M.trim, [0, 0.845], 0.014, rearZ(0.845) - 0.028, -1, 10);
+// Aerofólio no fim do teto (preso na tampa, sobe junto) com a luz de freio alta, apagada: não há sinal do
+// pedal de freio.
+tailgate.slab(M.paint, chaikin([[-1.36, 1.5], [-1.42, 1.497], [-1.5, 1.455], [-1.515, 1.43], [-1.46, 1.44], [-1.38, 1.47]], 1),
   (z, y, o) => [(o - 0.5) * 1.18, y, z], () => [1, 0, 0]);
-tailgate.box(M.lamp_tail, [0, 1.493, -1.835], [0.24, 0.022, 0.03]);
+tailgate.box(M.lamp_tail, [0, 1.44, -1.49], [0.24, 0.02, 0.03]);
 
 /** Roda de liga 15" do Fox do dono: 5 pares de raios em V, aro prata, miolo escuro, calota central. */
 const wheel = (left) => {
   const m = new Mesh();
   const s = left ? 1 : -1;
   const face = s * WHEEL_W / 2;
-  const RIM_R = 0.19;
   m.cylinderX(M.tire, WHEEL_R, WHEEL_W, 32, -WHEEL_W / 2, false);
   m.ringX(M.tire, RIM_R, WHEEL_R, face, s, 32); // flanco de fora
   m.ringX(M.tire, 0, WHEEL_R, -face, -s, 24); // lado de dentro fechado
@@ -414,8 +445,8 @@ const children = [];
 children.push(node("body", body));
 const hinge = (x, z) => [x, 0, z];
 for (const [name, mesh, z, left] of [
-  ["door_fl", doorFront, 0.78, true], ["door_fr", doorFront, 0.78, false],
-  ["door_rl", doorRear, -0.19, true], ["door_rr", doorRear, -0.19, false],
+  ["door_fl", doorFront, FRONT_HINGE_Z, true], ["door_fr", doorFront, FRONT_HINGE_Z, false],
+  ["door_rl", doorRear, REAR_HINGE_Z, true], ["door_rr", doorRear, REAR_HINGE_Z, false],
 ]) {
   const h = hinge(bodyHalf(0.6, z) + 0.017, z);
   const local = mesh.relativeTo(h);
@@ -427,9 +458,9 @@ for (const [name, mesh, z, left] of [
   }
   children.push(left ? node(name, local, h, kids) : node(name, local.mirrorX(), [-h[0], h[1], h[2]], kids));
 }
-const hoodHinge = [0, 0.98, 0.95];
+const hoodHinge = [0, 0.99, 0.95];
 children.push(node("hood", hood.relativeTo(hoodHinge), hoodHinge));
-const gateHinge = [0, 1.47, -1.76];
+const gateHinge = [0, 1.46, -1.44];
 children.push(node("tailgate", tailgate.relativeTo(gateHinge), gateHinge));
 for (const [name, z, left] of [["wheel_fl", FRONT_AXLE, true], ["wheel_fr", FRONT_AXLE, false], ["wheel_rl", REAR_AXLE, true], ["wheel_rr", REAR_AXLE, false]]) {
   children.push(node(name, wheel(left), [left ? TRACK_HALF : -TRACK_HALF, WHEEL_R, z]));
@@ -438,10 +469,11 @@ for (const [name, z, left] of [["wheel_fl", FRONT_AXLE, true], ["wheel_fr", FRON
 const lamp = (name, mat, c, s) => children.push(node(name, boxMesh(mat, s), c));
 for (const [side, s] of [["l", 1], ["r", -1]]) {
   // Farol com máscara escura e a seta âmbar numa faixa embaixo dele (como nas fotos).
-  lamp(`lamp_head_${side}`, M.lamp_head, [s * 0.52, 0.775, 1.81], [0.32, 0.1, 0.1]);
-  lamp(`lamp_turn_f${side}`, M.lamp_turn, [s * 0.55, 0.712, 1.83], [0.24, 0.028, 0.08]);
-  lamp(`lamp_tail_${side}`, M.lamp_tail, [s * 0.66, 0.93, -1.93], [0.13, 0.22, 0.06]);
-  lamp(`lamp_turn_r${side}`, M.lamp_turn, [s * 0.66, 0.78, -1.935], [0.13, 0.07, 0.05]);
+  lamp(`lamp_head_${side}`, M.lamp_head, [s * 0.56, 0.735, 1.875], [0.3, 0.13, 0.12]);
+  lamp(`lamp_turn_f${side}`, M.lamp_turn, [s * 0.56, 0.66, 1.9], [0.24, 0.025, 0.08]);
+  // Lanterna G2 dobrando a quina (vermelho por fora) e a seta na parte de dentro, mais baixa.
+  lamp(`lamp_tail_${side}`, M.lamp_tail, [s * 0.645, 0.915, -1.79], [0.15, 0.24, 0.14]);
+  lamp(`lamp_turn_r${side}`, M.lamp_turn, [s * 0.53, 0.86, -1.825], [0.09, 0.07, 0.05]);
 }
 const root = { name: "fox", children: [...children] };
 nodes.push(root);
