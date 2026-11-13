@@ -545,7 +545,9 @@ class CarRenderer(
         const val DEFAULT_YAW = 35f
         const val DEFAULT_PITCH = 9f
         private const val MIN_PITCH = 2f
-        private const val MAX_PITCH = 70f
+        // Até 30° de cima (pedido do dono, 2026-11-13): sem vista de topo; o modelo pode economizar no que só
+        // apareceria de cima ou de baixo (o fundo do carro nem é gerado).
+        private const val MAX_PITCH = 30f
         private const val MIN_ZOOM = 0.6f
         private const val MAX_ZOOM = 1.6f
         private const val FOV_Y = 30f
