@@ -122,7 +122,9 @@ object DashModel {
      * - Temperatura externa: o CAN entrega °C + 40 (74,5 contra 34,5 na tela original, ao mesmo tempo).
      * - Portas/porta-malas: `Cabin` do CAN (1 = aberta; testado: porta do motorista = 1). O protocolo PQ
      *   não manda o capô nem o cinto (o cinto fica sempre no valor padrão 1, por isso fica de fora).
-     * - Setas/pisca-alerta: `Lights` do CAN (comando 0x7D; não confirmado se a caixa do Fox manda).
+     * - Setas/pisca-alerta: `Lights` do CAN (testado no Fox em 2026-11-13). Vem a posição da alavanca,
+     *   fixa enquanto ligada (não pisca); o pisca-alerta chega como as duas setas = 1 e o campo
+     *   `emergencyFlasher` nunca vem (fica Int.MIN_VALUE).
      * - Farol: fio do chicote lido pelo ICar (o CAN não expõe).
      * - Freio de mão e bateria: fora do Painel. O CAN não expõe nenhum dos dois, e o fio do freio de mão
      *   não está ligado nesta instalação (testado em 2026-11-07: nunca mudou).
