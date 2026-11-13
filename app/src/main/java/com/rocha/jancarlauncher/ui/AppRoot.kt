@@ -39,6 +39,7 @@ import com.rocha.jancarlauncher.settings.NightModeController
 import com.rocha.jancarlauncher.settings.SettingsStore
 import com.rocha.jancarlauncher.settings.WelcomePolicy
 import com.rocha.jancarlauncher.system.rememberAdbStatus
+import com.rocha.jancarlauncher.system.rememberWifiStatus
 import com.rocha.jancarlauncher.ui.drawer.DrawerScreen
 import com.rocha.jancarlauncher.ui.home.BrightnessController
 import com.rocha.jancarlauncher.ui.home.HomeScreen
@@ -96,6 +97,7 @@ fun AppRoot(
     val nowSource = JancarNowPlaying.pick(sessionNow, jancarNow)
     val shownNow = if (nowSource == NowPlayingSource.Jancar) jancarNow else sessionNow
     val adbStatus by rememberAdbStatus(tickKey = clock)
+    val wifiStatus by rememberWifiStatus(tickKey = clock)
 
     // Tela inicial: Boas-vindas na 1ª abertura após reinício (ou quando a ativação por "acordar" pediu).
     LaunchedEffect(Unit) {
@@ -226,6 +228,7 @@ fun AppRoot(
                 onPrevious = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.previous() else nowPlaying.previous() },
                 adbStatus = adbStatus,
                 onOpenAdbSettings = { actions.openSettings(SettingsActions.DEVELOPER_OPTIONS) },
+                wifi = wifiStatus,
                 onScreenOff = { brightnessOpen = false; screen = Screen.Off },
                 onOpenDash = { brightnessOpen = false; screen = Screen.Dash },
             )

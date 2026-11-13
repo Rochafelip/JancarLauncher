@@ -61,6 +61,17 @@ adb shell appops set com.rocha.jancarlauncher WRITE_SETTINGS allow
 
 *Não verificado na central.* O launcher nunca mexe no brilho antes de você mexer no slider.
 
+### 5.1 Permissão opcional: nome do Wi-Fi na Home
+
+A Home mostra o ícone de Wi-Fi quando conectado. O **nome** da rede o Android só entrega com a permissão de
+localização (o nome da rede conta como dado de localização). Concede-se pelo adb, sem diálogo na tela:
+
+```
+adb shell pm grant com.rocha.jancarlauncher android.permission.ACCESS_FINE_LOCATION
+```
+
+Sem ela aparece "Wi-Fi conectado" no lugar do nome. Uma vez concedida, vale até desinstalar o app.
+
 ## 6. Desligar a depuração sem fio
 
 A porta 5555 fica aberta **sem senha**. Quando terminar:

@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,11 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.rocha.jancarlauncher.launch.AppTargets
 import com.rocha.jancarlauncher.launch.SettingsActions
 import com.rocha.jancarlauncher.media.NowPlayingState
 import com.rocha.jancarlauncher.system.AdbStatus
+import com.rocha.jancarlauncher.system.WifiStatus
 import com.rocha.jancarlauncher.ui.UiActions
 import com.rocha.jancarlauncher.ui.components.JIconButton
 import com.rocha.jancarlauncher.ui.components.MainTile
@@ -55,6 +59,7 @@ fun HomeScreen(
     onPrevious: () -> Unit = {},
     adbStatus: AdbStatus = AdbStatus.Disabled,
     onOpenAdbSettings: () -> Unit = {},
+    wifi: WifiStatus = WifiStatus.Disconnected,
     onScreenOff: () -> Unit = {},
     onOpenDash: () -> Unit = {},
 ) {
@@ -68,6 +73,29 @@ fun HomeScreen(
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // Wi-Fi: só aparece conectado (ícone + nome da rede); toque abre as configurações de Wi-Fi.
+                        if (wifi.connected) {
+                            Row(
+                                modifier = Modifier.clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                    onClickLabel = "Configurações de Wi-Fi",
+                                    onClick = { actions.openSettings(SettingsActions.WIFI) },
+                                ),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                            ) {
+                                com.rocha.jancarlauncher.ui.components.JIcon(JIcons.Wifi, c.muted, 14.dp)
+                                BasicText(
+                                    wifi.ssid ?: "Wi-Fi conectado",
+                                    style = JancarType.appTag.copy(color = c.muted),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 220.dp),
+                                )
+                            }
+                            Spacer(Modifier.width(6.dp))
+                        }
                         if (adbStatus != AdbStatus.Disabled) {
                             Row(
                                 modifier = Modifier.clickable(

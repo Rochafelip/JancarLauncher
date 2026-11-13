@@ -31,6 +31,7 @@ Referências vivas (abrir antes de codar):
    - Relógio grande + data, canto superior esquerdo
    - Ícones no canto superior direito: alternar tema claro/escuro, ajustar brilho (abre painel com slider), abrir gaveta de apps, **Painel** (velocímetro), **apagar tela** (ícone de power) — botões de **60dp** com ícone de 24dp (`Dimens.TopButton`/`TopButtonIcon`; pedido do usuário, 2026-11-07: "ainda acho pequenos")
    - Card **"Tocando agora"** — **reativado** (2026-11-07, ver decisão abaixo): faixa, capa e transporte da Música da Jancar (IMedia) ou de uma sessão de mídia padrão
+   - Linha de status no topo à direita: **Wi-Fi conectado** = ícone + nome da rede (pedido do usuário, 2026-11-13; some quando desconectado; toque abre as configurações de Wi-Fi; o nome exige `ACCESS_FINE_LOCATION`, concedida por adb — `docs/INSTALL.md` §5.1, senão "Wi-Fi conectado"; `system/WifiStatus`), depois "ADB ativo" e "MULTIMÍDIA"
    - Fileira de chips minimalistas: Wi-Fi, Bluetooth, GPS, Ajustes — cada um abre a tela/app correspondente direto (o chip de Câmera de ré foi **removido** em 2026-11-07 a pedido do usuário: "não serve para nada")
    - 4 blocos grandes (ação principal): **Auto** (Android Auto/CarPlay), **Música**, **Rádio**, **Vídeo**
 3. **Gaveta de apps** — grid com os apps secundários (os que não estão na Home), cada um com ícone, nome e tag "App" (instalado por fora) ou "Sistema": VLC, NewPipe, F-Droid, Lightning Browser, Galeria, Arquivos, Bluetooth, Música BT, EQ, Informações do veículo, Scrcpy for Android, Android OBD-II Reader.
