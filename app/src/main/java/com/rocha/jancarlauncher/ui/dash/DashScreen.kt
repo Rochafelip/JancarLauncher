@@ -283,7 +283,7 @@ fun DashScreen(
  * ([blinking]): o Painel não recompõe a cada quadro e, fora do ponto, nada fica animando.
  */
 @Composable
-private fun shiftBlink(): State<Float> =
+internal fun shiftBlink(): State<Float> =
     rememberInfiniteTransition(label = "shift").animateFloat(
         initialValue = 1f,
         targetValue = 0.25f,
@@ -292,7 +292,7 @@ private fun shiftBlink(): State<Float> =
     )
 
 /** Aplica o pisca de troca, se houver ([blink] `null` = fora do ponto de troca, não pisca). */
-private fun Modifier.blinking(blink: State<Float>?): Modifier =
+internal fun Modifier.blinking(blink: State<Float>?): Modifier =
     if (blink == null) this else graphicsLayer { alpha = blink.value }
 
 /**

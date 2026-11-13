@@ -1,8 +1,5 @@
 package com.rocha.jancarlauncher.ui.car3d
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
@@ -31,6 +29,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -43,6 +42,8 @@ import com.rocha.jancarlauncher.ui.dash.Lamp
 import com.rocha.jancarlauncher.ui.dash.TURN_BLINK_HALF_MS
 import com.rocha.jancarlauncher.ui.dash.dash
 import com.rocha.jancarlauncher.ui.dash.latched
+import com.rocha.jancarlauncher.ui.dash.blinking
+import com.rocha.jancarlauncher.ui.dash.shiftBlink
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.JTheme
 import com.rocha.jancarlauncher.ui.theme.JancarType
@@ -55,7 +56,7 @@ import kotlinx.coroutines.withContext
 const val CAR_MODEL_ASSET = "car/fox.glb"
 
 /**
- * Carro 3D (aberto pelo Painel): o Fox no meio, girando com o dedo, com portas, porta-malas e luzes seguindo o
+ * Carro 3D (aberto pelo Painel): o Fox fixo em 3/4 pela frente (pedido do dono), com portas, porta-malas e luzes seguindo o
  * carro de verdade. Mesmos dados e mesma conexão do Painel ([DashModel.reading]); nada aqui é simulado.
  */
 @Composable
@@ -72,11 +73,21 @@ fun CarRoute(onBack: () -> Unit) {
     val canDash by can.dashboard.collectAsState()
     val canCabin by can.cabin.collectAsState()
     val canLights by can.lights.collectAsState()
-    CarScreen(DashModel.reading(car, canDash, canCabin, canLights), canConnected, onBack)
+    // Mesmo modo de troca do Painel (DIA A DIA / BRAVO): trocado lá, vale aqui.
+    val savedMode by app.settings.driveMode.collectAsState(initial = null)
+    CarScreen(
+        DashModel.reading(car, canDash, canCabin, canLights), canConnected,
+        DashModel.DriveMode.fromName(savedMode), onBack,
+    )
 }
 
 @Composable
-fun CarScreen(reading: DashModel.Reading, canConnected: Boolean, onBack: () -> Unit) {
+fun CarScreen(
+    reading: DashModel.Reading,
+    canConnected: Boolean,
+    mode: DashModel.DriveMode = DashModel.DriveMode.Daily,
+    onBack: () -> Unit,
+) {
     val c = JTheme.colors
     val p = dash
     val load by rememberCarScene(CAR_MODEL_ASSET)
@@ -122,25 +133,50 @@ fun CarScreen(reading: DashModel.Reading, canConnected: Boolean, onBack: () -> U
                     Spacer(Modifier.width(20.dp))
                     BasicText("MODELO PROVISÓRIO", style = JancarType.appTag.copy(color = c.faint))
                 }
+                Spacer(Modifier.width(20.dp))
+                BasicText(
+                    "${mode.label} · TROCA ${DashModel.rpmText(mode.shiftRpm.toFloat())}",
+                    style = JancarType.appTag.copy(color = c.muted),
+                )
             }
 
-            // Como o painel original do Fox: conta-giros | (visor → aqui o carro 3D) | velocímetro + combustível.
-            // O 3D ocupa a largura toda, por trás dos mostradores: o carro fica grande e as pontas passam por
-            // trás deles (os mostradores não pegam toque, então girar funciona em qualquer lugar).
-            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
-                when (val l = load) {
-                    is SceneLoad.Ready -> Car3D(l.scene, renderState, Modifier.fillMaxSize())
-                    is SceneLoad.Failed -> BasicText("Modelo 3D não carregou", style = JancarType.body.copy(color = c.faint))
-                    SceneLoad.Loading -> {}
+            // Layout "C" (escolhido no Claude Design): faixa de RPM no topo, velocidade grande à esquerda, giro à
+            // direita e o carro 3D fixo no meio (3/4 pela frente, como nas fotos do dono).
+            val stage = DashModel.shiftStage(r.rpm, mode)
+            val blink = if (stage == DashModel.ShiftStage.Shift) shiftBlink() else null
+            Spacer(Modifier.height(12.dp))
+            RpmStrip(r.rpm, mode, blink)
+            Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.width(SIDE_W)) {
+                    BigReadout(
+                        DashModel.speedText(r.speed), "KM/H", 92,
+                        if (r.speed == null) c.faint else c.fg, alignEnd = false,
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    FuelBar(r.fuelLiters, low = DashModel.Alert.LowFuel in DashModel.alerts(r))
                 }
-                GestureHint(Modifier.align(Alignment.BottomCenter))
-                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-                    Tachometer(r.rpm, accent = p.normal, diameter = GAUGE_SIZE)
-                    Spacer(Modifier.weight(1f))
-                    Speedometer(
-                        r.speed, r.fuelLiters,
-                        lowFuel = DashModel.Alert.LowFuel in DashModel.alerts(r),
-                        accent = p.normal, diameter = GAUGE_SIZE,
+                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
+                    when (val l = load) {
+                        is SceneLoad.Ready -> Car3D(l.scene, renderState, Modifier.fillMaxSize())
+                        is SceneLoad.Failed -> BasicText("Modelo 3D não carregou", style = JancarType.body.copy(color = c.faint))
+                        SceneLoad.Loading -> {}
+                    }
+                }
+                Column(Modifier.width(SIDE_W), horizontalAlignment = Alignment.End) {
+                    BasicText(
+                        if (stage == DashModel.ShiftStage.Shift) "TROQUE" else " ",
+                        style = JancarType.appTag.copy(color = p.red, letterSpacing = 3.sp),
+                        modifier = Modifier.blinking(blink),
+                    )
+                    val rpmColor = when {
+                        r.rpm == null -> c.faint
+                        stage == DashModel.ShiftStage.Shift -> p.red
+                        stage == DashModel.ShiftStage.Near -> p.warn
+                        else -> c.fg
+                    }
+                    BigReadout(
+                        DashModel.rpmText(r.rpm), "RPM", 60, rpmColor, alignEnd = true,
+                        modifier = Modifier.blinking(blink),
                     )
                 }
             }
@@ -164,8 +200,8 @@ fun CarScreen(reading: DashModel.Reading, canConnected: Boolean, onBack: () -> U
     }
 }
 
-/** Diâmetro dos mostradores: cabe na altura útil da central (~534dp) com o carro ainda grande no meio. */
-private val GAUGE_SIZE = 240.dp
+/** Largura das colunas dos números (velocidade / giro) dos lados do carro. */
+private val SIDE_W = 200.dp
 
 /** Valor pequeno da linha de baixo (temperatura externa, hodômetro). */
 @Composable
@@ -206,18 +242,6 @@ private fun DoorsStatus(d: DashModel.Doors, modifier: Modifier = Modifier) {
     }
 }
 
-/** Dica dos gestos: aparece ao abrir e some sozinha (a tela fica limpa). */
-@Composable
-private fun GestureHint(modifier: Modifier) {
-    var visible by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) { delay(6_000); visible = false }
-    AnimatedVisibility(visible, modifier = modifier, exit = fadeOut(tween(600))) {
-        BasicText(
-            "Arraste para girar · pinça para aproximar · dois toques centraliza",
-            style = JancarType.appTag.copy(color = JTheme.colors.faint),
-        )
-    }
-}
 
 @Composable
 private fun Car3D(scene: GlbScene, state: CarRenderState, modifier: Modifier) {

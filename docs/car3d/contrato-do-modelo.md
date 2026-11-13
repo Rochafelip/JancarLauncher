@@ -81,8 +81,20 @@ nó) na dobradiça**; a malha fica parada em relação ao pivô.
 6. Salvar como `app/src/main/assets/car/fox.glb` e conferir na prévia:
    `adb shell am start -f 0x10008000 -n com.rocha.jancarlauncher/.CarPreviewActivity --es open fl,fr,rl,rr,trunk --ez lights true --es turn hazard`
 
-## Na central (a medir)
+## Câmera fixa (2026-11-13)
 
-- Quadros por segundo girando o carro e memória (`adb shell dumpsys meminfo com.rocha.jancarlauncher`):
-  meta do projeto é PSS ≤ ~70 MB.
-- O desenho só roda quando algo muda (toque, porta se mexendo, seta piscando); parado não gasta GPU.
+A tela mostra o carro **parado num ângulo só** (pedido do dono): 3/4 pela frente do lado do **passageiro**
+(direito, −X), de perto e um pouco de cima, como a foto `docs/Fox-photos/IMG-20261015-WA0044.jpg.jpeg`
+(`CarRenderer.FIXED_VIEW`, yaw −26°, pitch 11°, lente de 52°). Não gira nem aproxima.
+
+- O que essa câmera nunca vê (lado esquerdo, traseira, fundo) pode sair do modelo: a maquete corta tudo que fica
+  de costas para ela (`Mesh.cullAway`) e gasta os triângulos na frente, na lateral direita e nas rodas da
+  direita. Num modelo comprado, dá para apagar essas partes no Blender pelo mesmo motivo.
+- Exceções: portas e tampa traseira continuam inteiras (elas abrem e aparecem em outras posições).
+- Teto combinado: até 45 mil triângulos no total.
+
+## Na central (medido em 2026-11-13)
+
+- Modelo de 39,8 mil triângulos: memória do app ~68 MB de PSS (meta ≤ ~70 MB); portas abrindo a ~37 fps; o
+  dono girou com o dedo e achou fluido (antes da câmera fixa).
+- O desenho só roda quando algo muda (porta se mexendo, seta piscando); parado não gasta GPU.

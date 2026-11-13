@@ -24,7 +24,9 @@ const MATERIALS = [
   { name: "tire", baseColorFactor: [0.05, 0.05, 0.05, 1], metallicFactor: 0.0, roughnessFactor: 0.9 },
   { name: "rim", baseColorFactor: [0.74, 0.76, 0.78, 1], metallicFactor: 0.9, roughnessFactor: 0.28 },
   { name: "chrome", baseColorFactor: [0.85, 0.86, 0.88, 1], metallicFactor: 1.0, roughnessFactor: 0.12 },
-  { name: "lamp_head", baseColorFactor: [0.26, 0.28, 0.31, 1], metallicFactor: 0.4, roughnessFactor: 0.12 },
+  { name: "brake", baseColorFactor: [0.4, 0.41, 0.43, 1], metallicFactor: 0.8, roughnessFactor: 0.45 },
+  { name: "gloss_black", baseColorFactor: [0.02, 0.02, 0.025, 1], metallicFactor: 0.2, roughnessFactor: 0.12 },
+  { name: "lamp_head", baseColorFactor: [0.05, 0.055, 0.065, 1], metallicFactor: 0.5, roughnessFactor: 0.08 },
   { name: "lamp_tail", baseColorFactor: [0.45, 0.04, 0.05, 1], metallicFactor: 0.0, roughnessFactor: 0.2 },
   { name: "lamp_turn", baseColorFactor: [0.55, 0.33, 0.05, 1], metallicFactor: 0.0, roughnessFactor: 0.2 },
   { name: "lamp_fog", baseColorFactor: [0.55, 0.57, 0.6, 1], metallicFactor: 0.3, roughnessFactor: 0.15 },
@@ -261,6 +263,46 @@ class Mesh {
       this.tri(mat, [x0, 0, 0], p(x0, a0), p(x0, a1), [-1, 0, 0]);
     }
   }
+  /** Junta [other] nesta malha, deslocada por [offset]. */
+  append(other, offset = [0, 0, 0]) {
+    for (const [mat, p] of other.prims) {
+      const q = this.prim(mat);
+      for (let i = 0; i < p.idx.length; i += 3) {
+        const v = (k) => [0, 1, 2].map((a) => p.pos[p.idx[i + k] * 3 + a] + offset[a]);
+        const n = (k) => [0, 1, 2].map((a) => p.nrm[p.idx[i + k] * 3 + a]);
+        q.idx.push(this.vert(q, v(0), n(0)), this.vert(q, v(1), n(1)), this.vert(q, v(2), n(2)));
+      }
+    }
+  }
+  /**
+   * Câmera fixa: tira os triângulos que ela nunca vê — os três vértices virados para longe de [cam]
+   * ([cam] em coordenadas desta malha). [margin] deixa de fora os quase de perfil (podem aparecer na borda).
+   */
+  cullAway(cam, margin = 0.12) {
+    for (const [mat, p] of this.prims) {
+      const keep = [];
+      for (let i = 0; i < p.idx.length; i += 3) {
+        const away = [0, 1, 2].every((k) => {
+          const j = p.idx[i + k];
+          const v = [p.pos[j * 3], p.pos[j * 3 + 1], p.pos[j * 3 + 2]];
+          const n = [p.nrm[j * 3], p.nrm[j * 3 + 1], p.nrm[j * 3 + 2]];
+          return dot(n, norm(sub(cam, v))) < -margin;
+        });
+        if (!away) keep.push(p.idx[i], p.idx[i + 1], p.idx[i + 2]);
+      }
+      p.idx = keep;
+    }
+    // Vértices que sobraram sem triângulo: compacta.
+    for (const [mat, p] of this.prims) {
+      const map = new Map(), pos = [], nrm = [], idx = [];
+      for (const j of p.idx) {
+        if (!map.has(j)) { map.set(j, pos.length / 3); pos.push(p.pos[j * 3], p.pos[j * 3 + 1], p.pos[j * 3 + 2]); nrm.push(p.nrm[j * 3], p.nrm[j * 3 + 1], p.nrm[j * 3 + 2]); }
+        idx.push(map.get(j));
+      }
+      if (idx.length === 0) { this.prims.delete(mat); continue; }
+      p.pos = pos; p.nrm = nrm; p.idx = idx; p.keys = new Map();
+    }
+  }
   /** Copia a malha deslocada por -[origin] (vértices relativos ao pivô do nó). */
   relativeTo(origin) {
     const m = new Mesh();
@@ -358,7 +400,9 @@ function table(t, x) {
 // 2,465 m) e o comprimento total (3,823 m) repartido nos balanços como na foto; na vertical, o teto em 1,544 m
 // com o chão na base dos pneus. Largura e cantos pela foto de frente e pela traseira 3/4.
 const FRONT_AXLE = 1.165, REAR_AXLE = -1.3; // entre-eixos 2,465
-const TRACK_HALF = 0.70, WHEEL_R = 0.272, WHEEL_W = 0.19, ARCH_R = 0.315, RIM_R = 0.205;
+// Pneu 195/55 R15 (ficha do Fox G2 1.0/1.6): diâmetro 381 + 2 × 107 = 595 mm; aro de 15" com a borda (203 mm de raio);
+// folga pequena até o para-lama, como nas fotos (~2,5 cm).
+const TRACK_HALF = 0.70, WHEEL_R = 0.298, WHEEL_W = 0.195, ARCH_R = 0.323, RIM_R = 0.203;
 /** Cantos arredondados vistos de cima: a frente arredonda mais que a traseira (fotos de frente/traseira). */
 const taper = (z) => (z > 0 ? 1 - 0.13 * smooth(1.2, 1.97, z) : 1 - 0.09 * smooth(1.35, 1.86, -z));
 /** Meia-largura da lataria: barriga no meio da porta (y ≈ 0,55), recolhe na soleira e fecha acima da cintura. */
@@ -366,7 +410,8 @@ const sideHalf = (y) => (y < 0.55
   ? 0.8 - 0.035 * ((0.55 - y) / 0.3) ** 2
   : 0.8 - 0.01 * ((Math.min(y, 0.75) - 0.55) / 0.2) ** 2 - (y > 0.75 ? 0.12 * (y - 0.75) : 0));
 const bodyHalf = (y, z) => sideHalf(y) * taper(z);
-const glassHalf = (y, z) => (0.765 - (y - 0.95) * 0.3) * taper(z);
+// Vidros inclinados para dentro como no Fox (foto 3/4): o teto fica bem mais estreito que a cintura.
+const glassHalf = (y, z) => (0.765 - (y - 0.95) * 0.4) * taper(z);
 
 function arch(zc, from, to, steps = 10) {
   const pts = [];
@@ -447,7 +492,7 @@ function bulge(x, half, crown, r) {
  * [r]; a lateral (tampa) fica em x = ±[half](y, z), com o perfil recuado [r]. [matOf](z, y, normal2D) escolhe
  * o material de cada faixa (ex.: teto pintado sobre a estufa de vidro).
  */
-function extrudeRound(mesh, matOf, capMat, profile, half, { r, crownTop, crownEnd, steps = 18, capSubdiv = 5 }) {
+function extrudeRound(mesh, matOf, capMat, profile, half, { r, crownTop, crownEnd, steps = 22, capSubdiv = 7 }) {
   const ring = ccw(profile);
   const N = ring.length;
   // Normais 2D (z, y) de cada borda e de cada vértice (bissetriz); dobra forte = aresta viva no sombreado.
@@ -567,9 +612,9 @@ for (const s of [1, -1]) {
 }
 // Frente: grade preta com dois frisos cromados na altura dos faróis, emblema (disco genérico), colmeia
 // embaixo, neblina redonda em moldura preta (apagada: não há sinal da neblina) e placa em branco.
-body.slab(M.trim, [[-0.29, 0.675], [0.29, 0.675], [0.32, 0.772], [-0.32, 0.772]], onFront, FWD, false, 4);
-for (const y of [0.688, 0.722, 0.758]) body.slab(M.trim, rect(-0.3, y - 0.006, 0.3, y + 0.006), onFrontAt(0.012), FWD, false, 3);
-for (const y of [0.745, 0.7]) body.slab(M.chrome, rect(-0.31, y - 0.004, 0.31, y + 0.004), onFrontAt(0.016), FWD, false, 3);
+// Grade: faixa preta brilhante logo abaixo do capô, entre os faróis (foto 3/4), com lâminas em relevo.
+body.slab(M.gloss_black, [[-0.29, 0.675], [0.29, 0.675], [0.32, 0.772], [-0.32, 0.772]], onFront, FWD, false, 4);
+for (const y of [0.688, 0.722, 0.758]) body.slab(M.gloss_black, rect(-0.3, y - 0.006, 0.3, y + 0.006), onFrontAt(0.012), FWD, false, 3);
 body.slab(M.chrome, circle(0, 0.722, 0.055, 20), onFrontAt(0.018), FWD, false, 2);
 // Grade de baixo: fundo grafite com a colmeia preta em relevo por cima (hexágonos em fileiras alternadas).
 body.slab(M.interior, [[-0.5, 0.35], [0.5, 0.35], [0.48, 0.49], [-0.48, 0.49]], onFront, FWD, false, 5);
@@ -685,7 +730,7 @@ const hoodCrease = (x, v) => {
   const cx = lerp(0.36, 0.29, v);
   return 0.007 * Math.exp(-(((Math.abs(x) - cx) / 0.028) ** 2));
 };
-hood.gridPatch(M.paint, 64, 34, (u, v, o) => {
+hood.gridPatch(M.paint, 76, 42, (u, v, o) => {
   const z = lerp(0.95, 1.86, v), xmax = lerp(0.7, 0.62, v), x = (u * 2 - 1) * xmax, y0 = hoodY(z);
   const y = y0 + Math.max(0, bulge(x, bodyHalf(y0, z), BODY_CROWN_TOP * 0.95, BODY_R)) + hoodCrease(x, v);
   return [x, y + 0.008 + o * 0.016, z];
@@ -709,35 +754,62 @@ tailgate.slab(M.paint, chaikin([[-1.36, 1.53], [-1.42, 1.527], [-1.5, 1.485], [-
   (z, y, o) => [(o - 0.5) * 1.14, y, z], () => [1, 0, 0]);
 tailgate.box(M.lamp_tail, [0, 1.47, -1.49], [0.24, 0.02, 0.03]);
 
-/** Roda de liga 15" do Fox do dono: 5 pares de raios em V, aro prata, miolo escuro, calota central. */
-const wheel = (left) => {
+/**
+ * Roda do Fox do dono (fotos de 2026-11-13): liga 15" prata com 5 pares de raios em V levemente côncavos,
+ * 5 parafusos, calota central, disco de freio e pinça aparecendo entre os raios; pneu 195/55 R15 (ficha do
+ * Fox 1.0/1.6: 59,5 cm de diâmetro, flanco de 10,7 cm) com flanco abaulado e 3 sulcos na banda.
+ * [detail] = false: roda que quase não aparece da câmera fixa (direita), mais simples.
+ */
+const wheel = (left, detail = true) => {
   const m = new Mesh();
   const s = left ? 1 : -1;
   const face = s * WHEEL_W / 2;
   const w = WHEEL_W / 2, R = WHEEL_R;
-  // Perfil do pneu (x, raio): flanco, ombro arredondado, banda, ombro, flanco.
-  m.revolveX(M.tire, [[w - 0.004, RIM_R + 0.004], [w, RIM_R + 0.03], [w + 0.004, R - 0.06], [w, R - 0.03],
-    [w - 0.015, R - 0.008], [w - 0.035, R], [-(w - 0.035), R], [-(w - 0.015), R - 0.008], [-w, R - 0.03],
-    [-(w + 0.004), R - 0.06], [-w, RIM_R + 0.03], [-(w - 0.004), RIM_R + 0.004]], 48);
-  m.ringX(M.tire, 0, RIM_R + 0.03, -face, -s, 24); // lado de dentro fechado
-  m.ringX(M.trim, 0, RIM_R, face - s * 0.05, s, 24); // miolo escuro (aparece entre os raios)
-  m.cylinderX(M.rim, RIM_R, 0.05, 48, s > 0 ? face - 0.05 : face, false); // tala
-  m.ringX(M.rim, RIM_R - 0.02, RIM_R + 0.004, face + s * 0.004, s, 48); // borda do aro
+  const seg = detail ? 72 : 32;
+  // Perfil do pneu (x, raio) do lado de fora para o de dentro: talão, flanco abaulado, ombro, banda com
+  // 3 sulcos, ombro, flanco, talão.
+  const groove = (x0) => [[x0 + 0.006, R], [x0 + 0.004, R - 0.007], [x0 - 0.004, R - 0.007], [x0 - 0.006, R]];
+  const tread = detail ? [...groove(0.045), ...groove(0), ...groove(-0.045)] : [];
+  m.revolveX(M.tire, [[w - 0.006, RIM_R], [w + 0.002, RIM_R + 0.025], [w + 0.009, R - 0.055], [w + 0.004, R - 0.025],
+    [w - 0.012, R - 0.006], [w - 0.03, R], ...tread, [-(w - 0.03), R], [-(w - 0.012), R - 0.006], [-(w + 0.004), R - 0.025],
+    [-(w + 0.009), R - 0.055], [-(w + 0.002), RIM_R + 0.025], [-(w - 0.006), RIM_R]], seg);
+  m.ringX(M.tire, 0, RIM_R + 0.025, -face, -s, 24); // lado de dentro fechado
+  m.ringX(M.trim, 0, RIM_R, face - s * 0.11, s, 24); // fundo escuro atrás do freio
+  m.cylinderX(M.rim, RIM_R, 0.06, seg, s > 0 ? face - 0.06 : face, false); // tala
+  m.ringX(M.rim, RIM_R - 0.018, RIM_R + 0.005, face + s * 0.004, s, seg); // borda do aro
+  if (detail) {
+    // Disco de freio (com o "chapéu" no meio) e a pinça preta para a frente do carro, como na foto.
+    m.ringX(M.brake, 0.06, 0.135, face - s * 0.075, s, 40);
+    m.cylinderX(M.brake, 0.06, 0.02, 24, s > 0 ? face - 0.075 : face + 0.055, false);
+    m.box(M.trim, [face - s * 0.07, 0.035, 0.115], [0.04, 0.1, 0.05]);
+  }
+  // Raios em V: côncavos (o centro fica mais para fora que a borda).
+  const dish = (y, z) => 0.012 * (1 - Math.min(1, Math.hypot(y, z) / RIM_R));
   for (let k = 0; k < 5; k++) {
     const a = (k / 5) * 2 * Math.PI;
     for (const d of [-1, 1]) {
-      const pt = (r, ang, w) => {
+      const pt = (r, ang, hw) => {
         const c = [r * Math.sin(ang), r * Math.cos(ang)];
         const t = [Math.cos(ang), -Math.sin(ang)]; // perpendicular no plano da roda
-        return [[c[0] + t[0] * w, c[1] + t[1] * w], [c[0] - t[0] * w, c[1] - t[1] * w]];
+        return [[c[0] + t[0] * hw, c[1] + t[1] * hw], [c[0] - t[0] * hw, c[1] - t[1] * hw]];
       };
-      const [i0, i1] = pt(0.055, a + d * 0.07, 0.013);
-      const [o0, o1] = pt(RIM_R - 0.012, a + d * 0.2, 0.009);
-      m.slab(M.rim, [i0, o0, o1, i1], (y, z, o) => [face - s * 0.045 + s * o * 0.048, y, z], () => [s, 0, 0]);
+      const [i0, i1] = pt(0.058, a + d * 0.075, 0.014);
+      const [o0, o1] = pt(RIM_R - 0.012, a + d * 0.2, 0.0095);
+      m.slab(M.rim, [i0, o0, o1, i1], (y, z, o) => [face - s * 0.045 + s * (dish(y, z) + o * 0.048), y, z], () => [s, 0, 0], false, detail ? 3 : 1);
     }
   }
-  m.cylinderX(M.rim, 0.06, 0.02, 20, s > 0 ? face - 0.015 : face - 0.005); // cubo
-  m.ringX(M.chrome, 0, 0.032, face + s * 0.0055, s, 16); // calota central
+  m.cylinderX(M.rim, 0.065, 0.026, seg / 2, s > 0 ? face - 0.012 : face - 0.014); // cubo
+  if (detail) {
+    // 5 parafusos (furação 5×100: raio de 5 cm), entre os raios.
+    for (let k = 0; k < 5; k++) {
+      const a = ((k + 0.5) / 5) * 2 * Math.PI;
+      const bolt = new Mesh();
+      bolt.cylinderX(M.trim, 0.011, 0.012, 12, s > 0 ? face + 0.002 : face - 0.014);
+      m.append(bolt, [0, 0.05 * Math.sin(a), 0.05 * Math.cos(a)]);
+    }
+  }
+  m.ringX(M.trim, 0.026, 0.033, face + s * 0.0145, s, 20); // anel escuro da calota
+  m.ringX(M.chrome, 0, 0.026, face + s * 0.0148, s, 20); // calota central
   return m;
 };
 
@@ -755,6 +827,13 @@ function node(name, mesh, translation, kids) {
 const boxMesh = (mat, size) => { const m = new Mesh(); m.box(mat, [0, 0, 0], size); return m; };
 
 const children = [];
+// Câmera fixa do app (CarRenderer: 3/4 pela frente do lado do passageiro, yaw −26°, pitch 11°). Para cortar o que ela
+// nunca vê, usa um ponto bem mais longe na mesma direção: de longe se vê mais, então o corte fica conservador.
+const FIXED_CAM = (() => {
+  const yaw = (-26 * Math.PI) / 180, pitch = (11 * Math.PI) / 180, d = 12;
+  return [d * Math.cos(pitch) * Math.sin(yaw), 0.77 + d * Math.sin(pitch), d * Math.cos(pitch) * Math.cos(yaw)];
+})();
+body.cullAway(FIXED_CAM);
 children.push(node("body", body));
 const hinge = (x, z) => [x, 0, z];
 for (const [name, mesh, z, left] of [
@@ -776,7 +855,12 @@ children.push(node("hood", hood.relativeTo(hoodHinge), hoodHinge));
 const gateHinge = [0, 1.46, -1.44];
 children.push(node("tailgate", tailgate.relativeTo(gateHinge), gateHinge));
 for (const [name, z, left] of [["wheel_fl", FRONT_AXLE, true], ["wheel_fr", FRONT_AXLE, false], ["wheel_rl", REAR_AXLE, true], ["wheel_rr", REAR_AXLE, false]]) {
-  children.push(node(name, wheel(left), [left ? TRACK_HALF : -TRACK_HALF, WHEEL_R, z]));
+  // A câmera fixa vê o lado direito (−X): rodas da direita detalhadas, da esquerda simples; cada uma sem o que
+  // fica de costas para a câmera.
+  const pos = [left ? TRACK_HALF : -TRACK_HALF, WHEEL_R, z];
+  const m = wheel(left, !left);
+  m.cullAway(sub(FIXED_CAM, pos));
+  children.push(node(name, m, pos));
 }
 // Lanternas: nós próprios (o app acende pelo nome). Esquerda = +X.
 // As lentes são chapas finas coladas na lataria (acompanham o abaulado e a quina), não caixas.
@@ -785,11 +869,16 @@ for (const [side, s] of [["l", 1], ["r", -1]]) {
   const pick = (m) => (s > 0 ? m : m.mirrorX());
   const lampNode = (name, m) => children.push(node(`${name}_${side}`, pick(m)));
   // Farol com máscara escura, mais largo por fora e subindo para a quina; a seta âmbar numa faixa embaixo.
-  const head = lens(M.lamp_head, [[0.31, 0.675], [0.62, 0.668], [0.655, 0.755], [0.6, 0.8], [0.31, 0.785]], onFront, () => [0, 0, 1]);
-  for (const [cx, r] of [[0.4, 0.045], [0.53, 0.05]]) {
-    head.slab(M.chrome, circle(cx, 0.735, r, 18), onFrontAt(0.015), FWD, false, 2);
-    head.slab(M.lamp_head, circle(cx, 0.735, r * 0.45, 12), onFrontAt(0.026), FWD);
+  // Farol do G2: grande, da grade até a quina, a borda de cima subindo para o para-lama (foto 3/4).
+  // A máscara escura e os refletores ficam na carroceria (não acendem); o nó do farol só tem as lâmpadas, que
+  // brilham como na foto (máscara escura, lâmpada acesa) em vez da lente inteira virar uma mancha branca.
+  const housing = lens(M.lamp_head, [[0.31, 0.672], [0.5, 0.668], [0.64, 0.69], [0.695, 0.73], [0.7, 0.8], [0.66, 0.835], [0.5, 0.815], [0.31, 0.795]], onFront, () => [0, 0, 1], 5);
+  const head = new Mesh();
+  for (const [cx, r] of [[0.42, 0.047], [0.56, 0.052]]) {
+    housing.slab(M.chrome, circle(cx, 0.742, r, 18), onFrontAt(0.015), FWD, false, 2);
+    head.slab(M.lamp_head, circle(cx, 0.742, r * 0.5, 14), onFrontAt(0.026), FWD);
   }
+  body.append(pick(housing));
   lampNode("lamp_head", head);
   children.push(node(`lamp_turn_f${side}`, pick(lens(M.lamp_turn, [[0.4, 0.648], [0.61, 0.643], [0.625, 0.664], [0.4, 0.668]], onFront, () => [0, 0, 1]))));
   // Lanterna G2: vermelho por fora, dobrando a quina para a lateral; a seta na parte de dentro, mais baixa.

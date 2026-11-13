@@ -103,14 +103,15 @@ class CarRenderer(
 
     fun setState(s: CarRenderState) {
         val opened = animator.setDoors(s.doors)
-        // Abriu algo e ninguém mexeu na câmera há um tempo: gira até a peça.
-        if (opened != null && SystemClock.uptimeMillis() - lastTouch > IDLE_FOCUS_MS) {
+        // Abriu algo e ninguém mexeu na câmera há um tempo: gira até a peça (só com a câmera livre).
+        if (!FIXED_VIEW && opened != null && SystemClock.uptimeMillis() - lastTouch > IDLE_FOCUS_MS) {
             yawTarget = nearestAngle(yaw, CarRig.focusYaw(opened))
         }
         state = s
     }
 
     fun rotateBy(dxPx: Float, dyPx: Float) {
+        if (FIXED_VIEW) return
         lastTouch = SystemClock.uptimeMillis()
         yaw -= dxPx * DEG_PER_PX
         pitch = (pitch + dyPx * DEG_PER_PX * 0.6f).coerceIn(MIN_PITCH, MAX_PITCH)
@@ -118,6 +119,7 @@ class CarRenderer(
     }
 
     fun zoomBy(factor: Float) {
+        if (FIXED_VIEW) return
         lastTouch = SystemClock.uptimeMillis()
         zoom = (zoom / factor).coerceIn(MIN_ZOOM, MAX_ZOOM)
         zoomTarget = zoom
@@ -206,13 +208,14 @@ class CarRenderer(
             aspect >= 1.6f -> 0.82f - (aspect - 1.6f) / 0.6f * 0.16f
             else -> 0.82f + (1.6f - aspect).coerceIn(0f, 0.6f) * 0.3f
         }
-        val dist = fit * tight * zoom
+        // Câmera fixa: mais perto (o carro preenche a área entre os números).
+        val dist = fit * tight * zoom * (if (FIXED_VIEW) 0.86f else 1f)
         val y = Math.toRadians(yaw.toDouble()); val p = Math.toRadians(pitch.toDouble())
         eye[0] = restCenter[0] + (dist * cos(p) * sin(y)).toFloat()
         eye[1] = restCenter[1] + (dist * sin(p)).toFloat()
         eye[2] = restCenter[2] + (dist * cos(p) * cos(y)).toFloat()
         Matrix.perspectiveM(proj, 0, FOV_Y, aspect, dist * 0.2f, dist * 3f)
-        Matrix.setLookAtM(view, 0, eye[0], eye[1], eye[2], restCenter[0], restCenter[1] - 0.1f, restCenter[2], 0f, 1f, 0f)
+        Matrix.setLookAtM(view, 0, eye[0], eye[1], eye[2], restCenter[0], restCenter[1] - (if (FIXED_VIEW) 0.2f else 0.1f), restCenter[2], 0f, 1f, 0f)
         Matrix.multiplyMM(vp, 0, proj, 0, view, 0)
         // Luz principal acompanha a câmera (de cima, um pouco à esquerda): o carro fica bonito de qualquer lado.
         val fx = (eye[0] - restCenter[0]) / dist; val fz = (eye[2] - restCenter[2]) / dist
@@ -541,16 +544,23 @@ class CarRenderer(
     companion object {
         private const val TAG = "CarRenderer"
 
-        // 3/4 pela frente do lado do motorista, câmera baixa (como as fotos do dono à noite).
-        const val DEFAULT_YAW = 35f
-        const val DEFAULT_PITCH = 9f
+        /**
+         * Câmera fixa (pedido do dono, 2026-11-13): o carro não gira nem aproxima; fica sempre em 3/4 pela frente
+         * do lado do PASSAGEIRO (direito), de perto e um pouco de cima, como a foto IMG-20261015-WA0044 dele; o
+         * modelo só gasta triângulos no que
+         * aparece desse ângulo.
+         */
+        const val FIXED_VIEW = true
+        const val DEFAULT_YAW = -26f
+        const val DEFAULT_PITCH = 11f
         private const val MIN_PITCH = 2f
         // Até 30° de cima (pedido do dono, 2026-11-13): sem vista de topo; o modelo pode economizar no que só
         // apareceria de cima ou de baixo (o fundo do carro nem é gerado).
         private const val MAX_PITCH = 30f
         private const val MIN_ZOOM = 0.6f
         private const val MAX_ZOOM = 1.6f
-        private const val FOV_Y = 30f
+        // Lente aberta como a do celular (foto de perto): perspectiva forte, frente grande.
+        private const val FOV_Y = 52f
         private const val DEG_PER_PX = 0.35f
         private const val CAMERA_EASE_MS = 160f
         /** Sem toque há este tempo, a câmera vai sozinha até a porta que abriu. */
