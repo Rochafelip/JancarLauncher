@@ -629,8 +629,12 @@ function door(opts) {
   for (const poly of opts.black) m.slab(M.trim, poly, outer(glassHalf, 0.003), () => [1, 0, 0], true, 2);
   // Friso lateral fino na cor do carro e maçaneta arredondada na cor do carro.
   const [z0, z1] = opts.molding;
-  // Friso fino (4 mm de relevo): mais grosso, a borda vira uma linha clara serrilhada vista de lado.
-  m.slab(M.paint, [[z0, 0.44], [z1, 0.44], [z1, 0.46], [z0, 0.46]], (z, y, o) => [bodyHalf(y, z) + 0.037 + o * 0.004, y, z], () => [1, 0, 0], true, 2);
+  // Friso: relevo arredondado colado na porta (meia-cana de 4 mm), sem borda. Com borda, a faixa fina vista de
+  // lado serrilhava em pontinhos brancos (emulador e central).
+  m.decal(M.paint, [[z0, 0.44], [z1, 0.44], [z1, 0.46], [z0, 0.46]], (z, y) => {
+    const t = Math.min(1, Math.max(0, (y - 0.44) / 0.02));
+    return [bodyHalf(y, z) + 0.038 + 0.004 * Math.sin(Math.PI * t), y, z];
+  }, () => [1, 0, 0], 6);
   const [hz, hy] = opts.handle;
   m.blob(M.paint, [bodyHalf(hy, hz) + 0.034, hy, hz], [0.014, 0.016, 0.065], 2.4, 12, 6);
   if (opts.mirror) {
