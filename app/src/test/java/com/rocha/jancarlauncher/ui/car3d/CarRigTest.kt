@@ -73,4 +73,23 @@ class CarRigTest {
         assertEquals(0.5f, CarRig.ease(0.5f), 1e-6f)
         assertEquals(1f, CarRig.ease(2f), 0f)
     }
+
+    @Test fun lampFade_risesFastAndLandsExactlyOn() {
+        var level = 0f
+        level = CarRig.fadeLamp(level, on = true, dtMs = 16f)
+        assertTrue("acende um pouco no primeiro quadro, não tudo", level > 0.2f && level < 0.5f)
+        repeat(20) { level = CarRig.fadeLamp(level, on = true, dtMs = 16f) }
+        assertEquals(1f, level, 0f)
+    }
+
+    @Test fun lampFade_fallsSlowerThanItRises() {
+        val up = CarRig.fadeLamp(0f, on = true, dtMs = 16f)
+        val down = 1f - CarRig.fadeLamp(1f, on = false, dtMs = 16f)
+        assertTrue(up > down)
+    }
+
+    @Test fun mirrorRepeaters_blinkWithTheirSide() {
+        assertTrue("lamp_turn_ml" in CarRig.Lamp.TurnLeft.nodes)
+        assertTrue("lamp_turn_mr" in CarRig.Lamp.TurnRight.nodes)
+    }
 }

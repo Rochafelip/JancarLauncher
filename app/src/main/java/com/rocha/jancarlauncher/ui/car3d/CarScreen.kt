@@ -124,21 +124,24 @@ fun CarScreen(reading: DashModel.Reading, canConnected: Boolean, onBack: () -> U
             }
 
             // Como o painel original do Fox: conta-giros | (visor → aqui o carro 3D) | velocímetro + combustível.
-            Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                Tachometer(r.rpm, accent = p.normal, diameter = GAUGE_SIZE)
-                Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                    when (val l = load) {
-                        is SceneLoad.Ready -> Car3D(l.scene, renderState, Modifier.fillMaxSize())
-                        is SceneLoad.Failed -> BasicText("Modelo 3D não carregou", style = JancarType.body.copy(color = c.faint))
-                        SceneLoad.Loading -> {}
-                    }
-                    GestureHint(Modifier.align(Alignment.BottomCenter))
+            // O 3D ocupa a largura toda, por trás dos mostradores: o carro fica grande e as pontas passam por
+            // trás deles (os mostradores não pegam toque, então girar funciona em qualquer lugar).
+            Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) {
+                when (val l = load) {
+                    is SceneLoad.Ready -> Car3D(l.scene, renderState, Modifier.fillMaxSize())
+                    is SceneLoad.Failed -> BasicText("Modelo 3D não carregou", style = JancarType.body.copy(color = c.faint))
+                    SceneLoad.Loading -> {}
                 }
-                Speedometer(
-                    r.speed, r.fuelLiters,
-                    lowFuel = DashModel.Alert.LowFuel in DashModel.alerts(r),
-                    accent = p.normal, diameter = GAUGE_SIZE,
-                )
+                GestureHint(Modifier.align(Alignment.BottomCenter))
+                Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                    Tachometer(r.rpm, accent = p.normal, diameter = GAUGE_SIZE)
+                    Spacer(Modifier.weight(1f))
+                    Speedometer(
+                        r.speed, r.fuelLiters,
+                        lowFuel = DashModel.Alert.LowFuel in DashModel.alerts(r),
+                        accent = p.normal, diameter = GAUGE_SIZE,
+                    )
+                }
             }
 
             // Embaixo: luzes-espia e portas, como no Painel.

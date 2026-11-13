@@ -69,8 +69,17 @@ class CarRenderer(
     private val world = Array(scene.nodes.size) { FloatArray(16) }
     private val restCenter = FloatArray(3)
     private var radius = 2.2f
-    /** Centro (local) da malha de cada nó, para pôr o brilho da lanterna no lugar certo. */
+    /** Centro (local) e meia-diagonal da malha de cada nó: posição e tamanho do brilho da lanterna. */
     private val meshCenter = arrayOfNulls<FloatArray>(scene.nodes.size)
+    /** Brilho atual de cada luz (0..1), com fade de lâmpada ([CarRig.fadeLamp]). */
+    private val lampLevel = FloatArray(CarRig.Lamp.entries.size)
+    /** Verniz por material: só a pintura da lataria (nome com "paint"/"body"/"lataria"). */
+    private val coat = FloatArray(scene.materials.size) { i ->
+        val n = scene.materials[i].name.lowercase()
+        if ("paint" in n || "body" in n || "lataria" in n) 1f else 0f
+    }
+    private val emissive = FloatArray(3)
+    private val glow = FloatArray(4)
 
     // Objetos do GL (recriados quando o contexto é recriado).
     private var carProgram = 0
@@ -151,6 +160,12 @@ class CarRenderer(
         lastFrame = now
         var busy = animator.step(dt)
         busy = easeCamera(dt) || busy
+        for (lamp in CarRig.Lamp.entries) {
+            val on = lampOn(lamp)
+            val level = CarRig.fadeLamp(lampLevel[lamp.ordinal], on, dt)
+            lampLevel[lamp.ordinal] = level
+            if (level != (if (on) 1f else 0f)) busy = true
+        }
 
         val bg = state.background
         GLES20.glClearColor(((bg shr 16) and 0xFF) / 255f, ((bg shr 8) and 0xFF) / 255f, (bg and 0xFF) / 255f, 1f)
@@ -184,8 +199,13 @@ class CarRenderer(
         // Enquadra a esfera do carro na altura e na largura. Numa área larga dá para apertar (a esfera sobra em
         // cima e embaixo); entre os mostradores a área é quase quadrada e o carro de lado ocupa a largura toda,
         // com as portas abertas para fora, então aperta menos.
+        // Área bem larga (a tela do Carro: o 3D passa por trás dos mostradores) aperta mais e o carro fica grande.
         val fit = max(radius / tan(halfFov), radius / (tan(halfFov) * aspect))
-        val tight = 0.82f + (1.6f - aspect).coerceIn(0f, 0.6f) * 0.3f
+        val tight = when {
+            aspect >= 2.2f -> 0.66f
+            aspect >= 1.6f -> 0.82f - (aspect - 1.6f) / 0.6f * 0.16f
+            else -> 0.82f + (1.6f - aspect).coerceIn(0f, 0.6f) * 0.3f
+        }
         val dist = fit * tight * zoom
         val y = Math.toRadians(yaw.toDouble()); val p = Math.toRadians(pitch.toDouble())
         eye[0] = restCenter[0] + (dist * cos(p) * sin(y)).toFloat()
@@ -246,6 +266,7 @@ class CarRenderer(
         val uEye = uniform(carProgram, "uEye"); val uLight = uniform(carProgram, "uLight")
         val uSky = uniform(carProgram, "uSky"); val uGround = uniform(carProgram, "uGround")
         val uUseTex = uniform(carProgram, "uUseTex"); val uTex = uniform(carProgram, "uTex")
+        val uCoat = uniform(carProgram, "uCoat"); val uStudio = uniform(carProgram, "uStudio")
         val aPos = GLES20.glGetAttribLocation(carProgram, "aPos")
         val aNormal = GLES20.glGetAttribLocation(carProgram, "aNormal")
         val aUv = GLES20.glGetAttribLocation(carProgram, "aUv")
@@ -257,6 +278,7 @@ class CarRenderer(
         val ground = if (state.dark) GROUND_DARK else GROUND_LIGHT
         GLES20.glUniform3fv(uSky, 1, sky, 0)
         GLES20.glUniform3fv(uGround, 1, ground, 0)
+        GLES20.glUniform3fv(uStudio, 1, if (state.dark) STUDIO_DARK else STUDIO_LIGHT, 0)
         GLES20.glUniform1i(uTex, 0)
         GLES20.glDepthMask(true)
         GLES20.glDisable(GLES20.GL_BLEND)
@@ -274,14 +296,21 @@ class CarRenderer(
             scene.nodes.forEachIndexed { nodeIndex, node ->
                 if (node.mesh < 0) return@forEachIndexed
                 val lamp = lampOfNode[nodeIndex]
-                val lit = lampOn(lamp)
+                val level = lamp?.let { lampLevel[it.ordinal] } ?: 0f
                 GLES20.glUniformMatrix4fv(uModel, 1, false, world[nodeIndex], 0)
                 scene.meshes[node.mesh].forEachIndexed { k, prim ->
                     val mat = scene.materials.getOrNull(prim.material) ?: DEFAULT_MATERIAL
                     if (mat.blend != (pass == 1)) return@forEachIndexed
                     val ids = buffers[firstBuffer[node.mesh] + k]
                     GLES20.glUniform4fv(uBase, 1, mat.baseColor, 0)
-                    GLES20.glUniform3fv(uEmissive, 1, if (lit) lampColor(lamp) else mat.emissive, 0)
+                    if (lamp != null && level > 0f) {
+                        val on = lampColor(lamp)
+                        for (c in 0..2) emissive[c] = mat.emissive[c] + (on[c] - mat.emissive[c]) * level
+                        GLES20.glUniform3fv(uEmissive, 1, emissive, 0)
+                    } else {
+                        GLES20.glUniform3fv(uEmissive, 1, mat.emissive, 0)
+                    }
+                    GLES20.glUniform1f(uCoat, coat.getOrElse(prim.material) { 0f })
                     GLES20.glUniform1f(uMetal, mat.metallic)
                     GLES20.glUniform1f(uRough, mat.roughness.coerceIn(0.05f, 1f))
                     val tex = textures.getOrNull(mat.baseColorTexture) ?: 0
@@ -323,12 +352,15 @@ class CarRenderer(
         val shadowAlpha = if (state.dark) 0.75f else 0.32f
         groundQuad(restCenter[0], restCenter[2], radius * 0.5f, radius * 0.95f, floatArrayOf(0f, 0f, 0f, shadowAlpha), 0.25f)
         // Facho no chão só no tema escuro: no claro (dia) a luz somada vira uma mancha branca.
-        if (state.headlights && state.dark) {
+        val head = lampLevel[CarRig.Lamp.Head.ordinal]
+        if (head > 0f && state.dark) {
             GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
             val front = restCenter[2] + radius * 0.85f
+            for (c in 0..2) glow[c] = BEAM_COLOR[c]
+            glow[3] = BEAM_COLOR[3] * head
             for (s in floatArrayOf(-1f, 1f)) {
-                // Facho curto: cabe no quadro mesmo de lado (comprido, era cortado na borda da área 3D).
-                groundQuad(s * 0.5f, front + 0.7f, 0.6f, 0.95f, BEAM_COLOR, 0f)
+                // Facho curto: cabe no quadro mesmo de lado.
+                groundQuad(s * 0.5f, front + 0.7f, 0.6f, 0.95f, glow, 0f)
             }
         }
         GLES20.glDisable(GLES20.GL_BLEND)
@@ -349,7 +381,7 @@ class CarRenderer(
     private val out = FloatArray(4)
 
     private fun drawGlows() {
-        if (!state.headlights && !state.turnLeftLit && !state.turnRightLit) return
+        if (lampLevel.all { it == 0f }) return
         GLES20.glDepthMask(false)
         GLES20.glEnable(GLES20.GL_BLEND)
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE)
@@ -358,20 +390,24 @@ class CarRenderer(
         val ux = view[1]; val uy = view[5]; val uz = view[9]
         scene.nodes.indices.forEach { i ->
             val lamp = lampOfNode[i] ?: return@forEach
-            if (!lampOn(lamp)) return@forEach
+            val level = lampLevel[lamp.ordinal]
+            if (level <= 0f) return@forEach
             val c = meshCenter[i] ?: return@forEach
             center[0] = c[0]; center[1] = c[1]; center[2] = c[2]; center[3] = 1f
             Matrix.multiplyMV(out, 0, world[i], 0, center, 0)
             // Um pouco para fora do carro, para não sumir dentro da lataria.
             val push = if (out[2] >= restCenter[2]) 0.1f else -0.1f
             val px = out[0]; val py = out[1]; val pz = out[2] + push
-            val size = if (lamp == CarRig.Lamp.Head) 0.32f else 0.26f
+            // Brilho do tamanho da peça (o repetidor do retrovisor é bem menor que o farol).
+            val size = (c[3] * 1.6f).coerceIn(0.08f, if (lamp == CarRig.Lamp.Head) 0.32f else 0.26f)
+            val base = glowColor(lamp)
+            glow[0] = base[0]; glow[1] = base[1]; glow[2] = base[2]; glow[3] = base[3] * level
             fx(floatArrayOf(
                 px - (rx + ux) * size, py - (ry + uy) * size, pz - (rz + uz) * size, -1f, -1f,
                 px + (rx - ux) * size, py + (ry - uy) * size, pz + (rz - uz) * size, 1f, -1f,
                 px + (rx + ux) * size, py + (ry + uy) * size, pz + (rz + uz) * size, 1f, 1f,
                 px - (rx - ux) * size, py - (ry - uy) * size, pz - (rz - uz) * size, -1f, 1f,
-            ), glowColor(lamp), 0f)
+            ), glow, 0f)
         }
         GLES20.glDisable(GLES20.GL_BLEND)
         GLES20.glDepthMask(true)
@@ -431,7 +467,9 @@ class CarRenderer(
             val x = p.positions.get(k * 3 + a)
             min[a] = minOf(min[a], x); max[a] = maxOf(max[a], x)
         }
-        return FloatArray(3) { if (min[it] > max[it]) 0f else (min[it] + max[it]) / 2f }
+        if (min[0] > max[0]) return FloatArray(4)
+        val dx = max[0] - min[0]; val dy = max[1] - min[1]; val dz = max[2] - min[2]
+        return floatArrayOf((min[0] + max[0]) / 2f, (min[1] + max[1]) / 2f, (min[2] + max[2]) / 2f, sqrt(dx * dx + dy * dy + dz * dz) / 2f)
     }
 
     private fun upload(target: Int, id: Int, data: java.nio.Buffer, bytes: Int) {
@@ -503,8 +541,9 @@ class CarRenderer(
     companion object {
         private const val TAG = "CarRenderer"
 
-        const val DEFAULT_YAW = 38f
-        const val DEFAULT_PITCH = 16f
+        // 3/4 pela frente do lado do motorista, câmera baixa (como as fotos do dono à noite).
+        const val DEFAULT_YAW = 35f
+        const val DEFAULT_PITCH = 9f
         private const val MIN_PITCH = 2f
         private const val MAX_PITCH = 70f
         private const val MIN_ZOOM = 0.6f
@@ -520,6 +559,9 @@ class CarRenderer(
         private val GROUND_DARK = floatArrayOf(0.09f, 0.095f, 0.11f)
         private val SKY_LIGHT = floatArrayOf(0.95f, 0.96f, 0.98f)
         private val GROUND_LIGHT = floatArrayOf(0.5f, 0.51f, 0.54f)
+        /** Luzes de estúdio (softbox no teto e faixas em volta) que correm na lataria quando o carro gira. */
+        private val STUDIO_DARK = floatArrayOf(0.55f, 0.6f, 0.68f)
+        private val STUDIO_LIGHT = floatArrayOf(0.35f, 0.36f, 0.38f)
 
         // Luz branca-azulada do LED (o azul-aço do projeto), lanterna vermelha e seta âmbar.
         private val HEAD_ON = floatArrayOf(0.95f, 1f, 1.05f)
@@ -584,22 +626,35 @@ void main() {
 }
 """
 
-        // Pintura com reflexo falso de céu/chão (sem cubemap): barato para a Mali-450, que só tem mediump.
+        // Pintura com reflexo falso de estúdio (sem cubemap): céu/chão + softbox no teto + faixas de luz em volta,
+        // que correm na lataria quando o carro gira. Na pintura ([uCoat] = 1) vai uma camada de verniz por cima:
+        // reflexo nítido e brilho fino sobre o metálico borrado. Barato para a Mali-450, que só tem mediump.
         private const val CAR_FS = """
 precision mediump float;
 uniform vec4 uBase;
 uniform vec3 uEmissive;
 uniform float uMetal;
 uniform float uRough;
+uniform float uCoat;
 uniform vec3 uEye;
 uniform vec3 uLight;
 uniform vec3 uSky;
 uniform vec3 uGround;
+uniform vec3 uStudio;
 uniform sampler2D uTex;
 uniform float uUseTex;
 varying vec3 vNormal;
 varying vec3 vWorld;
 varying vec2 vUv;
+vec3 envAt(vec3 r, float soft) {
+  // Lateral (reflexo quase horizontal) já pega boa parte do "céu": é o que deixa o prata claro dos lados.
+  vec3 e = mix(uGround, uSky, smoothstep(-0.5, 0.2, r.y));
+  float top = smoothstep(0.78 - soft * 0.3, 0.92, r.y);
+  float strip = smoothstep(0.84 - soft * 0.6, 0.97, sin(atan(r.z, r.x) * 3.0))
+      * smoothstep(0.02, 0.18, r.y) * (1.0 - smoothstep(0.42, 0.6, r.y));
+  float horizon = (1.0 - smoothstep(0.0, 0.1 + soft * 0.2, abs(r.y - 0.05))) * 0.45;
+  return e + uStudio * (top * 1.2 + strip + horizon);
+}
 void main() {
   vec3 n = normalize(vNormal);
   if (!gl_FrontFacing) n = -n;
@@ -607,17 +662,20 @@ void main() {
   vec3 base = uBase.rgb;
   if (uUseTex > 0.5) base *= texture2D(uTex, vUv).rgb;
   float ndl = max(dot(n, uLight), 0.0);
+  float ndv = max(dot(n, v), 0.0);
   vec3 amb = mix(uGround, uSky, 0.5 + 0.5 * n.y);
   float gloss = 1.0 - uRough;
   vec3 h = normalize(uLight + v);
-  float spec = pow(max(dot(n, h), 0.0), 4.0 + 120.0 * gloss * gloss) * gloss;
+  float ndh = max(dot(n, h), 0.0);
+  float spec = pow(ndh, 4.0 + 120.0 * gloss * gloss) * gloss;
   vec3 r = reflect(-v, n);
-  vec3 env = mix(uGround, uSky, smoothstep(-0.15, 0.35, r.y));
-  float fres = pow(1.0 - max(dot(n, v), 0.0), 4.0);
+  float fres = pow(1.0 - ndv, 4.0);
   vec3 f0 = mix(vec3(0.04), base, uMetal);
-  vec3 refl = env * (f0 + (1.0 - f0) * fres) * gloss;
+  vec3 refl = envAt(r, uRough) * (f0 + (1.0 - f0) * fres) * gloss;
   vec3 diff = base * (1.0 - uMetal * 0.7) * (amb * 0.6 + ndl * 0.8);
-  gl_FragColor = vec4(diff + refl + spec * 0.7 + uEmissive, uBase.a);
+  float cc = uCoat * (0.04 + 0.96 * pow(1.0 - ndv, 5.0));
+  vec3 coat = envAt(r, 0.0) * cc + uCoat * pow(ndh, 220.0) * 1.1;
+  gl_FragColor = vec4((diff + refl + spec * 0.7) * (1.0 - cc) + coat + uEmissive, uBase.a);
 }
 """
 

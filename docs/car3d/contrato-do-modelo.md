@@ -42,12 +42,16 @@ nó) na dobradiça**; a malha fica parada em relação ao pivô.
 | `lamp_tail_l`, `lamp_tail_r` | lanternas (acendem junto com o farol) | — |
 | `lamp_turn_fl`, `lamp_turn_rl` | setas esquerdas (piscam) | — |
 | `lamp_turn_fr`, `lamp_turn_rr` | setas direitas (piscam) | — |
+| `lamp_turn_ml`, `lamp_turn_mr` | repetidor de seta no retrovisor esq. / dir. (opcional; **filho do nó da porta** dianteira) | — |
 
 - Ângulos e eixos ficam em `ui/car3d/CarRig.kt`. Se o modelo comprado vier com o eixo da dobradiça diferente,
   dá pra ajustar lá em vez de mexer no modelo.
 - As lanternas acendem pelo **nó**: tudo que estiver na malha do nó `lamp_*` ganha a cor de luz. Então o nó deve
   conter só a lente (não a carcaça).
-- Retrovisor, maçaneta e vidro da porta devem ser **filhos** do nó da porta (para abrirem junto).
+- Retrovisor, maçaneta e vidro da porta devem ser **filhos** do nó da porta (para abrirem junto). O aerofólio
+  (com a luz de freio alta, que fica apagada: não há sinal do freio) é parte da tampa traseira.
+- A pintura da lataria ganha verniz (reflexo nítido por cima) quando o nome do material tem `paint`, `body` ou
+  `lataria`; os outros materiais ficam sem.
 - Rodas (`wheel_fl` etc.) existem no provisório, mas o app não as gira (não há fonte confiável de velocidade
   por roda; não simular).
 

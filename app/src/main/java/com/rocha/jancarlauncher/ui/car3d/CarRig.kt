@@ -26,8 +26,24 @@ object CarRig {
     enum class Lamp(val nodes: List<String>) {
         Head(listOf("lamp_head_l", "lamp_head_r")),
         Tail(listOf("lamp_tail_l", "lamp_tail_r")),
-        TurnLeft(listOf("lamp_turn_fl", "lamp_turn_rl")),
-        TurnRight(listOf("lamp_turn_fr", "lamp_turn_rr")),
+        // ml/mr = repetidor no retrovisor (o Fox do dono tem; nó filho da porta, abre junto). Opcional no modelo.
+        TurnLeft(listOf("lamp_turn_fl", "lamp_turn_rl", "lamp_turn_ml")),
+        TurnRight(listOf("lamp_turn_fr", "lamp_turn_rr", "lamp_turn_mr")),
+    }
+
+    /**
+     * Lâmpada acendendo/apagando: o filamento leva um instante para esquentar e esfria um pouco mais devagar.
+     * Constantes de tempo (ms) do fade das luzes no desenho.
+     */
+    const val LAMP_RISE_MS = 45f
+    const val LAMP_FALL_MS = 110f
+
+    /** Aproxima o brilho [level] (0..1) do alvo em [dtMs]; chega exatamente no alvo quando fica bem perto. */
+    fun fadeLamp(level: Float, on: Boolean, dtMs: Float): Float {
+        val target = if (on) 1f else 0f
+        val tau = if (on) LAMP_RISE_MS else LAMP_FALL_MS
+        val next = level + (target - level) * (1f - kotlin.math.exp(-dtMs / tau))
+        return if (kotlin.math.abs(next - target) < 0.01f) target else next
     }
 
     /** Quanto tempo uma porta leva para abrir ou fechar por completo no desenho. */
