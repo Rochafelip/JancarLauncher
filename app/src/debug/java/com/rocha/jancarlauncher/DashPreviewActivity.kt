@@ -13,12 +13,14 @@ import com.rocha.jancarlauncher.can.DashBoard
 import com.rocha.jancarlauncher.can.Lights
 import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.dash.DashScreen
+import com.rocha.jancarlauncher.ui.theme.JancarTheme
 
 /**
  * Prévia do Painel com dados falsos (só debug), pra conferir o layout sem o carro.
  * `adb shell am start -n com.rocha.jancarlauncher/.DashPreviewActivity --ez moving true`
  * (moving = andando a 62 km/h com porta aberta → aviso vermelho; sem o extra, parado em marcha lenta).
  * Aviso de troca: `--ez moving true --es mode Sport --ei rpm 5000` (mode = Daily | Sport).
+ * Tema claro: `--ez light true` (sem o extra, escuro).
  */
 class DashPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +28,7 @@ class DashPreviewActivity : ComponentActivity() {
         val moving = intent.getBooleanExtra("moving", false)
         val rpm = intent.getIntExtra("rpm", if (moving) 3120 else 873)
         val mode = DashModel.DriveMode.fromName(intent.getStringExtra("mode"))
+        val light = intent.getBooleanExtra("light", false)
         // Sem porta aberta quando o teste é do aviso de troca (o SHIFT esconderia o resto de qualquer jeito).
         val door = if (intent.hasExtra("rpm")) 0 else 1
         val no = Int.MIN_VALUE
@@ -46,17 +49,19 @@ class DashPreviewActivity : ComponentActivity() {
         )
         setContent {
             var current by remember { mutableStateOf(mode) }
-            DashScreen(
-                state = CarState(headlightOn = true),
-                connected = true,
-                onBack = { finish() },
-                canConnected = true,
-                canDash = dash,
-                canCabin = cabin,
-                canLights = Lights(leftDirectionIndicator = 1, rightDirectionIndicator = 0, emergencyFlasher = 0),
-                mode = current,
-                onModeChange = { current = it },
-            )
+            JancarTheme(dark = !light) {
+                DashScreen(
+                    state = CarState(headlightOn = true),
+                    connected = true,
+                    onBack = { finish() },
+                    canConnected = true,
+                    canDash = dash,
+                    canCabin = cabin,
+                    canLights = Lights(leftDirectionIndicator = 1, rightDirectionIndicator = 0, emergencyFlasher = 0),
+                    mode = current,
+                    onModeChange = { current = it },
+                )
+            }
         }
     }
 }

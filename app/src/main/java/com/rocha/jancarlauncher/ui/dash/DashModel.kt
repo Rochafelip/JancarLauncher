@@ -123,7 +123,7 @@ object DashModel {
      * - Portas/porta-malas: `Cabin` do CAN (1 = aberta; testado: porta do motorista = 1). O protocolo PQ
      *   não manda o capô nem o cinto (o cinto fica sempre no valor padrão 1, por isso fica de fora).
      * - Setas/pisca-alerta: `Lights` do CAN (testado no Fox em 2026-11-13). Vem a posição da alavanca,
-     *   fixa enquanto ligada (não pisca); o pisca-alerta chega como as duas setas = 1 e o campo
+     *   fixa enquanto ligada (quem pisca é o `DashScreen`); o pisca-alerta chega como as duas setas = 1 e o campo
      *   `emergencyFlasher` nunca vem (fica Int.MIN_VALUE).
      * - Farol: fio do chicote lido pelo ICar (o CAN não expõe).
      * - Freio de mão e bateria: fora do Painel. O CAN não expõe nenhum dos dois, e o fio do freio de mão
