@@ -7,7 +7,7 @@ package com.rocha.jancarlauncher.ui.nav
  */
 object ScreenRestore {
     fun onRestore(saved: Screen?): Screen? = when (saved) {
-        Screen.Dash, Screen.Drawer -> Screen.Home
+        Screen.Dash, Screen.Car, Screen.Drawer -> Screen.Home
         Screen.Off -> Screen.Welcome
         Screen.Home, Screen.Welcome, null -> saved
     }

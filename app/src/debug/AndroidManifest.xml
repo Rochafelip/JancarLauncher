@@ -12,5 +12,11 @@
             android:exported="true"
             android:taskAffinity="com.rocha.jancarlauncher.dashpreview"
             android:screenOrientation="landscape" />
+        <!-- Prévia do carro 3D com estados falsos: só no build debug (ver CarPreviewActivity). -->
+        <activity
+            android:name=".CarPreviewActivity"
+            android:exported="true"
+            android:taskAffinity="com.rocha.jancarlauncher.carpreview"
+            android:screenOrientation="landscape" />
     </application>
 </manifest>

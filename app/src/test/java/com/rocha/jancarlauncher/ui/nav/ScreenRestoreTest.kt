@@ -13,6 +13,10 @@ class ScreenRestoreTest {
         assertEquals(Screen.Home, ScreenRestore.onRestore(Screen.Dash))
     }
 
+    @Test fun car3d_isNeverRestored_goesHome() {
+        assertEquals(Screen.Home, ScreenRestore.onRestore(Screen.Car))
+    }
+
     @Test fun drawer_isNeverRestored_goesHome() {
         assertEquals(Screen.Home, ScreenRestore.onRestore(Screen.Drawer))
     }

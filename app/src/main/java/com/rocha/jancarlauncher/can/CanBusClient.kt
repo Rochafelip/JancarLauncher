@@ -63,6 +63,12 @@ class CanBusClient(context: Context) {
 
     @Volatile private var remote: IBinder? = null
     @Volatile private var wantConnected = false
+    /**
+     * Quantas telas pediram a conexão (Painel e Carro 3D). Na troca entre as duas, a nova conecta antes da
+     * antiga sair; sem a contagem, o `disconnect()` da que sai derrubaria a conexão da que entrou.
+     * Só na thread principal (efeitos do Compose).
+     */
+    private var users = 0
 
     private val listener = object : Binder() {
         init { attachInterface(null, LISTENER) }
@@ -114,6 +120,7 @@ class CanBusClient(context: Context) {
     }
 
     fun connect() {
+        if (users++ > 0) return
         wantConnected = true
         val intent = Intent(ACTION).setComponent(ComponentName(PKG, SERVICE))
         val ok = runCatching { appContext.bindService(intent, conn, Context.BIND_AUTO_CREATE) }
@@ -122,6 +129,7 @@ class CanBusClient(context: Context) {
     }
 
     fun disconnect() {
+        if (users == 0 || --users > 0) return
         wantConnected = false
         main.removeCallbacksAndMessages(null)
         bg.post { runCatching { transact(T_UNREGISTER_LISTENER) { it.writeStrongBinder(listener) }?.recycle() } }

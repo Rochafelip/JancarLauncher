@@ -86,7 +86,7 @@ private val ShiftRed = Color(0xFFE11D1D)
  * Cores do Painel que dependem do tema. No claro são mais escuras, pra continuar legíveis no fundo
  * branco: âmbar e vermelho também pintam texto (número do RPM, escala, nome do modo).
  */
-private data class DashPalette(
+internal data class DashPalette(
     val normal: Color,
     val warn: Color,
     val red: Color,
@@ -106,7 +106,7 @@ private val LightDash = DashPalette(
     lampOn = Color(0xFF15803D), off = Color(0xFFDDE0E4),
 )
 
-private val dash: DashPalette
+internal val dash: DashPalette
     @Composable get() = if (JTheme.colors == LightColors) LightDash else DarkDash
 
 private fun DashModel.Zone.color(p: DashPalette) = when (this) {
@@ -130,7 +130,7 @@ private fun digits(size: Int, weight: FontWeight) = TextStyle(
  * única do CAN enquanto está na tela (a do ICar é do AppRoot). Toque longo abre o diagnóstico.
  */
 @Composable
-fun DashRoute(onBack: () -> Unit) {
+fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}) {
     val app = LocalContext.current.applicationContext as JancarApp
     // ICar: conexão aberta pelo AppRoot (o farol comanda o modo noturno); aqui só lê.
     val client = app.carService
@@ -156,6 +156,7 @@ fun DashRoute(onBack: () -> Unit) {
         state, connected, onBack, canConnected, canDash, canCabin, canLights,
         mode = DashModel.DriveMode.fromName(savedMode),
         onModeChange = { scope.launch { app.settings.setDriveMode(it.name) } },
+        onOpenCar = onOpenCar,
     )
 }
 
@@ -170,6 +171,8 @@ fun DashScreen(
     canLights: Lights? = null,
     mode: DashModel.DriveMode = DashModel.DriveMode.Daily,
     onModeChange: (DashModel.DriveMode) -> Unit = {},
+    /** Abre o carro 3D (botão do topo ou toque no desenho das portas). */
+    onOpenCar: () -> Unit = {},
 ) {
     var diagnostics by remember { mutableStateOf(false) }
     BackHandler(enabled = diagnostics) { diagnostics = false }
@@ -202,6 +205,8 @@ fun DashScreen(
                 // Tudo certo = nada escrito aqui.
                 if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = p.warn))
                 Spacer(Modifier.width(20.dp))
+                JIconButton(JIcons.Vehicle, "Carro 3D", onOpenCar)
+                Spacer(Modifier.width(12.dp))
                 ModeButton(mode) { onModeChange(mode.next()) }
             }
 
@@ -255,7 +260,12 @@ fun DashScreen(
                 Spacer(Modifier.weight(1f))
                 StatusLights(r)
                 Spacer(Modifier.width(28.dp))
-                DoorsDiagram(r.doors)
+                Box(
+                    Modifier
+                        .clip(RoundedCornerShape(Dimens.RadiusButton))
+                        .clickable(onClickLabel = "Abrir carro 3D", role = Role.Button, onClick = onOpenCar)
+                        .padding(6.dp),
+                ) { DoorsDiagram(r.doors) }
             }
         }
 
@@ -345,7 +355,7 @@ private fun Color.compositeOver(background: Color): Color {
 
 /** Valor com ícone grande à esquerda; [highlight] pinta ícone e número (ex.: reserva em âmbar). */
 @Composable
-private fun InfoItem(icon: ImageVector, value: String, unit: String, highlight: Color? = null) {
+internal fun InfoItem(icon: ImageVector, value: String, unit: String, highlight: Color? = null) {
     val c = JTheme.colors
     val unknown = value == DashModel.DASH
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -358,7 +368,7 @@ private fun InfoItem(icon: ImageVector, value: String, unit: String, highlight: 
 }
 
 /** Pisca das setas no Painel: meio ciclo aceso, meio apagado (1 piscada/s, pedido do usuário: "mais lento"). */
-private const val TURN_BLINK_HALF_MS = 500L
+internal const val TURN_BLINK_HALF_MS = 500L
 
 /**
  * O CAN do Fox manda a posição da alavanca (fica em 1 enquanto ligada), então quem pisca é o Painel.
@@ -393,7 +403,7 @@ private fun StatusLights(r: DashModel.Reading) {
 
 /** `true` assim que [on] liga; só volta a `false` depois de [TURN_HOLD_MS] desligado. */
 @Composable
-private fun latched(on: Boolean): Boolean {
+internal fun latched(on: Boolean): Boolean {
     var held by remember { mutableStateOf(on) }
     LaunchedEffect(on) {
         if (on) held = true else { delay(TURN_HOLD_MS); held = false }
@@ -402,7 +412,7 @@ private fun latched(on: Boolean): Boolean {
 }
 
 @Composable
-private fun Lamp(icon: ImageVector, on: Boolean?) {
+internal fun Lamp(icon: ImageVector, on: Boolean?) {
     val p = dash
     JIcon(icon, tint = if (on == true) p.lampOn else p.off, size = 36.dp)
 }

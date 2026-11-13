@@ -32,6 +32,7 @@ import com.rocha.jancarlauncher.media.rememberNowPlaying
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import com.rocha.jancarlauncher.power.ScreenOffPolicy
+import com.rocha.jancarlauncher.ui.car3d.CarRoute
 import com.rocha.jancarlauncher.ui.dash.DashRoute
 import com.rocha.jancarlauncher.ui.screenoff.ScreenOffScreen
 import com.rocha.jancarlauncher.settings.NightModeController
@@ -180,6 +181,7 @@ fun AppRoot(
             brightnessOpen -> brightnessOpen = false
             screen == Screen.Off -> screen = ScreenOffPolicy.afterWake(Screen.Off)
             screen == Screen.Drawer || screen == Screen.Dash -> screen = Screen.Home
+            screen == Screen.Car -> screen = Screen.Dash
             // Home/Boas-vindas: a tela inicial não "sai" com o botão voltar.
         }
     }
@@ -227,7 +229,8 @@ fun AppRoot(
                 onScreenOff = { brightnessOpen = false; screen = Screen.Off },
                 onOpenDash = { brightnessOpen = false; screen = Screen.Dash },
             )
-            Screen.Dash -> DashRoute(onBack = { screen = Screen.Home })
+            Screen.Dash -> DashRoute(onBack = { screen = Screen.Home }, onOpenCar = { screen = Screen.Car })
+            Screen.Car -> CarRoute(onBack = { screen = Screen.Dash })
             Screen.Off -> ScreenOffScreen(onWake = { screen = ScreenOffPolicy.afterWake(Screen.Off) })
             Screen.Drawer -> DrawerScreen(
                 isDark = isDark,
