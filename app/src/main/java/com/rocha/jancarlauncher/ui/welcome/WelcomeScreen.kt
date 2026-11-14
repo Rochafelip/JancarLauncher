@@ -29,8 +29,12 @@ import com.rocha.jancarlauncher.ui.home.ClockInfo
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.JancarType
 
-// A foto já vem tratada (desfoque + duotone), então as cores daqui são fixas nos dois temas.
+// Foto real do carro (a mesma da Home, estilo dos temas; antes era a tratada em azul com desfoque), com degradê
+// escuro: as cores daqui são fixas nos dois temas.
 private val Fg = Color(0xFFEEF0F2)
+
+/** Sombra leve no relógio: a foto real tem a parede branca atrás do carro. */
+private val TextShadow = androidx.compose.ui.graphics.Shadow(Color(0xB3000000), blurRadius = 14f)
 
 @Composable
 fun WelcomeScreen(clock: ClockInfo, onContinue: () -> Unit) {
@@ -46,7 +50,7 @@ fun WelcomeScreen(clock: ClockInfo, onContinue: () -> Unit) {
             ),
     ) {
         Image(
-            painter = painterResource(R.drawable.boot_background),
+            painter = painterResource(R.drawable.home_wallpaper),
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -54,8 +58,8 @@ fun WelcomeScreen(clock: ClockInfo, onContinue: () -> Unit) {
         Box(
             Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
-                    0f to Color(10, 11, 15, 77),
-                    0.68f to Color(10, 11, 15, 153),
+                    0f to Color(10, 11, 15, 110),
+                    0.55f to Color(10, 11, 15, 150),
                     1f to Color(8, 9, 12, 230),
                 ),
             ),
@@ -69,7 +73,7 @@ fun WelcomeScreen(clock: ClockInfo, onContinue: () -> Unit) {
                 "MULTIMÍDIA",
                 style = JancarType.caption.copy(color = Fg.copy(alpha = 0.55f), letterSpacing = 3.sp),
             )
-            BasicText(clock.time, style = JancarType.clockBoot.copy(color = Fg))
+            BasicText(clock.time, style = JancarType.clockBoot.copy(color = Fg, shadow = TextShadow))
             BasicText(clock.date, style = JancarType.dateBoot.copy(color = Fg.copy(alpha = 0.65f)), modifier = Modifier.padding(top = 4.dp))
         }
         Column(

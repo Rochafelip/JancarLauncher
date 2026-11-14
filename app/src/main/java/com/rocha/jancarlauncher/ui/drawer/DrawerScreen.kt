@@ -20,6 +20,8 @@ import com.rocha.jancarlauncher.launch.PackageGateway
 import com.rocha.jancarlauncher.ui.UiActions
 import com.rocha.jancarlauncher.ui.components.AppTile
 import com.rocha.jancarlauncher.ui.components.JIconButton
+import com.rocha.jancarlauncher.ui.components.OnPhotoSurfaces
+import com.rocha.jancarlauncher.ui.components.PhotoBackdrop
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.JTheme
 import com.rocha.jancarlauncher.ui.theme.JancarType
@@ -52,7 +54,11 @@ fun DrawerScreen(
     val availability = remember(gateway) { DrawerCatalog.entries.associate { it.id to DrawerCatalog.isAvailable(it, gateway) } }
     val installed = availability.values.count { it }
 
-    Column(Modifier.fillMaxSize().background(c.bg).padding(start = 64.dp, end = 64.dp, top = 44.dp, bottom = 40.dp)) {
+    Box(Modifier.fillMaxSize().background(c.bg)) {
+    // Estilo do tema: a foto do carro escurecida ao fundo e os blocos translúcidos.
+    PhotoBackdrop(dim = 0.84f)
+    OnPhotoSurfaces {
+    Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 44.dp, bottom = 40.dp)) {
         Row(Modifier.fillMaxWidth().padding(bottom = 34.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Row(horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 JIconButton(JIcons.Back, "Voltar para a tela inicial", onBack)
@@ -80,5 +86,7 @@ fun DrawerScreen(
             }
         }
         Box(Modifier.weight(1f))
+    }
+    }
     }
 }

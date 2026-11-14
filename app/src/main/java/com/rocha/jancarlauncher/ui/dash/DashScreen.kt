@@ -67,6 +67,8 @@ import com.rocha.jancarlauncher.can.DashBoard
 import com.rocha.jancarlauncher.can.Lights
 import com.rocha.jancarlauncher.can.VehicleInfoDetails
 import com.rocha.jancarlauncher.ui.components.JIcon
+import com.rocha.jancarlauncher.ui.components.OnPhotoSurfaces
+import com.rocha.jancarlauncher.ui.components.PhotoBackdrop
 import com.rocha.jancarlauncher.ui.components.JIconButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -217,7 +219,10 @@ fun DashScreen(
             .background(c.bg)
             .pointerInput(Unit) { detectTapGestures(onLongPress = { diagnostics = true }) },
     ) {
+        // Estilo do tema: a foto do carro bem escurecida ao fundo e os cartões translúcidos (PhotoBackdrop).
+        PhotoBackdrop(dim = 0.86f)
         // Na central a barra de status da Jancar ocupa ~66px do topo: área útil ~534dp, por isso tudo compacto.
+        OnPhotoSurfaces {
         Column(Modifier.fillMaxSize().padding(start = 40.dp, end = 40.dp, top = 20.dp, bottom = 24.dp)) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 JIconButton(JIcons.Back, "Voltar", onBack)
@@ -300,6 +305,7 @@ fun DashScreen(
                         .padding(6.dp),
                 ) { DoorsDiagram(r.doors) }
             }
+        }
         }
 
         if (diagnostics) {
