@@ -29,8 +29,8 @@ object GearModel {
     const val MIN_SPEED_KMH = 6f
     const val MIN_RPM = 900f
 
-    /** Abaixo disto o motor "pede" a marcha de baixo (por modo: no BRAVO o giro fica alto de propósito). */
-    fun downshiftRpm(mode: DashModel.DriveMode): Float = if (mode == DashModel.DriveMode.Sport) 2500f else 1400f
+    /** Abaixo disto o motor "pede" a marcha de baixo (por modo: no BRAVO o giro fica perto do torque de propósito). */
+    fun downshiftRpm(mode: DashModel.DriveMode): Float = if (mode == DashModel.DriveMode.Sport) 2300f else 1400f
 
     /** Marcha (1..5) que bate com a leitura agora; `null` = nenhuma bate (ou sem dado / parado). */
     fun gearFor(rpm: Float?, speed: Float?): Int? {

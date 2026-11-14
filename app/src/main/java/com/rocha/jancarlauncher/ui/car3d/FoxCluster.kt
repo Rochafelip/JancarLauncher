@@ -81,7 +81,7 @@ object FoxCluster {
     /**
      * Shift light no aro do conta-giros (pedido do dono, 2026-11-14: "shift light somente no RPM, dependendo do modo"):
      * [SHIFT_LEDS] LEDs acendem um a um nos [SHIFT_RANGE_RPM] antes do ponto de troca do modo (DIA A DIA 1500→3000,
-     * BRAVO 3500→5000); no ponto, todos vermelhos piscando. Fora da faixa o aro fica cromado, como o original.
+     * BRAVO 2350→3850, o torque máximo); no ponto, todos vermelhos piscando. Fora da faixa o aro fica cromado, como o original.
      */
     const val SHIFT_LEDS = 8
     const val SHIFT_RANGE_RPM = 1500f
@@ -139,8 +139,8 @@ enum class GaugeKind { Tach, Speed }
 @Composable
 fun AnalogGauge(
     kind: GaugeKind, value: Float?, sub: Float?, lamp: Boolean?, size: Dp, modifier: Modifier = Modifier,
-    /** Só conta-giros: quantos LEDs do shift light acesos (0 = aro cromado normal). */
-    shiftLeds: Int = 0,
+    /** Só conta-giros: modo do shift light (`null` = sem shift light). Os LEDs seguem o ponteiro, não o giro cru. */
+    shiftMode: DashModel.DriveMode? = null,
     /** No ponto de troca: pisca (lido só no desenho), todos os LEDs vermelhos. */
     shiftBlink: State<Float>? = null,
 ) {
@@ -170,13 +170,14 @@ fun AnalogGauge(
         drawCircle(Chrome, 152f * k, c, style = Stroke(5f * k))
 
         // Shift light: LEDs embutidos no topo do aro (só aparecem quando acendem).
-        if (tach && shiftLeds > 0) {
+        val shiftLeds = if (tach && shiftMode != null && shown != null) FoxCluster.shiftLeds(needle * 1000f, shiftMode) else 0
+        if (shiftLeds > 0 || shiftBlink != null) {
             val full = shiftBlink != null
             val alpha = shiftBlink?.value ?: 1f
             for (i in 0 until FoxCluster.SHIFT_LEDS) {
                 val at = p(160f, 160f, 152f, -42f + i * 12f)
                 drawCircle(Color(0xFF050506), 8.5f * k, at)
-                if (i >= shiftLeds) continue
+                if (i >= shiftLeds && shiftBlink == null) continue
                 val color = if (full) LedRed else when (FoxCluster.ledZone(i)) { 0 -> LedGreen; 1 -> LedAmber; else -> LedRed }
                 drawCircle(color.copy(alpha = 0.35f * alpha), 13f * k, at)
                 drawCircle(color.copy(alpha = alpha), 6f * k, at)

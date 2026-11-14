@@ -22,7 +22,7 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * Prévia do Painel com dados falsos (só debug), pra conferir o layout sem o carro.
  * `adb shell am start -n com.rocha.jancarlauncher/.DashPreviewActivity --ez moving true`
  * (moving = andando a 62 km/h com porta aberta → aviso vermelho; sem o extra, parado em marcha lenta).
- * Aviso de troca: `--ez moving true --es mode Sport --ei rpm 5000` (mode = Daily | Sport).
+ * Aviso de troca: `--ez moving true --es mode Sport --ei rpm 3850` (mode = Daily | Sport).
  * Tema claro: `--ez light true` (sem o extra, escuro).
  * Consumo (OBD falso): `--ez obd true` (conectado, com média agora e da viagem); sem o extra, OBD desligado.
  */

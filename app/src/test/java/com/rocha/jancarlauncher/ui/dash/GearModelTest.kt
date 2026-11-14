@@ -34,7 +34,7 @@ class GearModelTest {
 
     @Test fun suggest_upNearTheShiftPoint_downWhenLugging() {
         assertEquals(GearModel.Suggestion(GearModel.Hint.Up, 3), GearModel.suggest(2, 2700f, 27f, daily))
-        assertEquals(GearModel.Hint.None, GearModel.suggest(2, 2700f, 27f, sport).hint) // BRAVO troca em 5000
+        assertEquals(GearModel.Hint.None, GearModel.suggest(2, 2700f, 27f, sport).hint) // BRAVO troca em 3850
         assertEquals(GearModel.Hint.None, GearModel.suggest(5, 3500f, 100f, daily).hint) // não existe 6ª
         // 5ª a 35 km/h ≈ 1200 rpm: descer para a 4ª (≈1500 rpm, longe do ponto de troca).
         assertEquals(GearModel.Suggestion(GearModel.Hint.Down, 4), GearModel.suggest(5, 1200f, 35f, daily))

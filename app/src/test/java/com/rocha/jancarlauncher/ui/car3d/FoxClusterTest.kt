@@ -35,8 +35,9 @@ class FoxClusterTest {
         assertEquals(0, FoxCluster.shiftLeds(1400f, daily)) // antes da faixa: aro normal
         assertEquals(4, FoxCluster.shiftLeds(2250f, daily)) // meio da faixa 1500→3000
         assertEquals(8, FoxCluster.shiftLeds(3000f, daily)) // no ponto: todos
-        assertEquals(0, FoxCluster.shiftLeds(3000f, sport)) // no BRAVO a faixa começa em 3500
-        assertEquals(8, FoxCluster.shiftLeds(5200f, sport))
+        assertEquals(0, FoxCluster.shiftLeds(2300f, sport)) // no BRAVO a faixa começa em 2350
+        assertEquals(3, FoxCluster.shiftLeds(3000f, sport)) // onde o dia a dia já está no ponto
+        assertEquals(8, FoxCluster.shiftLeds(3850f, sport)) // torque máximo
         assertEquals(0, FoxCluster.shiftLeds(null, daily))
         assertEquals(listOf(0, 0, 0, 1, 1, 1, 2, 2), (0 until 8).map { FoxCluster.ledZone(it) })
     }

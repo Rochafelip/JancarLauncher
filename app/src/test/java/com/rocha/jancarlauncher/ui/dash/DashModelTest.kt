@@ -41,9 +41,9 @@ class DashModelTest {
     private val sport = DashModel.DriveMode.Sport
 
     @Test fun driveModes_matchTheDriversShiftPoints() {
-        // O usuário troca por volta de 3000 rpm no dia a dia e 5000 andando bravo.
+        // Dia a dia em 3000; BRAVO no torque máximo do EA111 1.0 8V (3850 rpm).
         assertEquals(3000, daily.shiftRpm)
-        assertEquals(5000, sport.shiftRpm)
+        assertEquals(3850, sport.shiftRpm)
     }
 
     @Test fun zone_lowSegments_areNormal() {
@@ -77,9 +77,9 @@ class DashModelTest {
     }
 
     @Test fun shiftStage_sport() {
-        assertEquals(DashModel.ShiftStage.None, DashModel.shiftStage(4499f, sport))
-        assertEquals(DashModel.ShiftStage.Near, DashModel.shiftStage(4500f, sport))
-        assertEquals(DashModel.ShiftStage.Shift, DashModel.shiftStage(5000f, sport))
+        assertEquals(DashModel.ShiftStage.None, DashModel.shiftStage(3349f, sport))
+        assertEquals(DashModel.ShiftStage.Near, DashModel.shiftStage(3350f, sport))
+        assertEquals(DashModel.ShiftStage.Shift, DashModel.shiftStage(3850f, sport))
         assertEquals(DashModel.ShiftStage.Shift, DashModel.shiftStage(6500f, sport))
     }
 
@@ -284,9 +284,9 @@ class DashModelTest {
     }
 
     @Test fun alerts_shift_onlyInSportMode_atTheShiftPoint() {
-        val atShift = reading(speed = 60f).copy(rpm = 5000f)
+        val atShift = reading(speed = 60f).copy(rpm = 3850f)
         assertEquals(listOf(DashModel.Alert.Shift), DashModel.alerts(atShift, sport))
-        assertTrue(DashModel.alerts(atShift.copy(rpm = 4900f), sport).isEmpty())
+        assertTrue(DashModel.alerts(atShift.copy(rpm = 3800f), sport).isEmpty())
         // No dia a dia não tem faixa: só a cor da barra e do número.
         assertTrue(DashModel.alerts(reading(speed = 60f).copy(rpm = 3200f), daily).isEmpty())
     }

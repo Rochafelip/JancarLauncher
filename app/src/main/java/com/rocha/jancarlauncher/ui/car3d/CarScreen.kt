@@ -146,7 +146,7 @@ private fun CarScreenContent(
                 AnalogGauge(
                     GaugeKind.Tach, r.rpm, FoxCluster.coolantFraction(obdLive), lamp = r.headlightOn ?: false,
                     size = GAUGE, modifier = Modifier.align(Alignment.CenterStart),
-                    shiftLeds = FoxCluster.shiftLeds(r.rpm, mode),
+                    shiftMode = mode,
                     shiftBlink = if (atShift) shiftBlink() else null,
                 )
                 AnalogGauge(

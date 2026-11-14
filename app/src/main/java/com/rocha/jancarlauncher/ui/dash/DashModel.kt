@@ -18,12 +18,14 @@ object DashModel {
 
     /**
      * Modo de condução, trocado por um botão no Painel: define o ponto de troca de marcha. Valores do
-     * motorista (2026-11-10): troca por volta de 3000 rpm no dia a dia e 5000 andando bravo.
+     * motorista: dia a dia em 3000 rpm (2026-11-10); BRAVO no **torque máximo do motor EA111 1.0 8V flex, 3850 rpm**
+     * (10,6 kgfm etanol / 9,7 gasolina, fichas técnicas; pedido do dono em 2026-11-14 — antes era 5000 e os dois modos
+     * ficavam parecidos).
      * Só o modo bravo mostra a faixa amarela "SHIFT"; o dia a dia avisa só com cor.
      */
     enum class DriveMode(val label: String, val shiftRpm: Int, val shiftBanner: Boolean) {
         Daily("DIA A DIA", 3000, shiftBanner = false),
-        Sport("BRAVO", 5000, shiftBanner = true);
+        Sport("BRAVO", 3850, shiftBanner = true);
 
         fun next(): DriveMode = entries[(ordinal + 1) % entries.size]
 

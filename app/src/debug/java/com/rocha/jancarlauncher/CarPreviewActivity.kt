@@ -109,7 +109,7 @@ private fun DemoCar(onBack: () -> Unit) {
         BasicText(
             "DEMO",
             style = TextStyle(color = Color(0xFF0A0B0F), fontSize = 13.sp, fontWeight = FontWeight.W600, letterSpacing = 2.sp),
-            modifier = Modifier.align(Alignment.TopEnd).padding(top = 22.dp, end = 28.dp)
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 26.dp)
                 .background(Color(0xFFFFB43A), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
         )
     }
