@@ -82,6 +82,12 @@ fun AppRoot(
         carService.connect()
         onDispose { carService.disconnect() }
     }
+    // OBD-II sempre conectado enquanto o launcher roda: a média da viagem conta tudo até zerar (escolha do dono).
+    val obd = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).obd
+    androidx.compose.runtime.DisposableEffect(obd) {
+        obd.start()
+        onDispose { obd.stop() }
+    }
     val headlightOn by remember(carService) { carService.state.map { it.headlightOn }.distinctUntilChanged() }
         .collectAsState(initial = null)
     val jancarInfo by jancarMedia.info.collectAsState()

@@ -11,6 +11,9 @@ import com.rocha.jancarlauncher.can.Cabin
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.DashBoard
 import com.rocha.jancarlauncher.can.Lights
+import com.rocha.jancarlauncher.obd.FuelModel
+import com.rocha.jancarlauncher.obd.ObdClient
+import com.rocha.jancarlauncher.obd.Trip
 import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.dash.DashScreen
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
@@ -21,6 +24,7 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * (moving = andando a 62 km/h com porta aberta → aviso vermelho; sem o extra, parado em marcha lenta).
  * Aviso de troca: `--ez moving true --es mode Sport --ei rpm 5000` (mode = Daily | Sport).
  * Tema claro: `--ez light true` (sem o extra, escuro).
+ * Consumo (OBD falso): `--ez obd true` (conectado, com média agora e da viagem); sem o extra, OBD desligado.
  */
 class DashPreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,6 +33,7 @@ class DashPreviewActivity : ComponentActivity() {
         val rpm = intent.getIntExtra("rpm", if (moving) 3120 else 873)
         val mode = DashModel.DriveMode.fromName(intent.getStringExtra("mode"))
         val light = intent.getBooleanExtra("light", false)
+        val obd = intent.getBooleanExtra("obd", false)
         // Sem porta aberta quando o teste é do aviso de troca (o SHIFT esconderia o resto de qualquer jeito).
         val door = if (intent.hasExtra("rpm")) 0 else 1
         val no = Int.MIN_VALUE
@@ -49,6 +54,8 @@ class DashPreviewActivity : ComponentActivity() {
         )
         setContent {
             var current by remember { mutableStateOf(mode) }
+            var blend by remember { mutableStateOf(FuelModel.Blend.Gasolina) }
+            var trip by remember { mutableStateOf(if (obd) Trip(liters = 2.9, km = 37.4) else Trip()) }
             JancarTheme(dark = !light) {
                 DashScreen(
                     state = CarState(headlightOn = true),
@@ -60,6 +67,14 @@ class DashPreviewActivity : ComponentActivity() {
                     canLights = Lights(leftDirectionIndicator = 1, rightDirectionIndicator = 0, emergencyFlasher = 0),
                     mode = current,
                     onModeChange = { current = it },
+                    obdLive = if (!obd) ObdClient.Live() else ObdClient.Live(
+                        ObdClient.Status.Connected, "OBDII", speedKmh = if (moving) 62f else 0f,
+                        litersPerHour = if (moving) 4.4f else 0.7f, kmPerLiter = if (moving) 14.1f else null,
+                    ),
+                    obdTrip = trip,
+                    fuelBlend = blend,
+                    onResetTrip = { trip = Trip() },
+                    onNextBlend = { blend = blend.next() },
                 )
             }
         }

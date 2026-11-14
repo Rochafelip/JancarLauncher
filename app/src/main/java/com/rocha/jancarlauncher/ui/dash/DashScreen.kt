@@ -57,6 +57,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rocha.jancarlauncher.JancarApp
+import com.rocha.jancarlauncher.obd.FuelModel
+import com.rocha.jancarlauncher.obd.ObdClient
+import com.rocha.jancarlauncher.obd.Trip
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.CarStateDetails
 import com.rocha.jancarlauncher.can.Cabin
@@ -152,11 +155,22 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}) {
     val savedMode by app.settings.driveMode.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
 
+    // OBD-II (ELM327): conexão mantida pelo AppRoot; aqui só lê consumo e viagem.
+    val obdLive by app.obd.live.collectAsState()
+    val obdTrip by app.obd.trip.collectAsState()
+    val savedBlend by app.settings.fuelBlend.collectAsState(initial = null)
+    val blend = FuelModel.Blend.fromName(savedBlend)
+
     DashScreen(
         state, connected, onBack, canConnected, canDash, canCabin, canLights,
         mode = DashModel.DriveMode.fromName(savedMode),
         onModeChange = { scope.launch { app.settings.setDriveMode(it.name) } },
         onOpenCar = onOpenCar,
+        obdLive = obdLive,
+        obdTrip = obdTrip,
+        fuelBlend = blend,
+        onResetTrip = { app.obd.resetTrip() },
+        onNextBlend = { scope.launch { app.settings.setFuelBlend(blend.next().name) } },
     )
 }
 
@@ -173,6 +187,11 @@ fun DashScreen(
     onModeChange: (DashModel.DriveMode) -> Unit = {},
     /** Abre a tela do Carro (botão do topo ou toque no desenho das portas). */
     onOpenCar: () -> Unit = {},
+    obdLive: ObdClient.Live = ObdClient.Live(),
+    obdTrip: Trip = Trip(),
+    fuelBlend: FuelModel.Blend = FuelModel.Blend.Gasolina,
+    onResetTrip: () -> Unit = {},
+    onNextBlend: () -> Unit = {},
 ) {
     var diagnostics by remember { mutableStateOf(false) }
     BackHandler(enabled = diagnostics) { diagnostics = false }
@@ -205,6 +224,11 @@ fun DashScreen(
                 // Tudo certo = nada escrito aqui.
                 if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = p.warn))
                 Spacer(Modifier.width(20.dp))
+                // Combustível do tanque: só quando a conta do consumo depende dele.
+                if (ConsumptionText.needsBlend(obdLive)) {
+                    FuelBlendButton(fuelBlend, onNextBlend)
+                    Spacer(Modifier.width(12.dp))
+                }
                 JIconButton(JIcons.Vehicle, "Carro", onOpenCar)
                 Spacer(Modifier.width(12.dp))
                 ModeButton(mode) { onModeChange(mode.next()) }
@@ -224,6 +248,8 @@ fun DashScreen(
                     )
                     BasicText("km/h", style = JancarType.tileLabel.copy(color = c.muted))
                 }
+                // Consumo pelo OBD-II na coluna do meio, entre velocidade e giro.
+                ConsumptionBlock(obdLive, obdTrip, onResetTrip, Modifier.weight(1f))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     val rpmColor = when {
                         r.rpm == null -> c.faint

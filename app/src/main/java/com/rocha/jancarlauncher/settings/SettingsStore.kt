@@ -3,6 +3,7 @@ package com.rocha.jancarlauncher.settings
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -19,6 +20,17 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     private val preNightBrightnessKey = intPreferencesKey("pre_night_brightness")
 
     private val driveModeKey = stringPreferencesKey("drive_mode")
+    private val fuelBlendKey = stringPreferencesKey("fuel_blend")
+    private val tripLitersKey = doublePreferencesKey("trip_liters")
+    private val tripKmKey = doublePreferencesKey("trip_km")
+
+    /** Mistura no tanque escolhida no Painel (nome do `FuelModel.Blend`); null = nunca escolheu (gasolina). */
+    val fuelBlend: Flow<String?> = ds.data.map { it[fuelBlendKey] }
+    suspend fun setFuelBlend(name: String) { ds.edit { it[fuelBlendKey] = name } }
+
+    /** Média da viagem (OBD): litros e km somados desde o último "zerar". */
+    val trip: Flow<Pair<Double, Double>> = ds.data.map { (it[tripLitersKey] ?: 0.0) to (it[tripKmKey] ?: 0.0) }
+    suspend fun setTrip(liters: Double, km: Double) { ds.edit { it[tripLitersKey] = liters; it[tripKmKey] = km } }
 
     val dark: Flow<Boolean> = ds.data.map { it[darkKey] ?: true }
     /** Modo do aviso de troca do Painel (nome do `DashModel.DriveMode`); null = nunca escolheu. */

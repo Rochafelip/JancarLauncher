@@ -8,6 +8,7 @@ import com.rocha.jancarlauncher.boot.CrashRestarter
 import com.rocha.jancarlauncher.can.CanBusClient
 import com.rocha.jancarlauncher.can.JancarCarClient
 import com.rocha.jancarlauncher.media.JancarMediaClient
+import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.launch.LaunchController
 import com.rocha.jancarlauncher.power.ScreenStateTracker
 import com.rocha.jancarlauncher.power.SharedPrefsScreenOffStore
@@ -32,6 +33,9 @@ class JancarApp : Application() {
 
     // Serviço de mídia da Jancar (faixa do app Música); instância única, conectada pelo AppRoot.
     val media: JancarMediaClient by lazy { JancarMediaClient(this) }
+
+    // Leitor OBD-II (ELM327 Bluetooth): consumo para o Painel; ligado pelo AppRoot o tempo todo.
+    val obd: ObdClient by lazy { ObdClient(this, settings) }
 
     override fun onCreate() {
         super.onCreate()

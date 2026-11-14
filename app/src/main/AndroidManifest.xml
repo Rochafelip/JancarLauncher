@@ -4,6 +4,9 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
+    <!-- OBD-II pelo ELM327 Bluetooth pareado (Painel: consumo). Na central (API 27) bastam BLUETOOTH/ADMIN. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!-- Wi-Fi na Home: estado da rede e nome (SSID). O Android só entrega o nome com a localização concedida;
          na central: adb shell pm grant com.rocha.jancarlauncher android.permission.ACCESS_FINE_LOCATION -->
