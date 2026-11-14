@@ -12,6 +12,7 @@ object ElmProtocol {
     const val PIDS_01_20 = 0x00
     const val PIDS_21_40 = 0x20
     const val PIDS_41_60 = 0x40
+    const val COOLANT = 0x05 // temperatura do líquido de arrefecimento (água do motor), °C
     const val MAP = 0x0B // pressão absoluta do coletor, kPa
     const val RPM = 0x0C
     const val SPEED = 0x0D // km/h
@@ -50,6 +51,7 @@ object ElmProtocol {
     fun rpm(d: IntArray) = (256 * d[0] + d[1]) / 4f
     fun speed(d: IntArray) = d[0].toFloat()
     fun intakeTemp(d: IntArray) = d[0] - 40f
+    fun coolantTemp(d: IntArray) = d[0] - 40f
     fun manifoldPressure(d: IntArray) = d[0].toFloat()
     fun mafGramsPerSecond(d: IntArray) = (256 * d[0] + d[1]) / 100f
     fun ethanolPercent(d: IntArray) = d[0] * 100f / 255f

@@ -3,6 +3,26 @@ package com.rocha.jancarlauncher
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
 import com.rocha.jancarlauncher.ui.car3d.CarScreen
@@ -16,6 +36,8 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * - lights: farol aceso. turn: left | right | hazard. light: tema claro.
  * - rpm, speed, fuel (--ei): valores dos mostradores (padrão 873 rpm, 0 km/h, 49 L).
  * - obd (--ez): OBD falso conectado (consumo no relógio pequeno e no visor); sem o extra, sem OBD.
+ * - mode (--es): Daily | Sport (modo do shift light; o botão do topo também troca).
+ * - demo (--ez): roteiro animado de ~32 s em loop (FoxDemo) com tudo funcionando; etiqueta DEMO na tela.
  * Reabrir com outros extras (`-f 0x10008000` limpa a tarefa) para ver a porta abrindo/fechando.
  */
 class CarPreviewActivity : ComponentActivity() {
@@ -40,17 +62,55 @@ class CarPreviewActivity : ComponentActivity() {
         )
         val light = intent.getBooleanExtra("light", false)
         val obd = intent.getBooleanExtra("obd", false)
+        val demo = intent.getBooleanExtra("demo", false)
         setContent {
             JancarTheme(dark = !light) {
+                if (demo) { DemoCar { finish() }; return@JancarTheme }
+                var mode by remember { mutableStateOf(DashModel.DriveMode.fromName(intent.getStringExtra("mode"))) }
                 CarScreen(
                     reading, canConnected = true, onBack = { finish() },
                     obdLive = if (obd) ObdClient.Live(
                         ObdClient.Status.Connected, speedKmh = reading.speed,
-                        litersPerHour = 4.4f, kmPerLiter = if ((reading.speed ?: 0f) > 3f) 14.1f else null,
+                        litersPerHour = 4.4f, kmPerLiter = if ((reading.speed ?: 0f) > 3f) 14.1f else null, coolantC = 90f,
                     ) else ObdClient.Live(),
                     trip = if (obd) Trip(liters = 10.3, km = 133.2) else Trip(),
+                    mode = mode, onModeChange = { mode = it },
                 )
             }
         }
+    }
+}
+
+/** Modo DEMO: roda o roteiro do [FoxDemo] a ~20 quadros/s, somando o trip, com a etiqueta DEMO por cima. */
+@Composable
+private fun DemoCar(onBack: () -> Unit) {
+    var seconds by remember { mutableStateOf(0.0) }
+    var trip by remember { mutableStateOf(Trip(liters = 10.3, km = 133.2)) }
+    var mode by remember { mutableStateOf(DashModel.DriveMode.Daily) }
+    LaunchedEffect(Unit) {
+        val start = System.nanoTime()
+        var last = start
+        while (true) {
+            delay(50)
+            val now = System.nanoTime()
+            val dt = (now - last) / 1e9
+            last = now
+            seconds = (now - start) / 1e9
+            val f = FoxDemo.at(seconds, mode)
+            trip = trip.add(f.obd.litersPerHour ?: 0f, f.reading.speed ?: 0f, dt)
+        }
+    }
+    val frame = FoxDemo.at(seconds, mode)
+    Box(Modifier.fillMaxSize()) {
+        CarScreen(
+            frame.reading, canConnected = true, onBack = onBack, obdLive = frame.obd, trip = trip,
+            mode = mode, onModeChange = { mode = it },
+        )
+        BasicText(
+            "DEMO",
+            style = TextStyle(color = Color(0xFF0A0B0F), fontSize = 13.sp, fontWeight = FontWeight.W600, letterSpacing = 2.sp),
+            modifier = Modifier.align(Alignment.TopEnd).padding(top = 22.dp, end = 28.dp)
+                .background(Color(0xFFFFB43A), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
+        )
     }
 }

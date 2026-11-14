@@ -198,6 +198,9 @@ fun DashScreen(
     val r = DashModel.reading(state, canDash, canCabin, canLights)
     val alerts = DashModel.alerts(r, mode)
     val stage = DashModel.shiftStage(r.rpm, mode)
+    // Marcha pela relação RPM ÷ km/h e sugestão de troca (GearModel).
+    val gear = rememberGear(r.rpm, r.speed)
+    val gearHint = GearModel.suggest(gear, r.rpm, r.speed, mode)
     // Um pisca só no ponto de troca: barra, escala, número e faixa SHIFT piscam juntos (pedido do usuário).
     val blink = if (stage == DashModel.ShiftStage.Shift) shiftBlink() else null
     // Conectar leva um instante: só avisa a falta de dados depois de alguns segundos.
@@ -246,7 +249,11 @@ fun DashScreen(
                         DashModel.speedText(r.speed),
                         style = digits(156, FontWeight.W600).copy(color = if (r.speed == null) c.faint else c.fg),
                     )
-                    BasicText("km/h", style = JancarType.tileLabel.copy(color = c.muted))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        BasicText("km/h", style = JancarType.tileLabel.copy(color = c.muted))
+                        Spacer(Modifier.width(18.dp))
+                        GearBadge(gear, gearHint, stage)
+                    }
                 }
                 // Consumo pelo OBD-II na coluna do meio, entre velocidade e giro.
                 ConsumptionBlock(obdLive, obdTrip, onResetTrip, Modifier.weight(1f))
@@ -536,7 +543,7 @@ private fun ShiftBanner(blink: State<Float>?) {
 
 /** Botão do modo de condução (alterna dia a dia ↔ bravo); o nome do modo atual fica escrito nele. */
 @Composable
-private fun ModeButton(mode: DashModel.DriveMode, onClick: () -> Unit) {
+internal fun ModeButton(mode: DashModel.DriveMode, onClick: () -> Unit) {
     val c = JTheme.colors
     val accent = if (mode == DashModel.DriveMode.Sport) dash.warn else c.fg
     Row(

@@ -41,6 +41,8 @@ class ObdClient(context: Context, private val settings: SettingsStore) {
         val kmPerLiter: Float? = null,
         /** % de etanol informado pelo carro (PID 0x52); `null` = o carro não informa (vale a escolha do Painel). */
         val ethanolPercent: Float? = null,
+        /** Temperatura da água do motor (PID 05), °C; `null` = o carro não informa ou ainda não leu. */
+        val coolantC: Float? = null,
     )
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -141,11 +143,14 @@ class ObdClient(context: Context, private val settings: SettingsStore) {
         val useMaf = ElmProtocol.MAF in supported
         val useMap = !useMaf && listOf(ElmProtocol.MAP, ElmProtocol.IAT, ElmProtocol.RPM).all { it in supported }
         val hasEthanol = ElmProtocol.ETHANOL in supported
+        val hasCoolant = ElmProtocol.COOLANT in supported
 
         var last = SystemClock.elapsedRealtime()
         var lastPersist = last
         var lastEthanolRead = 0L
         var ethanol: Float? = null
+        var coolant: Float? = null
+        var lastCoolantRead = 0L
         var misses = 0
         while (coroutineContext.isActive) {
             val speed = io.read(ElmProtocol.SPEED, 1)?.let(ElmProtocol::speed)
@@ -164,6 +169,11 @@ class ObdClient(context: Context, private val settings: SettingsStore) {
                 ethanol = io.read(ElmProtocol.ETHANOL, 1)?.let(ElmProtocol::ethanolPercent) ?: ethanol
                 lastEthanolRead = now
             }
+            // Temperatura da água muda devagar: a cada 2 s basta.
+            if (hasCoolant && now - lastCoolantRead > 2_000) {
+                coolant = io.read(ElmProtocol.COOLANT, 1)?.let(ElmProtocol::coolantTemp) ?: coolant
+                lastCoolantRead = now
+            }
             // Sem resposta seguida (ignição desligada, adaptador travado): cai para reconectar.
             misses = if (speed == null) misses + 1 else 0
             if (misses >= 8) throw IllegalStateException("sem resposta do carro")
@@ -179,6 +189,7 @@ class ObdClient(context: Context, private val settings: SettingsStore) {
                 litersPerHour = lph,
                 kmPerLiter = if (lph != null && speed != null) FuelModel.kmPerLiter(speed, lph) else null,
                 ethanolPercent = ethanol,
+                coolantC = coolant,
             )
             if (now - lastPersist > 15_000) { persistTrip(); lastPersist = now }
             delay(250)

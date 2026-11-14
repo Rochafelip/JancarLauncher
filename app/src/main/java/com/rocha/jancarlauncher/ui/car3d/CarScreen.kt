@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,10 @@ import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
 import com.rocha.jancarlauncher.ui.components.JIconButton
 import com.rocha.jancarlauncher.ui.dash.DashModel
+import com.rocha.jancarlauncher.ui.dash.GearModel
+import com.rocha.jancarlauncher.ui.dash.ModeButton
+import com.rocha.jancarlauncher.ui.dash.shiftBlink
+import com.rocha.jancarlauncher.ui.dash.rememberGear
 import com.rocha.jancarlauncher.ui.dash.TURN_BLINK_HALF_MS
 import com.rocha.jancarlauncher.ui.dash.dash
 import com.rocha.jancarlauncher.ui.dash.latched
@@ -41,6 +46,7 @@ import com.rocha.jancarlauncher.ui.theme.JTheme
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
 import com.rocha.jancarlauncher.ui.theme.JancarType
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Tela do Fox (aberta pelo Painel). Arranjo "A" escolhido no Claude Design (2026-11-14): o **painel de instrumentos
@@ -65,7 +71,13 @@ fun CarRoute(onBack: () -> Unit) {
     val canLights by can.lights.collectAsState()
     val obdLive by app.obd.live.collectAsState()
     val obdTrip by app.obd.trip.collectAsState()
-    CarScreen(DashModel.reading(car, canDash, canCabin, canLights), canConnected, onBack, obdLive, obdTrip)
+    val savedMode by app.settings.driveMode.collectAsState(initial = null)
+    val scope = rememberCoroutineScope()
+    CarScreen(
+        DashModel.reading(car, canDash, canCabin, canLights), canConnected, onBack, obdLive, obdTrip,
+        DashModel.DriveMode.fromName(savedMode),
+        onModeChange = { scope.launch { app.settings.setDriveMode(it.name) } },
+    )
 }
 
 @Composable
@@ -75,9 +87,11 @@ fun CarScreen(
     onBack: () -> Unit,
     obdLive: ObdClient.Live = ObdClient.Live(),
     trip: Trip = Trip(),
+    mode: DashModel.DriveMode = DashModel.DriveMode.Daily,
+    onModeChange: (DashModel.DriveMode) -> Unit = {},
 ) {
     // Painel de carro é escuro de verdade: esta tela fica sempre no tema escuro.
-    JancarTheme(dark = true) { CarScreenContent(reading, canConnected, onBack, obdLive, trip) }
+    JancarTheme(dark = true) { CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange) }
 }
 
 @Composable
@@ -87,6 +101,8 @@ private fun CarScreenContent(
     onBack: () -> Unit,
     obdLive: ObdClient.Live,
     trip: Trip,
+    mode: DashModel.DriveMode,
+    onModeChange: (DashModel.DriveMode) -> Unit,
 ) {
     val c = JTheme.colors
     val photo by rememberCarPhoto()
@@ -107,6 +123,9 @@ private fun CarScreenContent(
     var graceOver by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { delay(4_000); graceOver = true }
     val noCarData = graceOver && !canConnected
+    // Marcha e sugestão de troca (mesmo modo DIA A DIA / BRAVO do Painel), no visor como nos VW mais novos.
+    val gear = rememberGear(r.rpm, r.speed)
+    val gearHint = GearModel.hintText(GearModel.suggest(gear, r.rpm, r.speed, mode))
 
     Box(Modifier.fillMaxSize().background(ClusterBg)) {
         // Área útil da central ~534dp de altura (a barra da Jancar ocupa o topo).
@@ -117,19 +136,25 @@ private fun CarScreenContent(
                 BasicText("FOX", style = JancarType.caption.copy(color = c.faint))
                 Spacer(Modifier.weight(1f))
                 if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = dash.warn))
+                Spacer(Modifier.width(20.dp))
+                // Modo do shift light (o mesmo do Painel: trocado aqui, vale lá).
+                ModeButton(mode) { onModeChange(mode.next()) }
             }
 
             Box(Modifier.fillMaxWidth().weight(1f)) {
+                val atShift = DashModel.shiftStage(r.rpm, mode) == DashModel.ShiftStage.Shift
                 AnalogGauge(
-                    GaugeKind.Tach, r.rpm, FoxCluster.kmplFraction(obdLive), lamp = r.headlightOn ?: false,
+                    GaugeKind.Tach, r.rpm, FoxCluster.coolantFraction(obdLive), lamp = r.headlightOn ?: false,
                     size = GAUGE, modifier = Modifier.align(Alignment.CenterStart),
+                    shiftLeds = FoxCluster.shiftLeds(r.rpm, mode),
+                    shiftBlink = if (atShift) shiftBlink() else null,
                 )
                 AnalogGauge(
                     GaugeKind.Speed, r.speed, FoxCluster.fuelFraction(r.fuelLiters), lamp = null,
                     size = GAUGE, modifier = Modifier.align(Alignment.CenterEnd),
                 )
                 Column(
-                    Modifier.align(Alignment.Center).width(300.dp),
+                    Modifier.align(Alignment.Center).width(316.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -147,9 +172,9 @@ private fun CarScreenContent(
                             PhotoLoad.Loading -> {}
                         }
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         ClusterArrow(left = true, on = left && lit)
-                        ClusterLcd(r.outsideTempC, r.odoKm, trip)
+                        ClusterLcd(r.outsideTempC, r.odoKm, trip, gear = gear, hint = gearHint)
                         ClusterArrow(left = false, on = right && lit)
                     }
                     // Portas: na foto só aparecem as do lado do motorista; o texto cobre todas.

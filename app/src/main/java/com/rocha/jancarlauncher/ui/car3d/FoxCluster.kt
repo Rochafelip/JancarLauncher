@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
+import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.Inter
 import kotlinx.coroutines.delay
@@ -58,8 +60,8 @@ import kotlin.math.sin
  * Painel de instrumentos original do Fox G2 redesenhado a partir da foto do dono (2026-11-14; arranjo "A" escolhido
  * no Claude Design: relógios dos lados, foto do carro e visor âmbar no meio). Regras puras, testáveis.
  *
- * Fiel ao painel: conta-giros 0–8 (×1000) com faixa vermelha a partir de 6,5 e, no lugar do relógio da água (sem
- * fonte nesta central), o de **consumo instantâneo 0–30 km/L** pelo OBD (pedido do dono, 2026-11-14);
+ * Fiel ao painel: conta-giros 0–8 (×1000) com faixa vermelha a partir de 6,5 e o relógio da **temperatura da água**
+ * 50–90–130 °C embutido, pelo OBD (PID 05; o CAN/a central não têm; pedido do dono, 2026-11-14 — antes era km/L);
  * velocímetro 0–200 com o do combustível embutido; ponteiros vermelhos; visor âmbar com hora, consumo, temperatura
  * externa, km e trip. Honesto: sem dado = sem ponteiro / "---" (como o próprio visor do carro mostra).
  */
@@ -76,17 +78,38 @@ object FoxCluster {
 
     fun fuelFraction(liters: Float?): Float? = liters?.let { (it / FUEL_TANK_L).coerceIn(0f, 1f) }
 
-    /** Fundo de escala do relógio de consumo (no lugar do da água). */
-    const val KMPL_MAX = 30f
+    /**
+     * Shift light no aro do conta-giros (pedido do dono, 2026-11-14: "shift light somente no RPM, dependendo do modo"):
+     * [SHIFT_LEDS] LEDs acendem um a um nos [SHIFT_RANGE_RPM] antes do ponto de troca do modo (DIA A DIA 1500→3000,
+     * BRAVO 3500→5000); no ponto, todos vermelhos piscando. Fora da faixa o aro fica cromado, como o original.
+     */
+    const val SHIFT_LEDS = 8
+    const val SHIFT_RANGE_RPM = 1500f
+
+    fun shiftLeds(rpm: Float?, mode: DashModel.DriveMode): Int {
+        if (rpm == null) return 0
+        val start = mode.shiftRpm - SHIFT_RANGE_RPM
+        return ((rpm - start) / (SHIFT_RANGE_RPM / SHIFT_LEDS)).toInt().coerceIn(0, SHIFT_LEDS)
+    }
+
+    /** Cor de cada LED: 3 verdes, 3 âmbar, 2 vermelhos (como um shift light de corrida). */
+    fun ledZone(index: Int): Int = when {
+        index < 3 -> 0
+        index < 6 -> 1
+        else -> 2
+    }
+
+    /** Escala do relógio da água, como no painel: 50 a 130 °C (90 no topo). */
+    const val COOLANT_MIN = 50f
+    const val COOLANT_MAX = 130f
 
     /**
-     * Ponteiro do consumo: fração 0..1 de [KMPL_MAX]. Sem OBD = `null` (sem ponteiro). Conectado e parado = 0 (parado
-     * não anda: 0 km/L é o valor real, o gasto em L/h fica no Painel).
+     * Ponteiro da água: fração 0..1 da escala (abaixo de 50 fica encostado no começo, como o de verdade com o motor
+     * frio). Sem OBD ou o carro não informa = `null` (sem ponteiro).
      */
-    fun kmplFraction(live: ObdClient.Live): Float? = when {
-        live.status != ObdClient.Status.Connected || live.litersPerHour == null -> null
-        else -> ((live.kmPerLiter ?: 0f) / KMPL_MAX).coerceIn(0f, 1f)
-    }
+    fun coolantFraction(live: ObdClient.Live): Float? =
+        if (live.status != ObdClient.Status.Connected) null
+        else live.coolantC?.let { ((it - COOLANT_MIN) / (COOLANT_MAX - COOLANT_MIN)).coerceIn(0f, 1f) }
 
     // Visor: o painel do carro usa ponto decimal e "---" sem dado; o visor daqui faz igual.
     fun lcdTemp(c: Float?): String = c?.let { String.format(Locale.US, "%.1f °C", it) } ?: "--- °C"
@@ -101,17 +124,26 @@ private val ZoneRed = Color(0xFFC8141D)
 private val TickWhite = Color(0xFFF2F3F4)
 private val LampGreen = Color(0xFF2FD06B)
 private val LampOff = Color(0xFF1D2A22)
+private val LedGreen = Color(0xFF2FD06B)
+private val LedAmber = Color(0xFFF2A93B)
+private val LedRed = Color(0xFFFF2B2B)
 private val Chrome = Brush.verticalGradient(listOf(Color(0xFFE9ECEF), Color(0xFF7D838B), Color(0xFFD5D9DE)))
 
 enum class GaugeKind { Tach, Speed }
 
 /**
  * Um relógio do painel. [value] em rpm (conta-giros) ou km/h; `null` = sem ponteiro. [sub] = fração 0..1 do relógio
- * pequeno (consumo no conta-giros, combustível no velocímetro); `null` = sem ponteiro.
+ * pequeno (água no conta-giros, combustível no velocímetro); `null` = sem ponteiro.
  * [lamp] acende a luz da lanterna no conta-giros (onde fica a do farol no painel original), `null` = não desenha.
  */
 @Composable
-fun AnalogGauge(kind: GaugeKind, value: Float?, sub: Float?, lamp: Boolean?, size: Dp, modifier: Modifier = Modifier) {
+fun AnalogGauge(
+    kind: GaugeKind, value: Float?, sub: Float?, lamp: Boolean?, size: Dp, modifier: Modifier = Modifier,
+    /** Só conta-giros: quantos LEDs do shift light acesos (0 = aro cromado normal). */
+    shiftLeds: Int = 0,
+    /** No ponto de troca: pisca (lido só no desenho), todos os LEDs vermelhos. */
+    shiftBlink: State<Float>? = null,
+) {
     val tach = kind == GaugeKind.Tach
     val max = if (tach) 8f else 200f
     // Ponteiro suave (250 ms), como o de verdade; leve: só anima quando o valor muda.
@@ -136,6 +168,20 @@ fun AnalogGauge(kind: GaugeKind, value: Float?, sub: Float?, lamp: Boolean?, siz
             152f * k, c,
         )
         drawCircle(Chrome, 152f * k, c, style = Stroke(5f * k))
+
+        // Shift light: LEDs embutidos no topo do aro (só aparecem quando acendem).
+        if (tach && shiftLeds > 0) {
+            val full = shiftBlink != null
+            val alpha = shiftBlink?.value ?: 1f
+            for (i in 0 until FoxCluster.SHIFT_LEDS) {
+                val at = p(160f, 160f, 152f, -42f + i * 12f)
+                drawCircle(Color(0xFF050506), 8.5f * k, at)
+                if (i >= shiftLeds) continue
+                val color = if (full) LedRed else when (FoxCluster.ledZone(i)) { 0 -> LedGreen; 1 -> LedAmber; else -> LedRed }
+                drawCircle(color.copy(alpha = 0.35f * alpha), 13f * k, at)
+                drawCircle(color.copy(alpha = alpha), 6f * k, at)
+            }
+        }
 
         // Faixa vermelha do conta-giros (6,5 a 8).
         if (tach) arc(c, 141f * k, FoxCluster.angle(6.5f, 0f, max), FoxCluster.angle(8f, 0f, max), ZoneRed, 9f * k)
@@ -163,18 +209,19 @@ fun AnalogGauge(kind: GaugeKind, value: Float?, sub: Float?, lamp: Boolean?, siz
         val unit = if (tach) "1/min\nX1000" else "km/h"
         label(measurer, unit, Offset(108f * k, (if (tach) 200f else 206f) * k), 12f * k, FontWeight.W400)
 
-        // Relógio pequeno (consumo km/L no conta-giros, combustível no velocímetro).
+        // Relógio pequeno (água no conta-giros, combustível no velocímetro).
         val sc = Offset(160f * k, 254f * k)
         drawCircle(Color(0xFF08090A), 52f * k, sc)
         drawCircle(Color(0xFFB9BEC5), 52f * k, sc, style = Stroke(2.4f * k))
-        if (!tach) arc(sc, 43f * k, -100f, -76f, ZoneRed, 6f * k) // reserva do combustível
+        // Faixa vermelha: água quente (120–130 °C) ou reserva do combustível.
+        if (tach) arc(sc, 43f * k, 75f, 100f, ZoneRed, 6f * k) else arc(sc, 43f * k, -100f, -76f, ZoneRed, 6f * k)
         for (i in 0..8) {
             val a = -100f + i * 25f
             drawLine(TickWhite, p(160f, 254f, 46f, a), p(160f, 254f, if (i % 4 == 0) 36f else 41f, a), 2.2f * k)
         }
-        val subLabels = if (tach) listOf("0" to -100f, "15" to 0f, "30" to 100f) else listOf("0" to -100f, "1/2" to 0f, "1" to 100f)
+        val subLabels = if (tach) listOf("50" to -100f, "90" to 0f, "130" to 100f) else listOf("0" to -100f, "1/2" to 0f, "1" to 100f)
         for ((t, a) in subLabels) label(measurer, t, p(160f, 254f, 28f, a), 13f * k)
-        if (tach) label(measurer, "km/L", Offset(160f * k, 280f * k), 10f * k, FontWeight.W400)
+        if (tach) label(measurer, "°C", Offset(160f * k, 280f * k), 11f * k, FontWeight.W400)
         if (sub != null) {
             drawLine(NeedleRed, sc, p(160f, 254f, 40f, -100f + subShown.coerceIn(0f, 1f) * 200f), 4f * k, StrokeCap.Round)
         }
@@ -219,9 +266,15 @@ private fun DrawScope.label(m: TextMeasurer, text: String, at: Offset, sizePx: F
     drawText(layout, topLeft = Offset(at.x - layout.size.width / 2f, at.y - layout.size.height / 2f))
 }
 
-/** Visor âmbar do meio, como o do painel: hora, consumo médio (OBD), temperatura externa, km e trip. */
+/**
+ * Visor âmbar do meio, como o do painel: marcha e sugestão de troca (como o indicador de marcha dos VW mais novos),
+ * hora, consumo médio (OBD), temperatura externa, km e trip.
+ */
 @Composable
-fun ClusterLcd(outsideTempC: Float?, odoKm: Int?, trip: Trip, modifier: Modifier = Modifier) {
+fun ClusterLcd(
+    outsideTempC: Float?, odoKm: Int?, trip: Trip, modifier: Modifier = Modifier,
+    gear: Int? = null, hint: String? = null,
+) {
     var clock by remember { mutableStateOf(now()) }
     LaunchedEffect(Unit) {
         while (true) { clock = now(); delay(10_000) }
@@ -238,7 +291,11 @@ fun ClusterLcd(outsideTempC: Float?, odoKm: Int?, trip: Trip, modifier: Modifier
             .padding(horizontal = 14.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        BasicText(clock, style = st(24))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            BasicText(gear?.toString() ?: "", style = st(24, align = TextAlign.Start), modifier = Modifier.weight(1f))
+            BasicText(clock, style = st(24))
+            BasicText(hint ?: "", style = st(20, align = TextAlign.End), modifier = Modifier.weight(1f))
+        }
         LcdRule()
         BasicText("Consumo médio", style = st(17, FontWeight.W500))
         BasicText("${FoxCluster.lcdConsumption(trip)} km/L", style = st(20))
@@ -263,11 +320,11 @@ private fun LcdRule() {
 
 private fun now(): String = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
 
-/** Seta do painel (acima/ao lado do visor): verde acesa, quase invisível apagada. */
+/** Seta do painel (dos lados do visor): verde acesa, quase invisível apagada. 48dp (pedido do dono: "aumentar as setas"). */
 @Composable
 fun ClusterArrow(left: Boolean, on: Boolean, modifier: Modifier = Modifier) {
     val painter = rememberVectorPainter(if (left) JIcons.TurnLeft else JIcons.TurnRight)
-    Canvas(modifier.size(30.dp)) {
+    Canvas(modifier.size(48.dp)) {
         with(painter) { draw(this@Canvas.size, colorFilter = ColorFilter.tint(if (on) LampGreen else LampOff)) }
     }
 }

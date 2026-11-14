@@ -29,6 +29,7 @@ class ElmProtocolTest {
         assertEquals(1726f, ElmProtocol.rpm(intArrayOf(0x1A, 0xF8)), 0.01f)
         assertEquals(50f, ElmProtocol.speed(intArrayOf(0x32)), 0f)
         assertEquals(25f, ElmProtocol.intakeTemp(intArrayOf(65)), 0f)
+        assertEquals(90f, ElmProtocol.coolantTemp(intArrayOf(130)), 0f)
         assertEquals(6.5f, ElmProtocol.mafGramsPerSecond(intArrayOf(0x02, 0x8A)), 0.001f)
         assertEquals(100f, ElmProtocol.ethanolPercent(intArrayOf(255)), 0.01f)
     }

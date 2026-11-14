@@ -25,7 +25,10 @@ class OverlayPreviewActivity : Activity() {
             }
             val rpm = when (stage) { DashModel.ShiftStage.Near -> "2700"; DashModel.ShiftStage.Shift -> "3100"; else -> "2400" }
             AutoOverlay.debugTarget = intent.getStringExtra("pkg") ?: "com.android.settings"
-            AutoOverlay.debugLines = OverlayPolicy.Lines("62", rpm, rpm.toFloat(), stage, "14,1 km/L")
+            AutoOverlay.debugLines = OverlayPolicy.Lines(
+                "62", rpm, rpm.toFloat(), stage, "14,1 km/L",
+                gear = "4", hint = if (stage == DashModel.ShiftStage.None) null else "↑5",
+            )
         }
         finish()
     }

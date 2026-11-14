@@ -20,12 +20,25 @@ class FoxClusterTest {
         assertNull(FoxCluster.fuelFraction(null))
     }
 
-    @Test fun kmpl_noObd_noNeedle_stopped_zero() {
-        assertNull(FoxCluster.kmplFraction(ObdClient.Live()))
-        val stopped = ObdClient.Live(ObdClient.Status.Connected, litersPerHour = 0.7f, kmPerLiter = null)
-        assertEquals(0f, FoxCluster.kmplFraction(stopped)!!, 0f)
-        val moving = ObdClient.Live(ObdClient.Status.Connected, litersPerHour = 4f, kmPerLiter = 15f)
-        assertEquals(0.5f, FoxCluster.kmplFraction(moving)!!, 0.001f)
+    @Test fun coolant_scale50to130_noObdNoNeedle() {
+        val on = { c: Float? -> ObdClient.Live(ObdClient.Status.Connected, coolantC = c) }
+        assertEquals(0.5f, FoxCluster.coolantFraction(on(90f))!!, 0.001f) // 90 no topo, como no painel
+        assertEquals(0f, FoxCluster.coolantFraction(on(25f))!!, 0f) // motor frio: encostado no começo
+        assertEquals(1f, FoxCluster.coolantFraction(on(140f))!!, 0f)
+        assertNull(FoxCluster.coolantFraction(on(null))) // o carro não informa
+        assertNull(FoxCluster.coolantFraction(ObdClient.Live(coolantC = 90f))) // OBD desconectado
+    }
+
+    @Test fun shiftLeds_followTheMode() {
+        val daily = com.rocha.jancarlauncher.ui.dash.DashModel.DriveMode.Daily
+        val sport = com.rocha.jancarlauncher.ui.dash.DashModel.DriveMode.Sport
+        assertEquals(0, FoxCluster.shiftLeds(1400f, daily)) // antes da faixa: aro normal
+        assertEquals(4, FoxCluster.shiftLeds(2250f, daily)) // meio da faixa 1500→3000
+        assertEquals(8, FoxCluster.shiftLeds(3000f, daily)) // no ponto: todos
+        assertEquals(0, FoxCluster.shiftLeds(3000f, sport)) // no BRAVO a faixa começa em 3500
+        assertEquals(8, FoxCluster.shiftLeds(5200f, sport))
+        assertEquals(0, FoxCluster.shiftLeds(null, daily))
+        assertEquals(listOf(0, 0, 0, 1, 1, 1, 2, 2), (0 until 8).map { FoxCluster.ledZone(it) })
     }
 
     @Test fun lcd_usesDotAndDashesLikeTheCar() {

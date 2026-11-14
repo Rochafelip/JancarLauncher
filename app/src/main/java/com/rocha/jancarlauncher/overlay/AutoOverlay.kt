@@ -24,6 +24,7 @@ import android.view.WindowManager
 import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.R
 import com.rocha.jancarlauncher.ui.dash.DashModel
+import com.rocha.jancarlauncher.ui.dash.GearEstimator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -52,6 +53,7 @@ class AutoOverlay(private val app: JancarApp) {
     private var view: CardView? = null
     private var params: WindowManager.LayoutParams? = null
     private var mode = DashModel.DriveMode.Daily
+    private val gearEstimator = GearEstimator()
 
     private var foreground: String? = null
     private var loggedForeground: String? = null
@@ -89,7 +91,8 @@ class AutoOverlay(private val app: JancarApp) {
         val r = DashModel.reading(
             app.carService.state.value, app.canBus.dashboard.value, app.canBus.cabin.value, app.canBus.lights.value,
         )
-        return OverlayPolicy.lines(r, app.obd.live.value, mode)
+        val gear = gearEstimator.update(r.rpm, r.speed, SystemClock.uptimeMillis())
+        return OverlayPolicy.lines(r, app.obd.live.value, mode, gear)
     }
 
     /** Último app que veio para a frente, pelos eventos de uso desde a última consulta. */
@@ -209,7 +212,7 @@ class AutoOverlay(private val app: JancarApp) {
             val old = lines
             lines = l
             val shape = old == null || (old.speed == null) != (l.speed == null) || (old.rpm == null) != (l.rpm == null) ||
-                (old.consumption == null) != (l.consumption == null)
+                (old.consumption == null) != (l.consumption == null) || (old.gear == null) != (l.gear == null)
             if (shape) requestLayout()
             invalidate()
         }
@@ -226,6 +229,7 @@ class AutoOverlay(private val app: JancarApp) {
             if (l.rpm != null) h += barH + gap + rowH
             if (l.rpm != null && l.consumption != null) h += gap + 1 * d + gap
             if (l.consumption != null) h += rowH
+            if (l.gear != null) h += rowH
             return h + 12 * d
         }
 
@@ -296,6 +300,24 @@ class AutoOverlay(private val app: JancarApp) {
                 val base = y + rowH * 0.72f
                 canvas.drawText(it.substringAfterLast(' '), left, base, labelL)
                 canvas.drawText(it.substringBeforeLast(' '), right, base, valueP)
+                y += rowH
+            }
+            // Marcha + sugestão (↑ na cor do aviso de troca, ↓ no azul do acento).
+            l.gear?.let { g ->
+                val base = y + rowH * 0.72f
+                canvas.drawText("marcha", left, base, labelL)
+                var x = right
+                l.hint?.let { h ->
+                    valueP.color = when {
+                        l.hintDown -> ACCENT
+                        l.stage == DashModel.ShiftStage.Shift -> RED
+                        else -> AMBER
+                    }
+                    canvas.drawText(h, x, base, valueP)
+                    x -= valueP.measureText(h) + 10 * d
+                    valueP.color = FG
+                }
+                canvas.drawText(g, x, base, valueP)
             }
         }
 

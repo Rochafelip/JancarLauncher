@@ -3,6 +3,7 @@ package com.rocha.jancarlauncher.overlay
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.ui.dash.ConsumptionText
 import com.rocha.jancarlauncher.ui.dash.DashModel
+import com.rocha.jancarlauncher.ui.dash.GearModel
 
 /**
  * Regras da faixa do Painel sobre o Android Auto (pedido do dono, 2026-11-13). Puras, testáveis.
@@ -23,18 +24,26 @@ object OverlayPolicy {
         val rpmValue: Float?,
         val stage: DashModel.ShiftStage,
         val consumption: String?,
+        /** Marcha engatada (GearModel) e a seta da sugestão ("↑4", "↓3"); `null` = some. */
+        val gear: String? = null,
+        val hint: String? = null,
+        val hintDown: Boolean = false,
     ) {
         val isEmpty: Boolean get() = speed == null && rpm == null && consumption == null
     }
 
-    fun lines(r: DashModel.Reading, live: ObdClient.Live, mode: DashModel.DriveMode): Lines {
+    fun lines(r: DashModel.Reading, live: ObdClient.Live, mode: DashModel.DriveMode, gear: Int? = null): Lines {
         val (now, unit) = ConsumptionText.instant(live)
+        val s = GearModel.suggest(gear, r.rpm, r.speed, mode)
         return Lines(
             speed = r.speed?.let { DashModel.speedText(it) },
             rpm = r.rpm?.let { DashModel.rpmText(it) },
             rpmValue = r.rpm,
             stage = DashModel.shiftStage(r.rpm, mode),
             consumption = if (now == DashModel.DASH) null else "$now $unit",
+            gear = gear?.toString(),
+            hint = GearModel.hintText(s),
+            hintDown = s.hint == GearModel.Hint.Down,
         )
     }
 }
