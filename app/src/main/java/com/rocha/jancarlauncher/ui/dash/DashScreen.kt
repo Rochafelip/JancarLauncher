@@ -1,5 +1,9 @@
 package com.rocha.jancarlauncher.ui.dash
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.border
+import com.rocha.jancarlauncher.ui.theme.ScreenStyles
+import com.rocha.jancarlauncher.ui.theme.screenStyles
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -79,6 +83,7 @@ import com.rocha.jancarlauncher.ui.theme.JTheme
 import com.rocha.jancarlauncher.ui.theme.DarkColors
 import com.rocha.jancarlauncher.ui.theme.LightColors
 import com.rocha.jancarlauncher.ui.theme.JancarType
+import com.rocha.jancarlauncher.ui.theme.isLight
 
 // Faixas de aviso (vermelha/âmbar) e SHIFT: blocos de cor próprios, iguais nos dois temas.
 private val ZoneWarn = Color(0xFFF2A93B)
@@ -112,7 +117,7 @@ private val LightDash = DashPalette(
 )
 
 internal val dash: DashPalette
-    @Composable get() = if (JTheme.colors == LightColors) LightDash else DarkDash
+    @Composable get() = if (JTheme.colors.isLight) LightDash else DarkDash
 
 private fun DashModel.Zone.color(p: DashPalette) = when (this) {
     DashModel.Zone.Normal -> p.normal
@@ -210,6 +215,18 @@ fun DashScreen(
     LaunchedEffect(Unit) { delay(4_000); graceOver = true }
     val noCarData = graceOver && !canConnected
 
+    // Versões escolhidas na galeria (aba Painel).
+    val styles = screenStyles()
+    val lightStyle = if (JTheme.colors.isLight) styles.lightDash else null
+    val cards = lightStyle == ScreenStyles.LightDash.Cartoes
+    // SHIFT na barra: a faixa amarela sai e a própria barra avisa.
+    val shiftOnBar = styles.shift == ScreenStyles.Shift.Barra && stage == DashModel.ShiftStage.Shift && mode.shiftBanner
+    val noShift = if (styles.shift == ScreenStyles.Shift.Barra) alerts - DashModel.Alert.Shift else alerts
+    // Aviso em cartão: porta/reserva vão para o cartão do meio; a faixa fica só para o SHIFT.
+    val cardAlerts = if (styles.alert == ScreenStyles.Alert.Cartao) noShift.filter { it != DashModel.Alert.Shift } else emptyList()
+    val stripAlerts = noShift - cardAlerts.toSet()
+    val unicoVazio = styles.empty == ScreenStyles.Empty.Unico && noCarData
+
     // Segue o tema da Home (claro/escuro, inclusive o modo noturno pelo farol).
     val c = JTheme.colors
     val p = dash
@@ -220,7 +237,11 @@ fun DashScreen(
             .pointerInput(Unit) { detectTapGestures(onLongPress = { diagnostics = true }) },
     ) {
         // Estilo do tema: a foto do carro bem escurecida ao fundo e os cartões translúcidos (PhotoBackdrop).
-        PhotoBackdrop(dim = 0.86f)
+        when (lightStyle) {
+            ScreenStyles.LightDash.Liso -> {} // claro liso: sem foto
+            ScreenStyles.LightDash.Cartoes -> PhotoBackdrop(dim = 0.09f) // foto bem presente, números em cartões
+            else -> PhotoBackdrop(dim = 0.86f)
+        }
         // Na central a barra de status da Jancar ocupa ~66px do topo: área útil ~534dp, por isso tudo compacto.
         OnPhotoSurfaces {
         Column(Modifier.fillMaxSize().padding(start = 40.dp, end = 40.dp, top = 20.dp, bottom = 24.dp)) {
@@ -230,7 +251,7 @@ fun DashScreen(
                 BasicText("PAINEL", style = JancarType.caption.copy(color = c.faint))
                 Spacer(Modifier.weight(1f))
                 // Tudo certo = nada escrito aqui.
-                if (noCarData) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = p.warn))
+                if (noCarData && !unicoVazio) BasicText("Sem dados do carro", style = JancarType.appTag.copy(color = p.warn))
                 Spacer(Modifier.width(20.dp))
                 // Combustível do tanque: só quando a conta do consumo depende dele.
                 if (ConsumptionText.needsBlend(obdLive)) {
@@ -243,13 +264,13 @@ fun DashScreen(
             }
 
             Spacer(Modifier.height(14.dp))
-            RpmBar(r.rpm, mode, blink)
+            Box(Modifier.card(cards)) { RpmBar(r.rpm, mode, blink, label = if (shiftOnBar) shiftLabel(gearHint) else null) }
 
             Row(
                 Modifier.fillMaxWidth().weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(Modifier.weight(1.4f)) {
+                Column(Modifier.weight(1.4f).card(cards)) {
                     BasicText(
                         DashModel.speedText(r.speed),
                         style = digits(156, FontWeight.W600).copy(color = if (r.speed == null) c.faint else c.fg),
@@ -261,8 +282,12 @@ fun DashScreen(
                     }
                 }
                 // Consumo pelo OBD-II na coluna do meio, entre velocidade e giro.
-                ConsumptionBlock(obdLive, obdTrip, onResetTrip, Modifier.weight(1f))
-                Column(Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                when {
+                    unicoVazio -> NoDataCard(obdLive, Modifier.weight(1f))
+                    cardAlerts.isNotEmpty() -> AlertCard(cardAlerts, r, Modifier.weight(1f))
+                    else -> ConsumptionBlock(obdLive, obdTrip, onResetTrip, Modifier.weight(1f).card(cards))
+                }
+                Column(Modifier.weight(1f).card(cards), horizontalAlignment = Alignment.End) {
                     val rpmColor = when {
                         r.rpm == null -> c.faint
                         stage == DashModel.ShiftStage.Shift -> p.red
@@ -279,14 +304,14 @@ fun DashScreen(
             }
 
             // Faixa de aviso: só existe quando algo acontece.
-            if (alerts.isNotEmpty()) {
-                AlertBanner(alerts, r, blink)
+            if (stripAlerts.isNotEmpty()) {
+                AlertBanner(stripAlerts, r, blink)
                 Spacer(Modifier.height(16.dp))
             }
 
             // Ícones no lugar de rótulos: bomba = combustível, termômetro = temperatura externa, estrada = odômetro.
             // À direita, as luzes-espia (setas e farol) e o carro visto de cima com as portas abertas.
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().card(cards), verticalAlignment = Alignment.CenterVertically) {
                 Row(horizontalArrangement = Arrangement.spacedBy(48.dp), verticalAlignment = Alignment.CenterVertically) {
                     InfoItem(
                         JIcons.Fuel, DashModel.valueText(r.fuelLiters), "L",
@@ -339,12 +364,13 @@ internal fun Modifier.blinking(blink: State<Float>?): Modifier =
  * vermelhos a partir dele, piscando com [blink]; as faixas apagadas e a escala mostram onde fica o ponto.
  */
 @Composable
-private fun RpmBar(rpm: Float?, mode: DashModel.DriveMode, blink: State<Float>?) {
+private fun RpmBar(rpm: Float?, mode: DashModel.DriveMode, blink: State<Float>?, label: String? = null) {
     val c = JTheme.colors
     val p = dash
     val lit = DashModel.litSegments(rpm)
     val stage = DashModel.shiftStage(rpm, mode)
     Column {
+        Box(contentAlignment = Alignment.Center) {
         Row(Modifier.fillMaxWidth().height(44.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             for (i in 0 until DashModel.SEGMENTS) {
                 val on = i < lit
@@ -363,6 +389,17 @@ private fun RpmBar(rpm: Float?, mode: DashModel.DriveMode, blink: State<Float>?)
                         .background(if (on) color else DashModel.zone(i, mode).color(p).copy(alpha = 0.10f).compositeOver(color)),
                 )
             }
+        }
+        // SHIFT na barra: "TROQUE ↑ 4ª" escrito por cima da barra que pisca.
+        if (label != null) {
+            BasicText(
+                label,
+                style = TextStyle(
+                    fontFamily = Inter, fontWeight = FontWeight.W800, fontSize = 28.sp, letterSpacing = 6.sp, color = Color.White,
+                    shadow = androidx.compose.ui.graphics.Shadow(Color(0x99000000), blurRadius = 10f),
+                ),
+            )
+        }
         }
         // Escala x1000 rpm sob a barra; os números da faixa vermelha piscam junto no ponto de troca.
         BoxWithConstraints(Modifier.fillMaxWidth().height(22.dp).padding(top = 6.dp)) {
@@ -585,6 +622,79 @@ private fun DiagnosticsLayer(onClose: () -> Unit, content: @Composable androidx.
             }
             Row(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                 content()
+            }
+        }
+    }
+}
+
+/** Cartão branco atrás de um bloco (Painel claro "Cartões sobre a foto"). */
+private fun Modifier.card(on: Boolean): Modifier =
+    if (!on) this else this.background(Color(0xE6FBFBFC), RoundedCornerShape(22.dp)).padding(horizontal = 16.dp, vertical = 10.dp)
+
+/** Texto da troca escrito na barra (versão "SHIFT na barra"). */
+private fun shiftLabel(s: GearModel.Suggestion): String =
+    if (s.hint == GearModel.Hint.Up && s.target != null) "TROQUE ↑ ${s.target}ª" else "TROQUE"
+
+/** Aviso em cartão no meio da tela (versão "Cartão"): borda vermelha pulsando, alterna a cada 3 s se houver mais de um. */
+@Composable
+private fun AlertCard(alerts: List<DashModel.Alert>, r: DashModel.Reading, modifier: Modifier = Modifier) {
+    var tick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(alerts.size) {
+        while (alerts.size > 1) { delay(3_000); tick++ }
+    }
+    val alert = alerts[tick % alerts.size]
+    val (icon, title, detail) = when (alert) {
+        DashModel.Alert.DoorOpen -> Triple(JIcons.DoorOpen, "PORTA ABERTA", DashModel.openDoorsText(r.doors))
+        DashModel.Alert.LowFuel -> Triple(JIcons.Fuel, "RESERVA", "${DashModel.valueText(r.fuelLiters)} L no tanque")
+        DashModel.Alert.Shift -> Triple(JIcons.Gauge, "SHIFT", "")
+    }
+    val tone = if (alert.red) ZoneRed else ZoneWarn
+    val pulse by rememberInfiniteTransition(label = "aviso").animateFloat(
+        initialValue = 1f, targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(tween(800, easing = LinearEasing), RepeatMode.Reverse), label = "borda",
+    )
+    val shape = RoundedCornerShape(22.dp)
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Row(
+            Modifier
+                .padding(horizontal = 8.dp)
+                .background(Color(0xEB1E0C0E), shape)
+                .border(2.dp, tone.copy(alpha = pulse), shape)
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Box(Modifier.size(56.dp).background(tone, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                JIcon(icon, tint = if (alert.red) Color.White else Color(0xFF0A0B0F), size = 30.dp)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                BasicText(title, style = JancarType.panelTitle.copy(color = Color.White, fontWeight = FontWeight.W700, letterSpacing = 1.sp))
+                if (detail.isNotEmpty()) BasicText(detail, style = JancarType.body.copy(color = Color(0xFFF3C7C7), fontSize = 15.sp), maxLines = 2)
+            }
+        }
+    }
+}
+
+/** Sem dados do carro (versão "Status único"): um cartão só com o que falta, no lugar das mensagens soltas. */
+@Composable
+private fun NoDataCard(obd: ObdClient.Live, modifier: Modifier = Modifier) {
+    val c = JTheme.colors
+    val shape = RoundedCornerShape(18.dp)
+    val obdText = ConsumptionText.status(obd) ?: "OBD conectado"
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Row(
+            Modifier
+                .padding(horizontal = 8.dp)
+                .background(c.surface, shape)
+                .border(1.dp, ZoneWarn.copy(alpha = 0.35f), shape)
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            JIcon(JIcons.Vehicle, tint = dash.warn, size = 28.dp)
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                BasicText("Sem dados do carro", style = JancarType.panelTitle.copy(color = c.fg, fontWeight = FontWeight.W600))
+                BasicText("CAN sem sinal · $obdText", style = JancarType.appTag.copy(color = c.muted, fontSize = 14.sp), maxLines = 2)
             }
         }
     }

@@ -47,3 +47,9 @@ val LightColors = JancarColors(
 )
 
 val LocalJancarColors = staticCompositionLocalOf { DarkColors }
+
+/**
+ * Tema claro? Pela cor de fundo, não pela igualdade do conjunto: sobre a foto as telas trocam `surface` por uma versão
+ * translúcida (`OnPhotoSurfaces`), e a comparação `== LightColors` passava a dizer "escuro" no tema claro.
+ */
+val JancarColors.isLight: Boolean get() = bg == LightColors.bg

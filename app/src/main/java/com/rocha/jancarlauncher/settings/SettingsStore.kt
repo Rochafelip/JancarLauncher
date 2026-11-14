@@ -23,6 +23,15 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     private val fuelBlendKey = stringPreferencesKey("fuel_blend")
     private val homeLayoutKey = stringPreferencesKey("home_layout")
 
+    /**
+     * Versões das outras telas (aba da galeria): uma chave por tela, valor = nome da opção em `ScreenStyles`.
+     * Ausente = a versão atual de cada tela.
+     */
+    val screenStyles: Flow<Map<String, String>> = ds.data.map { p ->
+        STYLE_KEYS.mapNotNull { k -> p[stringPreferencesKey("style_$k")]?.let { k to it } }.toMap()
+    }
+    suspend fun setScreenStyle(key: String, value: String) { ds.edit { it[stringPreferencesKey("style_$key")] = value } }
+
     /** Tema (arranjo) da Home (nome do `HomeLayout`); null = nunca escolheu (A, o de sempre). */
     val homeLayout: Flow<String?> = ds.data.map { it[homeLayoutKey] }
     suspend fun setHomeLayout(name: String) { ds.edit { it[homeLayoutKey] = name } }
@@ -51,6 +60,11 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     val preNightBrightness: Flow<Int?> = ds.data.map { it[preNightBrightnessKey] }
 
     suspend fun setDark(value: Boolean) { ds.edit { it[darkKey] = value } }
+
+    companion object {
+        /** Telas com versões escolhíveis (aba da galeria). */
+        val STYLE_KEYS = listOf("welcome", "drawer", "alert", "shift", "empty", "light_dash")
+    }
     suspend fun setUserBrightness(value: Int) { ds.edit { it[userBrightnessKey] = value } }
     suspend fun setLastBootCount(value: Int) { ds.edit { it[bootCountKey] = value } }
 

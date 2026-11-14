@@ -11,7 +11,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.rocha.jancarlauncher.R
 import com.rocha.jancarlauncher.ui.theme.JTheme
-import com.rocha.jancarlauncher.ui.theme.LightColors
+import com.rocha.jancarlauncher.ui.theme.isLight
 import com.rocha.jancarlauncher.ui.theme.LocalJancarColors
 
 /**
@@ -22,7 +22,7 @@ import com.rocha.jancarlauncher.ui.theme.LocalJancarColors
 @Composable
 fun PhotoBackdrop(dim: Float, modifier: Modifier = Modifier) {
     val c = JTheme.colors
-    val light = c == LightColors
+    val light = c.isLight
     Box(modifier.fillMaxSize()) {
         Image(painterResource(R.drawable.home_wallpaper), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(c.bg.copy(alpha = if (light) (0.40f + dim * 0.55f).coerceAtMost(0.95f) else dim)))

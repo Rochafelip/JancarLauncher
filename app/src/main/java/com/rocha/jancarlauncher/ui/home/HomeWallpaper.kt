@@ -12,7 +12,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import com.rocha.jancarlauncher.R
 import com.rocha.jancarlauncher.ui.theme.JTheme
-import com.rocha.jancarlauncher.ui.theme.LightColors
+import com.rocha.jancarlauncher.ui.theme.isLight
 
 /**
  * Fundo da Home (pedido do dono, 2026-11-14: "em vez de preto, o papel de parede ... centralizando o carro" e depois
@@ -26,7 +26,7 @@ import com.rocha.jancarlauncher.ui.theme.LightColors
 @Composable
 fun HomeWallpaper(modifier: Modifier = Modifier, layout: HomeLayout = HomeLayout.Atual) {
     val c = JTheme.colors
-    val light = c == LightColors
+    val light = c.isLight
     Box(modifier.fillMaxSize()) {
         Image(
             painter = painterResource(R.drawable.home_wallpaper),

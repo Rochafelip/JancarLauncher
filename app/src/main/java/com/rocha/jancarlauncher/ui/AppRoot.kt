@@ -65,6 +65,9 @@ fun AppRoot(
     val dark by settings.dark.collectAsState(initial = null)
     // Tema (arranjo) da Home, escolhido na galeria.
     val homeLayoutName by settings.homeLayout.collectAsState(initial = null)
+    // Versões das outras telas (abas da galeria), para todas as telas lerem via LocalScreenStyles.
+    val stylePrefs by settings.screenStyles.collectAsState(initial = emptyMap())
+    val screenStyles = com.rocha.jancarlauncher.ui.theme.ScreenStyles.fromPrefs(stylePrefs)
     // Ao recriar a activity, nunca volta direto no Painel/Gaveta/tela apagada (ver ScreenRestore).
     var screen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen?>(null) }
     var brightnessOpen by rememberSaveable { mutableStateOf(false) }
@@ -211,6 +214,7 @@ fun AppRoot(
     }
 
     JancarTheme(isDark) {
+    androidx.compose.runtime.CompositionLocalProvider(com.rocha.jancarlauncher.ui.theme.LocalScreenStyles provides screenStyles) {
         val toggleTheme: () -> Unit = { scope.launch { settings.setDark(!isDark) } }
         AnimatedContent(
             targetState = current,
@@ -247,6 +251,7 @@ fun AppRoot(
                 onOpenDash = { brightnessOpen = false; screen = Screen.Dash },
                 layout = com.rocha.jancarlauncher.ui.home.HomeLayout.fromName(homeLayoutName),
                 onLayoutChange = { scope.launch { settings.setHomeLayout(it.name) } },
+                onStyleChange = { key, value -> scope.launch { settings.setScreenStyle(key, value) } },
             )
             Screen.Dash -> DashRoute(onBack = { screen = Screen.Home }, onOpenCar = { screen = Screen.Car })
             Screen.Car -> CarRoute(onBack = { screen = Screen.Dash })
@@ -260,6 +265,7 @@ fun AppRoot(
             )
             }
         }
+    }
     }
 }
 

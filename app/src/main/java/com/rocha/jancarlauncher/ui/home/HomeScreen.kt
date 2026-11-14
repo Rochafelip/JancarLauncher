@@ -49,6 +49,8 @@ fun HomeScreen(
     /** Tema (arranjo) da Home; trocado pela galeria (segurar o botão de tema, ou pelo painel de brilho). */
     layout: HomeLayout = HomeLayout.Atual,
     onLayoutChange: (HomeLayout) -> Unit = {},
+    /** Versão de outra tela escolhida na galeria (chave da tela, nome da opção). */
+    onStyleChange: (key: String, value: String) -> Unit = { _, _ -> },
 ) {
     val c = JTheme.colors
     var pickerOpen by remember { mutableStateOf(false) }
@@ -98,6 +100,8 @@ fun HomeScreen(
                 ready = READY_LAYOUTS,
                 onPick = { onLayoutChange(it); pickerOpen = false },
                 onClose = { pickerOpen = false },
+                styles = com.rocha.jancarlauncher.ui.theme.screenStyles(),
+                onStyleChange = onStyleChange,
             )
         }
     }
