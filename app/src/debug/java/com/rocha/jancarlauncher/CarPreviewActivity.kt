@@ -3,6 +3,8 @@ package com.rocha.jancarlauncher
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.rocha.jancarlauncher.obd.ObdClient
+import com.rocha.jancarlauncher.obd.Trip
 import com.rocha.jancarlauncher.ui.car3d.CarScreen
 import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
@@ -13,6 +15,7 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * - open: portas abertas, separadas por vírgula (fl, fr, rl, rr, trunk, hood); sem o extra, tudo fechado.
  * - lights: farol aceso. turn: left | right | hazard. light: tema claro.
  * - rpm, speed, fuel (--ei): valores dos mostradores (padrão 873 rpm, 0 km/h, 49 L).
+ * - obd (--ez): OBD falso conectado (consumo no relógio pequeno e no visor); sem o extra, sem OBD.
  * Reabrir com outros extras (`-f 0x10008000` limpa a tarefa) para ver a porta abrindo/fechando.
  */
 class CarPreviewActivity : ComponentActivity() {
@@ -36,9 +39,17 @@ class CarPreviewActivity : ComponentActivity() {
             turnRight = turn == "right" || turn == "hazard",
         )
         val light = intent.getBooleanExtra("light", false)
+        val obd = intent.getBooleanExtra("obd", false)
         setContent {
             JancarTheme(dark = !light) {
-                CarScreen(reading, canConnected = true, onBack = { finish() })
+                CarScreen(
+                    reading, canConnected = true, onBack = { finish() },
+                    obdLive = if (obd) ObdClient.Live(
+                        ObdClient.Status.Connected, speedKmh = reading.speed,
+                        litersPerHour = 4.4f, kmPerLiter = if ((reading.speed ?: 0f) > 3f) 14.1f else null,
+                    ) else ObdClient.Live(),
+                    trip = if (obd) Trip(liters = 10.3, km = 133.2) else Trip(),
+                )
             }
         }
     }
