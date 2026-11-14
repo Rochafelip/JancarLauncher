@@ -31,3 +31,11 @@ Nova foto → novo quadro de trabalho, novo contorno, novo retângulo da placa (
 em `CarPhoto.SPEC` (faróis, setas, contorno de cada porta visível). Lado da foto define quais setas/portas são
 "de perto". Para conferir sem o carro: `CarPreviewActivity` (só no build debug), ex.
 `adb shell am start -f 0x10008000 -n com.rocha.jancarlauncher/.CarPreviewActivity --ez lights true --es turn hazard --es open fl,rl`.
+
+## Papel de parede da Home
+
+`papel-de-parede.ps1` gera `app/src/main/res/drawable-nodpi/home_wallpaper.jpg` (1024×600) da mesma foto original: recorte na largura toda, centrado no carro, sem tratamento de cor, placa em branco (mesmo polígono do recorte, em coordenadas da foto original).
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/car-photo/papel-de-parede.ps1
+```

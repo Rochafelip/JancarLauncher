@@ -21,6 +21,11 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
 
     private val driveModeKey = stringPreferencesKey("drive_mode")
     private val fuelBlendKey = stringPreferencesKey("fuel_blend")
+    private val homeLayoutKey = stringPreferencesKey("home_layout")
+
+    /** Tema (arranjo) da Home (nome do `HomeLayout`); null = nunca escolheu (A, o de sempre). */
+    val homeLayout: Flow<String?> = ds.data.map { it[homeLayoutKey] }
+    suspend fun setHomeLayout(name: String) { ds.edit { it[homeLayoutKey] = name } }
     private val tripLitersKey = doublePreferencesKey("trip_liters")
     private val tripKmKey = doublePreferencesKey("trip_km")
 

@@ -24,5 +24,11 @@
             android:exported="true"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <!-- Troca o tema da Home por adb: só no build debug (ver ThemeSetActivity). -->
+        <activity
+            android:name=".ThemeSetActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 </manifest>

@@ -2,6 +2,7 @@ package com.rocha.jancarlauncher.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -49,7 +51,12 @@ import kotlin.math.roundToInt
 
 /** Painel de brilho (260 dp). [onChange] dispara durante o arrasto; [onChangeFinished] ao soltar (persistir). */
 @Composable
-fun BrightnessPanel(percent: Int, onChange: (Int) -> Unit, onChangeFinished: () -> Unit, modifier: Modifier = Modifier) {
+fun BrightnessPanel(
+    percent: Int, onChange: (Int) -> Unit, onChangeFinished: () -> Unit, modifier: Modifier = Modifier,
+    /** Atalho para a galeria de temas (segurar o botão de tema é difícil de descobrir sozinho). */
+    onOpenThemes: (() -> Unit)? = null,
+    themeLabel: String? = null,
+) {
     val c = JTheme.colors
     val shape = RoundedCornerShape(Dimens.RadiusPanel)
     Column(
@@ -67,6 +74,22 @@ fun BrightnessPanel(percent: Int, onChange: (Int) -> Unit, onChangeFinished: () 
             BasicText("$percent%", style = JancarType.body.copy(color = c.muted))
         }
         JSlider(percent, BrightnessMapper.MIN, BrightnessMapper.MAX, onChange, onChangeFinished)
+        if (onOpenThemes != null) {
+            Box(Modifier.fillMaxWidth().height(1.dp).background(c.surfaceBorder))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Dimens.MinTouch)
+                    .clip(RoundedCornerShape(Dimens.RadiusButton))
+                    .background(c.surfaceHover)
+                    .clickable(onClickLabel = "Escolher tema da Home", onClick = onOpenThemes)
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BasicText("Escolher tema", style = JancarType.body.copy(color = c.fg), modifier = Modifier.weight(1f))
+                if (themeLabel != null) BasicText(themeLabel, style = JancarType.appTag.copy(color = c.muted))
+            }
+        }
     }
 }
 

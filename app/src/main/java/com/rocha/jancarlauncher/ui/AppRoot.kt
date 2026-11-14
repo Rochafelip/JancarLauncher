@@ -63,6 +63,8 @@ fun AppRoot(
     forceWelcome: Boolean,
 ) {
     val dark by settings.dark.collectAsState(initial = null)
+    // Tema (arranjo) da Home, escolhido na galeria.
+    val homeLayoutName by settings.homeLayout.collectAsState(initial = null)
     // Ao recriar a activity, nunca volta direto no Painel/Gaveta/tela apagada (ver ScreenRestore).
     var screen by rememberSaveable(stateSaver = ScreenSaver) { mutableStateOf<Screen?>(null) }
     var brightnessOpen by rememberSaveable { mutableStateOf(false) }
@@ -243,6 +245,8 @@ fun AppRoot(
                 wifi = wifiStatus,
                 onScreenOff = { brightnessOpen = false; screen = Screen.Off },
                 onOpenDash = { brightnessOpen = false; screen = Screen.Dash },
+                layout = com.rocha.jancarlauncher.ui.home.HomeLayout.fromName(homeLayoutName),
+                onLayoutChange = { scope.launch { settings.setHomeLayout(it.name) } },
             )
             Screen.Dash -> DashRoute(onBack = { screen = Screen.Home }, onOpenCar = { screen = Screen.Car })
             Screen.Car -> CarRoute(onBack = { screen = Screen.Dash })

@@ -62,7 +62,7 @@ fun JIcon(icon: ImageVector, tint: Color, size: Dp, modifier: Modifier = Modifie
  * borda de acento quando focada (D-pad/botões físicos da central).
  */
 @Composable
-private fun Pressable(
+internal fun Pressable(
     onClick: () -> Unit,
     shape: Shape,
     modifier: Modifier = Modifier,
@@ -105,13 +105,17 @@ fun JIconButton(
     modifier: Modifier = Modifier,
     size: Dp = Dimens.MinTouch,
     iconSize: Dp = 18.dp,
+    /** Toque longo (ex.: botão de tema da Home abre a galeria de temas). */
+    onLongClick: (() -> Unit)? = null,
+    shape: Shape = RoundedCornerShape(Dimens.RadiusButton),
 ) {
     val colors = JTheme.colors
     Pressable(
         onClick = onClick,
-        shape = RoundedCornerShape(Dimens.RadiusButton),
+        shape = shape,
         modifier = modifier.size(size),
         description = description,
+        onLongClick = onLongClick,
     ) { pressed, _ ->
         JIcon(icon, if (pressed) colors.fg else colors.muted, iconSize)
     }
