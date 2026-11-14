@@ -88,6 +88,12 @@ fun AppRoot(
         obd.start()
         onDispose { obd.stop() }
     }
+    // Faixa do Painel sobre o Android Auto: vigia quem está na frente enquanto o launcher roda.
+    val autoOverlay = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).autoOverlay
+    androidx.compose.runtime.DisposableEffect(autoOverlay) {
+        autoOverlay.start()
+        onDispose { autoOverlay.stop() }
+    }
     val headlightOn by remember(carService) { carService.state.map { it.headlightOn }.distinctUntilChanged() }
         .collectAsState(initial = null)
     val jancarInfo by jancarMedia.info.collectAsState()

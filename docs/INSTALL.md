@@ -72,6 +72,20 @@ adb shell pm grant com.rocha.jancarlauncher android.permission.ACCESS_FINE_LOCAT
 
 Sem ela aparece "Wi-Fi conectado" no lugar do nome. Uma vez concedida, vale até desinstalar o app.
 
+### 5.2 Permissões opcionais: Painel por cima do Android Auto
+
+Com o Android Auto (ou CarPlay) na frente, o launcher mostra uma faixa pequena no canto superior direito com
+velocidade, RPM (cor do aviso de troca) e consumo. Ela não recebe toque: os toques passam para o AA. Precisa de duas
+permissões, concedidas pelo adb:
+
+```
+adb shell appops set com.rocha.jancarlauncher SYSTEM_ALERT_WINDOW allow
+adb shell appops set com.rocha.jancarlauncher GET_USAGE_STATS allow
+```
+
+A primeira deixa desenhar por cima de outros apps; a segunda deixa saber qual app está na frente. Sem qualquer
+uma delas, a faixa simplesmente não aparece. Para desligar: as mesmas linhas com `deny`.
+
 ## 6. Desligar a depuração sem fio
 
 A porta 5555 fica aberta **sem senha**. Quando terminar:

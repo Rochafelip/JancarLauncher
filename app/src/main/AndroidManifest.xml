@@ -7,6 +7,12 @@
     <!-- OBD-II pelo ELM327 Bluetooth pareado (Painel: consumo). Na central (API 27) bastam BLUETOOTH/ADMIN. -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- Faixa do Painel sobre o Android Auto (overlay/AutoOverlay). Concedidas por adb, ver docs/INSTALL.md 5.2:
+         appops set com.rocha.jancarlauncher SYSTEM_ALERT_WINDOW allow / GET_USAGE_STATS allow -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!-- Wi-Fi na Home: estado da rede e nome (SSID). O Android só entrega o nome com a localização concedida;
          na central: adb shell pm grant com.rocha.jancarlauncher android.permission.ACCESS_FINE_LOCATION -->

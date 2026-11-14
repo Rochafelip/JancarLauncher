@@ -18,5 +18,11 @@
             android:exported="true"
             android:taskAffinity="com.rocha.jancarlauncher.carpreview"
             android:screenOrientation="landscape" />
+        <!-- Prévia da faixa sobre o Android Auto: só no build debug (ver OverlayPreviewActivity). -->
+        <activity
+            android:name=".OverlayPreviewActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 </manifest>
