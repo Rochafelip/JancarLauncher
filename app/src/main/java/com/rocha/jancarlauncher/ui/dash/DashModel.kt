@@ -135,14 +135,21 @@ object DashModel {
         val canRpm = can?.rotationRate?.takeIf { it != Int.MIN_VALUE && it >= 0 }?.toFloat()
         val canSpeed = can?.speed?.takeIf { it != Int.MIN_VALUE && it >= 0 }?.toFloat()
             ?: if (canRpm != null) 0f else null
-        val canFuel = can?.fuel?.takeIf { it.isCanValue() && it >= 0f }
-        val canTemp = can?.ambientTemp?.takeIf { it.isCanValue() }?.let { it - CAN_TEMP_OFFSET }
+        // Combustível 0 = a central ainda sem o dado (visto no carro em 2026-11-15 com o tanque não vazio): vira "—".
+        val rawFuel = can?.fuel?.takeIf { it.isCanValue() && it > 0f }
+        val rawTemp = can?.ambientTemp?.takeIf { it.isCanValue() }?.let { it - CAN_TEMP_OFFSET }
+        // Quadro deslocado: logo após ligar o carro o app CAN pode ler o 0x41 um byte adiante (visto em 2026-11-15:
+        // 689442 km, 182 L, 175 °C). Combustível ou temperatura impossíveis = hodômetro, combustível e temperatura
+        // desse quadro descartados ("—" até chegar um quadro bom). O giro vem antes do trecho deslocado e fica.
+        val shifted = (rawFuel != null && rawFuel > MAX_FUEL_LITERS) || (rawTemp != null && rawTemp !in TEMP_RANGE_C)
+        val canFuel = rawFuel.takeUnless { shifted }
+        val canTemp = rawTemp.takeUnless { shifted }
         return Reading(
             speed = canSpeed ?: car.speed,
             rpm = canRpm ?: car.rpm,
-            fuelLiters = canFuel ?: car.fuelLiters,
+            fuelLiters = canFuel ?: car.fuelLiters?.takeIf { it > 0f },
             outsideTempC = canTemp ?: car.outsideTempC,
-            odoKm = can?.odo?.takeIf { it > 0 },
+            odoKm = can?.odo?.takeIf { it > 0 && !shifted },
             doors = Doors(
                 frontLeft = cabin?.flDoorStatus.flag() ?: car.isDoorOpen(DOOR_FRONT_LEFT),
                 frontRight = cabin?.frDoorStatus.flag() ?: car.isDoorOpen(DOOR_FRONT_RIGHT),
@@ -212,6 +219,12 @@ object DashModel {
     }
 
     private const val CAN_TEMP_OFFSET = 40f
+
+    /** Tanque do Fox (50 L) com folga: acima disso a leitura é lixo. */
+    private const val MAX_FUEL_LITERS = 60f
+
+    /** Temperatura externa possível; fora disso a leitura é lixo. */
+    private val TEMP_RANGE_C = -40f..70f
 
     private fun Float.isCanValue() = !isNaN() && this != Int.MIN_VALUE.toFloat()
 }

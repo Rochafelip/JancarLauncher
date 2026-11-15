@@ -180,6 +180,36 @@ class DashModelTest {
         assertNull(r.odoKm)
     }
 
+    @Test fun reading_fuelZero_isUnknown_notEmptyTank() {
+        // Na central (2026-11-15, motor em marcha lenta a 1140 rpm) o CAN mandou combustível 0 com o tanque não vazio:
+        // 0 é "ainda sem o dado", não tanque seco. Mostra "—" em vez de "0,0 L".
+        val r = DashModel.reading(CarState(), canDash(odo = 68229, rpm = 1140, fuel = 0f, ambient = 72.5f))
+        assertNull(r.fuelLiters)
+        assertEquals("—", DashModel.valueText(r.fuelLiters))
+        assertEquals(1140f, r.rpm!!, 0.001f)
+        // O mesmo vale para o valor do ICar quando o CAN não tem combustível.
+        assertNull(DashModel.reading(CarState(fuelLiters = 0f), null).fuelLiters)
+        assertEquals(30f, DashModel.reading(CarState(fuelLiters = 30f), canDash(fuel = 0f)).fuelLiters!!, 0.001f)
+    }
+
+    @Test fun reading_byteShiftedCanFrame_isDiscarded() {
+        // Visto na central (2026-11-15 09:47, logo após ligar o carro): o app CAN leu o quadro 0x41 deslocado um byte.
+        // Hodômetro 01 0A 85 (68229) virou 0A 85 22 (689442); o combustível virou o byte seguinte (182 L num tanque de
+        // 50 L) e a temperatura deu 175 °C. Minutos depois o mesmo CAN mandava 68229 km, 34 L e 33 °C.
+        val shifted = DashModel.reading(CarState(), canDash(odo = 689442, rpm = 870, fuel = 182f, ambient = 215f))
+        assertNull(shifted.fuelLiters)
+        assertNull(shifted.outsideTempC)
+        assertNull(shifted.odoKm)
+        assertEquals(870f, shifted.rpm!!, 0.001f) // vem antes do trecho deslocado e bateu com o carro
+        // Só a temperatura fora do possível já denuncia o quadro.
+        assertNull(DashModel.reading(CarState(), canDash(odo = 689442, rpm = 870, fuel = 34f, ambient = 215f)).odoKm)
+        // O quadro bom de logo depois passa inteiro.
+        val good = DashModel.reading(CarState(), canDash(odo = 68229, rpm = 873, fuel = 34f, ambient = 73f))
+        assertEquals(34f, good.fuelLiters!!, 0.001f)
+        assertEquals(33f, good.outsideTempC!!, 0.001f)
+        assertEquals(68229, good.odoKm)
+    }
+
     @Test fun reading_missingEverywhere_isUnknown() {
         val r = DashModel.reading(CarState(), canDash())
         assertNull(r.speed)
