@@ -22,3 +22,8 @@ docs/releases/
 
 # Rascunhos do brainstorm (servidor de mockups)
 .superpowers/
+
+# Skills instaladas pelo `npx skills add`
+.agents/
+skills-lock.json
+.claude/skills/
