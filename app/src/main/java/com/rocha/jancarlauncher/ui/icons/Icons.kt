@@ -60,6 +60,14 @@ object JIcons {
         fill("M12 6a6 6 0 0 1 0 12a9 9 0 0 0 0-12z")
     }
     /** Brilho: sol inteiro com 8 raios (o de tema é meio sol / meio lua, não confundem). */
+    /** Paleta: abre a galeria "Escolher tema". */
+    val Palette = icon("Palette", 1.7f) {
+        line("M12 3a9 9 0 0 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.8-.5-1.2 0-1 .8-1.8 1.8-1.8H16.5A4.5 4.5 0 0 0 21 11.5C21 6.8 17 3 12 3z")
+        dot(7.5f, 11.5f, 1.5f)
+        dot(9.5f, 7.2f, 1.5f)
+        dot(14.5f, 7.2f, 1.5f)
+        dot(17.2f, 11f, 1.5f)
+    }
     val Brightness = icon("Brightness", 1.7f) {
         circle(12f, 12f, 4f)
         line("M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7")

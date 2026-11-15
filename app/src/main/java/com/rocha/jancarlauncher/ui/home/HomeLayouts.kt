@@ -152,10 +152,11 @@ fun HomeParts.StatusLine(showLabel: Boolean = true) {
     }
 }
 
-/** Os botões do topo: tema (toque = claro/escuro, segurar = escolher tema), brilho, apps, Painel, apagar tela. */
+/** Os botões do topo: escolher tema (paleta), claro/escuro (segurar também abre a galeria), brilho, apps, Painel, apagar tela. */
 @Composable
 fun HomeParts.TopButtons(size: Dp = Dimens.TopButton, iconSize: Dp = Dimens.TopButtonIcon, vertical: Boolean = false) {
     val buttons: @Composable () -> Unit = {
+        JIconButton(JIcons.Palette, "Escolher tema", onOpenThemes, size = size, iconSize = iconSize)
         JIconButton(
             JIcons.ThemeToggle, "Alternar tema claro/escuro (segure para escolher o tema da Home)", onToggleTheme,
             size = size, iconSize = iconSize, onLongClick = onOpenThemes,
@@ -341,6 +342,7 @@ private fun BoxScope.LayoutVitrine(p: HomeParts) {
             Divider(length = 40.dp)
             JIconButton(JIcons.Gauge, "Painel de velocidade", p.onOpenDash, size = 64.dp, iconSize = 26.dp, shape = square)
             JIconButton(JIcons.Grid, "Ver todos os apps", p.onOpenDrawer, size = 64.dp, iconSize = 26.dp, shape = square)
+            JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 64.dp, iconSize = 24.dp, shape = square)
             JIconButton(
                 JIcons.ThemeToggle, "Alternar tema claro/escuro (segure para escolher o tema da Home)", p.onToggleTheme,
                 size = 64.dp, iconSize = 24.dp, shape = square, onLongClick = p.onOpenThemes,
@@ -559,6 +561,7 @@ private fun BoxScope.LayoutCentral(p: HomeParts) {
         p.Clock(timeSize = 96, horizontal = Alignment.CenterHorizontally)
     }
     Column(Modifier.align(Alignment.TopStart).padding(start = 24.dp, top = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
         JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro (segure para escolher o tema da Home)", p.onToggleTheme, size = 52.dp, iconSize = 20.dp, onLongClick = p.onOpenThemes, shape = CircleShape)
         JIconButton(JIcons.Brightness, "Ajustar brilho", p.onToggleBrightness, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
         JIconButton(JIcons.Power, "Apagar tela", p.onScreenOff, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
@@ -637,6 +640,7 @@ private fun BoxScope.LayoutTrilho(p: HomeParts) {
         Spacer(Modifier.width(6.dp))
         p.StatusLine(showLabel = false)
         Spacer(Modifier.weight(1f))
+        JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
         JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro (segure para escolher o tema da Home)", p.onToggleTheme, size = 52.dp, iconSize = 20.dp, onLongClick = p.onOpenThemes, shape = CircleShape)
         JIconButton(JIcons.Brightness, "Ajustar brilho", p.onToggleBrightness, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
         JIconButton(JIcons.Power, "Apagar tela", p.onScreenOff, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
@@ -688,6 +692,7 @@ private fun BoxScope.LayoutPilulas(p: HomeParts) {
     Box(Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 30.dp)) { p.Clock(timeSize = 84) }
     Column(Modifier.align(Alignment.TopEnd).padding(end = 36.dp, top = 26.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
             JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro (segure para escolher o tema da Home)", p.onToggleTheme, size = 52.dp, iconSize = 20.dp, onLongClick = p.onOpenThemes, shape = CircleShape)
             JIconButton(JIcons.Brightness, "Ajustar brilho", p.onToggleBrightness, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
             JIconButton(JIcons.Grid, "Ver todos os apps", p.onOpenDrawer, size = 52.dp, iconSize = 20.dp, shape = CircleShape)

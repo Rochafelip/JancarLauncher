@@ -84,7 +84,7 @@ fun ThemePicker(
                 Column(Modifier.weight(1f)) {
                     BasicText("Escolher tema", style = JancarType.panelTitle.copy(color = c.fg, fontSize = 24.sp))
                     BasicText(
-                        "Toque para aplicar. O toque simples no botão continua trocando claro / escuro.",
+                        "Toque para aplicar. O botão ao lado da paleta troca claro / escuro.",
                         style = JancarType.appTag.copy(color = c.muted, fontSize = 14.sp),
                     )
                 }
