@@ -52,6 +52,7 @@ private fun DrawerIcon.vector(): ImageVector = when (this) {
     DrawerIcon.FDroid -> JIcons.FDroid
     DrawerIcon.Lightning -> JIcons.Lightning
     DrawerIcon.Gallery -> JIcons.Gallery
+    DrawerIcon.Video -> JIcons.Video
     DrawerIcon.Folder -> JIcons.Folder
     DrawerIcon.Bluetooth -> JIcons.Bluetooth
     DrawerIcon.BtMusic -> JIcons.BtMusic
@@ -63,7 +64,7 @@ private fun DrawerIcon.vector(): ImageVector = when (this) {
 
 /** Grupos da versão "Por grupos" (ids do `DrawerCatalog`). */
 private val GROUPS = listOf(
-    "MÍDIA" to listOf("vlc", "newpipe", "gallery", "bt_music", "eq"),
+    "MÍDIA" to listOf("video", "vlc", "newpipe", "gallery", "bt_music", "eq"),
     "CARRO" to listOf("vehicle", "obd", "bluetooth"),
     "FERRAMENTAS" to listOf("files", "fdroid", "lightning", "scrcpy"),
 )
@@ -130,7 +131,7 @@ private fun Header(title: String, subtitle: String?, onBack: () -> Unit, round: 
     }
 }
 
-/** Atual: 6 colunas em cima. */
+/** Atual: 7 colunas em cima (eram 6; com o Vídeo são 13 apps e 3 fileiras não cabem na altura da central). */
 @Composable
 private fun DrawerAtual(items: List<DrawerItem>, installed: Int, onToggleTheme: () -> Unit, onBack: () -> Unit) {
     val c = JTheme.colors
@@ -146,7 +147,7 @@ private fun DrawerAtual(items: List<DrawerItem>, installed: Int, onToggleTheme: 
             JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro", onToggleTheme)
         }
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            items.chunked(6).forEach { row ->
+            items.chunked(7).forEach { row ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     row.forEach { item ->
                         AppTile(
@@ -155,6 +156,8 @@ private fun DrawerAtual(items: List<DrawerItem>, installed: Int, onToggleTheme: 
                             enabled = item.enabled, onClick = item.onClick, modifier = Modifier.weight(1f),
                         )
                     }
+                    // Última fileira incompleta: mantém a largura dos blocos.
+                    repeat(7 - row.size) { Spacer(Modifier.weight(1f)) }
                 }
             }
         }
@@ -182,6 +185,7 @@ private fun DrawerGrade(items: List<DrawerItem>, installed: Int, onBack: () -> U
                         }
                     }
                 }
+                repeat(4 - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
     }
@@ -230,7 +234,8 @@ private fun BoxScope.DrawerPilulas(items: List<DrawerItem>, onBack: () -> Unit) 
         Header("Todos os apps", null, onBack, round = true)
     }
     Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 40.dp, end = 40.dp, bottom = 30.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        items.chunked(4).forEach { row ->
+        // 5 por fileira: 13 apps em 3 fileiras, o carro segue à vista.
+        items.chunked(5).forEach { row ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 row.forEach { item ->
                     Pressable(onClick = item.onClick, shape = CircleShape, modifier = Modifier.height(62.dp).alpha(if (item.enabled) 1f else 0.5f), description = item.entry.name) { _, _ ->

@@ -82,7 +82,8 @@ class HomeParts(
         HomeItem("auto", JIcons.Auto, "Auto") { actions.openAuto() },
         HomeItem("music", JIcons.Music, "Música") { actions.open(AppTargets.MUSIC) },
         HomeItem("radio", JIcons.Radio, "Rádio") { actions.open(AppTargets.RADIO) },
-        HomeItem("video", JIcons.Video, "Vídeo") { actions.open(AppTargets.VIDEO) },
+        // Chamadas no lugar do Vídeo (pedido do usuário, 2026-11-15); o Vídeo foi para a gaveta.
+        HomeItem("calls", JIcons.Phone, "Chamadas") { actions.open(AppTargets.CALLS) },
     )
     val shortcuts = listOf(
         HomeItem("wifi", JIcons.Wifi, "Wi-Fi") { actions.openSettings(SettingsActions.WIFI) },

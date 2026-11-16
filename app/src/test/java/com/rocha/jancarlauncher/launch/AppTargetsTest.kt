@@ -39,6 +39,13 @@ class AppTargetsTest {
         assertEquals("com.jancar.video.ui.activity.VideoListActivity", AppTargets.VIDEO.activityClass)
     }
 
+    @Test fun calls_opensJancarBluetoothPackage_byLaunchIntent() {
+        // Pacote do mapeamento da central; activity do discador ainda não confirmada via dumpsys.
+        assertEquals("com.jancar.bluetooth", AppTargets.CALLS.pkg)
+        assertNull(AppTargets.CALLS.activityClass)
+        assertNotNull(AppTargets.byId("calls"))
+    }
+
     @Test fun ids_areUnique_andLookupWorks() {
         assertEquals(AppTargets.all.size, AppTargets.all.map { it.id }.toSet().size)
         assertNotNull(AppTargets.byId("radio"))

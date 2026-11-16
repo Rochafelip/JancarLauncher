@@ -1,5 +1,6 @@
 package com.rocha.jancarlauncher.ui.drawer
 
+import com.rocha.jancarlauncher.launch.AppTargets
 import com.rocha.jancarlauncher.launch.Kind
 import com.rocha.jancarlauncher.launch.PackageGateway
 import org.junit.Assert.assertEquals
@@ -18,21 +19,24 @@ class DrawerCatalogTest {
 
     private fun entry(id: String) = DrawerCatalog.entries.first { it.id == id }
 
-    @Test fun hasTwelveEntries_inPreviewOrder() {
+    @Test fun hasThirteenEntries_inPreviewOrder() {
+        // Vídeo veio da Home (o bloco virou Chamadas) e fica ao lado da Galeria.
         assertEquals(
-            listOf("VLC", "NewPipe", "F-Droid", "Lightning", "Galeria", "Arquivos", "Bluetooth", "Música BT", "EQ", "Veículo", "Scrcpy", "OBD-II"),
+            listOf("VLC", "NewPipe", "F-Droid", "Lightning", "Galeria", "Vídeo", "Arquivos", "Bluetooth", "Música BT", "EQ", "Veículo", "Scrcpy", "OBD-II"),
             DrawerCatalog.entries.map { it.name },
         )
     }
 
     @Test fun tags_matchPreview() {
         val apps = listOf("vlc", "newpipe", "fdroid", "lightning", "scrcpy", "obd")
-        val system = listOf("gallery", "files", "bluetooth", "bt_music", "eq", "vehicle")
+        val system = listOf("gallery", "video", "files", "bluetooth", "bt_music", "eq", "vehicle")
         assertTrue(apps.all { entry(it).tag == Kind.App })
         assertTrue(system.all { entry(it).tag == Kind.System })
     }
 
-    @Test fun idsAreUnique() = assertEquals(12, DrawerCatalog.entries.map { it.id }.toSet().size)
+    @Test fun idsAreUnique() = assertEquals(13, DrawerCatalog.entries.map { it.id }.toSet().size)
+
+    @Test fun videoEntry_opensJancarVideo() = assertEquals(AppTargets.VIDEO, entry("video").target)
 
     @Test fun knownPackages_areConfigured() {
         assertEquals("org.videolan.vlc", entry("vlc").target?.pkg)

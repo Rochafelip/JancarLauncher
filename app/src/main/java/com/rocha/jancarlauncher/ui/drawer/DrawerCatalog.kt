@@ -6,7 +6,7 @@ import com.rocha.jancarlauncher.launch.Kind
 import com.rocha.jancarlauncher.launch.PackageGateway
 import com.rocha.jancarlauncher.launch.SettingsActions
 
-enum class DrawerIcon { Vlc, NewPipe, FDroid, Lightning, Gallery, Folder, Bluetooth, BtMusic, Eq, Vehicle, Scrcpy, Obd }
+enum class DrawerIcon { Vlc, NewPipe, FDroid, Lightning, Gallery, Video, Folder, Bluetooth, BtMusic, Eq, Vehicle, Scrcpy, Obd }
 
 /**
  * Um item da gaveta. Exatamente um destes: [target] (app), [settingsAction] (tela de Settings) ou nenhum
@@ -31,6 +31,8 @@ object DrawerCatalog {
         DrawerEntry("fdroid", "F-Droid", Kind.App, DrawerIcon.FDroid, app("fdroid", "F-Droid", "org.fdroid.fdroid")),
         DrawerEntry("lightning", "Lightning", Kind.App, DrawerIcon.Lightning, app("lightning", "Lightning", "acr.browser.lightning")),
         DrawerEntry("gallery", "Galeria", Kind.System, DrawerIcon.Gallery, AppTargets.GALLERY),
+        // Saiu da Home em 2026-11-15 (o bloco virou Chamadas).
+        DrawerEntry("video", "Vídeo", Kind.System, DrawerIcon.Video, AppTargets.VIDEO),
         DrawerEntry("files", "Arquivos", Kind.System, DrawerIcon.Folder, AppTargets.FILES),
         DrawerEntry("bluetooth", "Bluetooth", Kind.System, DrawerIcon.Bluetooth, settingsAction = SettingsActions.BLUETOOTH),
         DrawerEntry("bt_music", "Música BT", Kind.System, DrawerIcon.BtMusic, AppTargets.BT_MUSIC),

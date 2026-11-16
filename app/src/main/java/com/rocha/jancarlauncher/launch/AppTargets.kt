@@ -35,6 +35,14 @@ object AppTargets {
         "com.jancar.video", "com.jancar.video.ui.activity.VideoListActivity",
     )
 
+    // Chamadas = telefone Bluetooth da central (pedido do usuário, 2026-11-15: troca o bloco Vídeo da Home).
+    // Pacote do mapeamento técnico; a activity do discador ainda não foi confirmada via dumpsys, então abre
+    // pela intent de lançamento do pacote. Confirmar na central e fixar a activity aqui.
+    val CALLS = AppTarget(
+        "calls", "Chamadas", Kind.System,
+        "com.jancar.bluetooth", null,
+    )
+
     val GALLERY = AppTarget(
         "gallery", "Galeria", Kind.System,
         "com.jancar.gallery", "com.jancar.gallery.ui.activity.GalleryListActivity",
@@ -67,7 +75,7 @@ object AppTargets {
     )
 
     val all: List<AppTarget> = listOf(
-        ANDROID_AUTO, CARPLAY, RADIO, MUSIC, BT_MUSIC, VIDEO, GALLERY, FILES, EQ, VEHICLE, SCRCPY, OBD,
+        ANDROID_AUTO, CARPLAY, RADIO, MUSIC, BT_MUSIC, VIDEO, CALLS, GALLERY, FILES, EQ, VEHICLE, SCRCPY, OBD,
     )
 
     fun byId(id: String): AppTarget? = all.firstOrNull { it.id == id }
