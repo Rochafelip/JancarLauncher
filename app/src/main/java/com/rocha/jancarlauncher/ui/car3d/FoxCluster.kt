@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -104,12 +105,35 @@ object FoxCluster {
     const val COOLANT_MAX = 130f
 
     /**
-     * Ponteiro da água: fração 0..1 da escala (abaixo de 50 fica encostado no começo, como o de verdade com o motor
-     * frio). Sem OBD ou o carro não informa = `null` (sem ponteiro).
+     * Faixa em que o painel da VW segura o ponteiro da água parado no 90 (pedido do dono, 2026-11-15: o ponteiro da
+     * tela não ficava onde fica o do carro). Pelo manual de fábrica da VW, entre 75 e 107 °C reais o ponteiro "sempre
+     * fica na marca de 90 °C"; o OBD dá a temperatura real, que com o motor quente anda entre ~88 e ~105 °C.
+     */
+    const val COOLANT_FLAT_FROM = 75f
+    const val COOLANT_FLAT_TO = 107f
+    /** Acima da faixa, a temperatura real em que o ponteiro chega ao fim da escala (130). Estimativa, não medida. */
+    const val COOLANT_REAL_AT_MAX = 123f
+
+    /**
+     * Onde o ponteiro do painel do Fox fica (na escala 50–130) para a temperatura real [realC] lida pelo OBD:
+     * frio = encostado no 50; esquentando sobe até o 90 aos 75 °C; de 75 a 107 °C parado no 90; acima, sobe rápido
+     * até o 130 aos [COOLANT_REAL_AT_MAX].
+     */
+    fun clusterCoolantC(realC: Float): Float = when {
+        realC <= COOLANT_MIN -> COOLANT_MIN
+        realC < COOLANT_FLAT_FROM -> COOLANT_MIN + (realC - COOLANT_MIN) / (COOLANT_FLAT_FROM - COOLANT_MIN) * (90f - COOLANT_MIN)
+        realC <= COOLANT_FLAT_TO -> 90f
+        realC < COOLANT_REAL_AT_MAX -> 90f + (realC - COOLANT_FLAT_TO) / (COOLANT_REAL_AT_MAX - COOLANT_FLAT_TO) * (COOLANT_MAX - 90f)
+        else -> COOLANT_MAX
+    }
+
+    /**
+     * Ponteiro da água: fração 0..1 da escala, imitando o painel da VW ([clusterCoolantC]). Sem OBD ou o carro não
+     * informa = `null` (sem ponteiro).
      */
     fun coolantFraction(live: ObdClient.Live): Float? =
         if (live.status != ObdClient.Status.Connected) null
-        else live.coolantC?.let { ((it - COOLANT_MIN) / (COOLANT_MAX - COOLANT_MIN)).coerceIn(0f, 1f) }
+        else live.coolantC?.let { ((clusterCoolantC(it) - COOLANT_MIN) / (COOLANT_MAX - COOLANT_MIN)).coerceIn(0f, 1f) }
 
     // Visor: o painel do carro usa ponto decimal e "---" sem dado; o visor daqui faz igual.
     fun lcdTemp(c: Float?): String = c?.let { String.format(Locale.US, "%.1f °C", it) } ?: "--- °C"
@@ -124,9 +148,9 @@ private val ZoneRed = Color(0xFFC8141D)
 private val TickWhite = Color(0xFFF2F3F4)
 private val LampGreen = Color(0xFF2FD06B)
 private val LampOff = Color(0xFF1D2A22)
-private val LedGreen = Color(0xFF2FD06B)
-private val LedAmber = Color(0xFFF2A93B)
-private val LedRed = Color(0xFFFF2B2B)
+private val LedGreen = Color(0xFF3DFF7E)
+private val LedAmber = Color(0xFFFFB020)
+private val LedRed = Color(0xFFFF2424)
 private val Chrome = Brush.verticalGradient(listOf(Color(0xFFE9ECEF), Color(0xFF7D838B), Color(0xFFD5D9DE)))
 
 enum class GaugeKind { Tach, Speed }
@@ -179,8 +203,19 @@ fun AnalogGauge(
                 drawCircle(Color(0xFF050506), 8.5f * k, at)
                 if (i >= shiftLeds && shiftBlink == null) continue
                 val color = if (full) LedRed else when (FoxCluster.ledZone(i)) { 0 -> LedGreen; 1 -> LedAmber; else -> LedRed }
-                drawCircle(color.copy(alpha = 0.35f * alpha), 13f * k, at)
-                drawCircle(color.copy(alpha = alpha), 6f * k, at)
+                // Mais brilho (pedido do dono, 2026-11-15): halo largo somado (Plus), miolo cheio e ponto quente claro.
+                drawCircle(
+                    Brush.radialGradient(
+                        listOf(color.copy(alpha = 0.9f * alpha), color.copy(alpha = 0.35f * alpha), Color.Transparent),
+                        at, 22f * k,
+                    ),
+                    22f * k, at, blendMode = BlendMode.Plus,
+                )
+                drawCircle(color.copy(alpha = alpha), 7.5f * k, at)
+                drawCircle(
+                    Brush.radialGradient(listOf(Color.White.copy(alpha = 0.85f * alpha), Color.Transparent), at, 4.5f * k),
+                    4.5f * k, at, blendMode = BlendMode.Plus,
+                )
             }
         }
 

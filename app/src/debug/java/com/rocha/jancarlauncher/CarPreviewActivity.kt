@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
+import com.rocha.jancarlauncher.ui.car3d.CarPhoto
 import com.rocha.jancarlauncher.ui.car3d.CarScreen
 import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
@@ -38,6 +39,10 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * - obd (--ez): OBD falso conectado (consumo no relógio pequeno e no visor); sem o extra, sem OBD.
  * - mode (--es): Daily | Sport (modo do shift light; o botão do topo também troca).
  * - demo (--ez): roteiro animado de ~32 s em loop (FoxDemo) com tudo funcionando; etiqueta DEMO na tela.
+ * - fog (--ez): farol de milha aceso.
+ * - headSize, headPower, fogSize, fogPower (--ef): tamanho e intensidade das luzes da foto (1 = o desenho
+ *   original; sem o extra vale o padrão de [CarPhoto.TUNING]). Ex.: `--ez lights true --ez fog true --ef fogPower 2.5`.
+ *   Achou os números bons? Copie para `CarPhoto.TUNING`.
  * Reabrir com outros extras (`-f 0x10008000` limpa a tarefa) para ver a porta abrindo/fechando.
  */
 class CarPreviewActivity : ComponentActivity() {
@@ -59,13 +64,23 @@ class CarPreviewActivity : ComponentActivity() {
             headlightOn = intent.getBooleanExtra("lights", false),
             turnLeft = turn == "left" || turn == "hazard",
             turnRight = turn == "right" || turn == "hazard",
+            fogOn = intent.getBooleanExtra("fog", false),
+        )
+        val base = CarPhoto.TUNING
+        val tuning = CarPhoto.Tuning(
+            head = CarPhoto.Intensity(
+                intent.getFloatExtra("headSize", base.head.size), intent.getFloatExtra("headPower", base.head.power),
+            ),
+            fog = CarPhoto.Intensity(
+                intent.getFloatExtra("fogSize", base.fog.size), intent.getFloatExtra("fogPower", base.fog.power),
+            ),
         )
         val light = intent.getBooleanExtra("light", false)
         val obd = intent.getBooleanExtra("obd", false)
         val demo = intent.getBooleanExtra("demo", false)
         setContent {
             JancarTheme(dark = !light) {
-                if (demo) { DemoCar { finish() }; return@JancarTheme }
+                if (demo) { DemoCar(tuning) { finish() }; return@JancarTheme }
                 var mode by remember { mutableStateOf(DashModel.DriveMode.fromName(intent.getStringExtra("mode"))) }
                 CarScreen(
                     reading, canConnected = true, onBack = { finish() },
@@ -75,6 +90,7 @@ class CarPreviewActivity : ComponentActivity() {
                     ) else ObdClient.Live(),
                     trip = if (obd) Trip(liters = 10.3, km = 133.2) else Trip(),
                     mode = mode, onModeChange = { mode = it },
+                    lightTuning = tuning,
                 )
             }
         }
@@ -83,7 +99,7 @@ class CarPreviewActivity : ComponentActivity() {
 
 /** Modo DEMO: roda o roteiro do [FoxDemo] a ~20 quadros/s, somando o trip, com a etiqueta DEMO por cima. */
 @Composable
-private fun DemoCar(onBack: () -> Unit) {
+private fun DemoCar(tuning: CarPhoto.Tuning, onBack: () -> Unit) {
     var seconds by remember { mutableStateOf(0.0) }
     var trip by remember { mutableStateOf(Trip(liters = 10.3, km = 133.2)) }
     var mode by remember { mutableStateOf(DashModel.DriveMode.Daily) }
@@ -104,7 +120,7 @@ private fun DemoCar(onBack: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
         CarScreen(
             frame.reading, canConnected = true, onBack = onBack, obdLive = frame.obd, trip = trip,
-            mode = mode, onModeChange = { mode = it },
+            mode = mode, onModeChange = { mode = it }, lightTuning = tuning,
         )
         BasicText(
             "DEMO",

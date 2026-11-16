@@ -302,6 +302,14 @@ class DashModelTest {
         assertNull(DashModel.reading(CarState(), null).headlightOn)
     }
 
+    @Test fun reading_fog_isBit4OfIcarLightMask() {
+        assertEquals(true, DashModel.reading(CarState(lightMask = 1 shl 4), null).fogOn)
+        assertEquals(false, DashModel.reading(CarState(lightMask = 0b1011), null).fogOn)
+        assertNull(DashModel.reading(CarState(), null).fogOn)
+        // Máscara negativa (todos os bits em 1) = sem dado, não "farol de milha aceso".
+        assertNull(DashModel.reading(CarState(lightMask = -1), null).fogOn)
+    }
+
     @Test fun alerts_doorOpenWhileMoving_isRedAndFirst() {
         val r = reading(speed = 20f, fuel = 5f).copy(doors = DashModel.Doors(frontLeft = true))
         assertEquals(listOf(DashModel.Alert.DoorOpen, DashModel.Alert.LowFuel), DashModel.alerts(r))

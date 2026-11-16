@@ -1,14 +1,12 @@
-# Ajuda a traçar/ajustar o contorno: mostra uma janela do quadro de trabalho (a foto reduzida pela metade,
-# 1400x740) ampliada [k]x, com grade a cada 10 px (rótulos a cada 50) e o contorno [poly] em vermelho.
-# Ex.: powershell -File tools/car-photo/grade.ps1 0 360 260 360 3 janela.png ((Get-Content tools/car-photo/contorno.txt) -join ";")
+# Ajuda a traçar/ajustar o contorno: mostra uma janela do quadro de trabalho (ver foto.ps1) ampliada [k]x, com
+# grade a cada 10 px (rótulos a cada 50) e o contorno [poly] em vermelho.
+# Ex.: powershell -File tools/car-photo/grade.ps1 0 650 260 360 3 janela.png ((Get-Content tools/car-photo/contorno.txt) -join ";")
 param([int]$x0, [int]$y0, [int]$w, [int]$h, [double]$k, [string]$out, [string]$poly)
-Add-Type -AssemblyName System.Drawing
-$src = [System.Drawing.Image]::FromFile([System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "../../docs/Fox-photos/IMG_20261008_210115332_HDR_PCT.jpg.jpeg")))
-# Aplica a rotação do EXIF (o celular grava em pé só na etiqueta).
-if ($src.PropertyIdList -contains 0x0112) { $o = $src.GetPropertyItem(0x0112).Value[0]; switch ($o) { 3 { $src.RotateFlip("Rotate180FlipNone") } 6 { $src.RotateFlip("Rotate90FlipNone") } 8 { $src.RotateFlip("Rotate270FlipNone") } } }
-$OX = 40; $OY = 1380; $S = 0.5   # quadro de trabalho 1400x740 = original (x 40.., y 1380..) × 0,5
+. (Join-Path $PSScriptRoot "foto.ps1")
+$src = Open-Foto
 $bmp = New-Object System.Drawing.Bitmap ([int]($w*$k)), ([int]($h*$k))
 $g = [System.Drawing.Graphics]::FromImage($bmp); $g.InterpolationMode = 'HighQualityBicubic'
+$g.Clear([System.Drawing.Color]::FromArgb(255, 40, 44, 52))   # fundo para foto já isolada (transparente)
 $sr = New-Object System.Drawing.RectangleF ([single]($OX + $x0/$S)), ([single]($OY + $y0/$S)), ([single]($w/$S)), ([single]($h/$S))
 $g.DrawImage($src, (New-Object System.Drawing.RectangleF 0,0,$bmp.Width,$bmp.Height), $sr, 'Pixel')
 $thin = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(70,255,0,255)), 1

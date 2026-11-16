@@ -4,6 +4,7 @@ import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FoxClusterTest {
@@ -27,6 +28,30 @@ class FoxClusterTest {
         assertEquals(1f, FoxCluster.coolantFraction(on(140f))!!, 0f)
         assertNull(FoxCluster.coolantFraction(on(null))) // o carro não informa
         assertNull(FoxCluster.coolantFraction(ObdClient.Live(coolantC = 90f))) // OBD desconectado
+    }
+
+    @Test fun coolant_flatAt90Between75And107_likeTheVwCluster() {
+        // Painel da VW: entre 75 e 107 °C reais o ponteiro fica parado no 90 (manual de fábrica).
+        for (c in listOf(75f, 82f, 90f, 98f, 103f, 107f)) {
+            assertEquals("$c °C", 90f, FoxCluster.clusterCoolantC(c), 0.001f)
+        }
+    }
+
+    @Test fun coolant_outsideTheFlatBand_followsTheRealValue() {
+        assertEquals(50f, FoxCluster.clusterCoolantC(30f), 0f)           // frio: encostado no começo
+        assertEquals(50f, FoxCluster.clusterCoolantC(50f), 0f)
+        assertEquals(70f, FoxCluster.clusterCoolantC(62.5f), 0.001f)     // esquentando: sobe até o 90 aos 75
+        assertEquals(110f, FoxCluster.clusterCoolantC(115f), 0.001f)     // passou de 107: sai do 90
+        assertEquals(130f, FoxCluster.clusterCoolantC(123f), 0.001f)     // superaquecendo: fim da escala
+        assertEquals(130f, FoxCluster.clusterCoolantC(140f), 0f)
+        // Nunca anda para trás com a temperatura subindo.
+        var last = 0f
+        for (c in 20..140) { val v = FoxCluster.clusterCoolantC(c.toFloat()); assertTrue(v >= last); last = v }
+    }
+
+    @Test fun coolant_needleAtTheTopWhenTheEngineIsHot() {
+        val on = { c: Float -> ObdClient.Live(ObdClient.Status.Connected, coolantC = c) }
+        assertEquals(0.5f, FoxCluster.coolantFraction(on(100f))!!, 0.001f) // ventoinha ligando: ainda no 90
     }
 
     @Test fun shiftLeds_followTheMode() {

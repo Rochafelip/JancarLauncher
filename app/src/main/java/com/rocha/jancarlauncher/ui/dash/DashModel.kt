@@ -114,6 +114,11 @@ object DashModel {
         val headlightOn: Boolean? = null,
         val turnLeft: Boolean? = null,
         val turnRight: Boolean? = null,
+        /**
+         * Farol de milha: bit FRONT_FOG da máscara de luzes do ICar. A caixa CAN (PQ) não manda; se a MCU manda
+         * nesta central ainda **não foi testado** (teste no carro marcado para 2026-11-16). Sem dado = `null`.
+         */
+        val fogOn: Boolean? = null,
     )
 
     /**
@@ -163,6 +168,8 @@ object DashModel {
                 ?: turn(car.isLightOn(LIGHT_TURN_LEFT), car.isLightOn(LIGHT_EMERGENCY)),
             turnRight = turn(lights?.rightDirectionIndicator, lights?.emergencyFlasher)
                 ?: turn(car.isLightOn(LIGHT_TURN_RIGHT), car.isLightOn(LIGHT_EMERGENCY)),
+            // Máscara negativa = sem dado (todos os bits em 1 acenderiam o farol de milha à toa).
+            fogOn = car.lightMask?.takeIf { it >= 0 }?.let { (it shr LIGHT_FRONT_FOG) and 1 == 1 },
         )
     }
 
@@ -189,6 +196,7 @@ object DashModel {
     private const val LIGHT_TURN_LEFT = 0
     private const val LIGHT_TURN_RIGHT = 1
     private const val LIGHT_EMERGENCY = 3
+    private const val LIGHT_FRONT_FOG = 4
 
     /** Avisos do Painel; a faixa só aparece quando há algum. [red] = grave (vermelho), senão âmbar. */
     enum class Alert(val red: Boolean) { Shift(true), DoorOpen(true), LowFuel(false) }

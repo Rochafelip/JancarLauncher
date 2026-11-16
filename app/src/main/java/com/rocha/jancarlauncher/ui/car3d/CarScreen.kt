@@ -26,8 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.obd.ObdClient
@@ -89,9 +87,13 @@ fun CarScreen(
     trip: Trip = Trip(),
     mode: DashModel.DriveMode = DashModel.DriveMode.Daily,
     onModeChange: (DashModel.DriveMode) -> Unit = {},
+    /** Tamanho/intensidade das luzes da foto (a prévia de debug troca para testar; o app usa [CarPhoto.TUNING]). */
+    lightTuning: CarPhoto.Tuning = CarPhoto.TUNING,
 ) {
     // Painel de carro é escuro de verdade: esta tela fica sempre no tema escuro.
-    JancarTheme(dark = true) { CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange) }
+    JancarTheme(dark = true) {
+        CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange, lightTuning)
+    }
 }
 
 @Composable
@@ -103,6 +105,7 @@ private fun CarScreenContent(
     trip: Trip,
     mode: DashModel.DriveMode,
     onModeChange: (DashModel.DriveMode) -> Unit,
+    lightTuning: CarPhoto.Tuning,
 ) {
     val c = JTheme.colors
     val photo by rememberCarPhoto()
@@ -153,12 +156,14 @@ private fun CarScreenContent(
                     GaugeKind.Speed, r.speed, FoxCluster.fuelFraction(r.fuelLiters), lamp = null,
                     size = GAUGE, modifier = Modifier.align(Alignment.CenterEnd),
                 )
+                // Foto maior (pedido do dono, 2026-11-15: "aumentar o tamanho do carro"): a coluna sobe para o topo,
+                // onde os relógios redondos se afastam do meio, e a foto passa por cima do espaço entre eles.
                 Column(
-                    Modifier.align(Alignment.Center).width(316.dp),
+                    Modifier.align(Alignment.TopCenter).padding(top = PHOTO_TOP).width(PHOTO_W),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    Box(Modifier.size(width = 290.dp, height = 156.dp), contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(width = PHOTO_W, height = PHOTO_H), contentAlignment = Alignment.Center) {
                         when (val ph = photo) {
                             is PhotoLoad.Ready -> CarPhotoView(
                                 ph.image, CarPhoto.SPEC,
@@ -167,6 +172,8 @@ private fun CarScreenContent(
                                 turnRightLit = right && lit,
                                 doors = r.doors,
                                 modifier = Modifier.fillMaxSize(),
+                                fogLights = r.fogOn == true,
+                                tuning = lightTuning,
                             )
                             PhotoLoad.Missing -> BasicText("Foto do carro não encontrada", style = JancarType.body.copy(color = c.faint))
                             PhotoLoad.Loading -> {}
@@ -177,14 +184,7 @@ private fun CarScreenContent(
                         ClusterLcd(r.outsideTempC, r.odoKm, trip, gear = gear, hint = gearHint)
                         ClusterArrow(left = false, on = right && lit)
                     }
-                    // Portas: na foto só aparecem as do lado do motorista; o texto cobre todas.
-                    if (r.doors.anyOpen) {
-                        BasicText(
-                            "Aberto: ${DashModel.openDoorsText(r.doors)}",
-                            style = JancarType.body.copy(color = dash.warn, textAlign = TextAlign.Center),
-                            maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        )
-                    }
+                    // Portas abertas: balão com o nome em cima de cada uma, na própria foto (CarPhotoView).
                 }
             }
         }
@@ -192,4 +192,8 @@ private fun CarScreenContent(
 }
 
 private val GAUGE = 330.dp
+/** Caixa da foto do carro (a foto tem proporção ~1,78:1). Antes 290×156; maior que isso encosta nos relógios. */
+private val PHOTO_W = 372.dp
+private val PHOTO_H = 210.dp
+private val PHOTO_TOP = 4.dp
 private val ClusterBg = Color(0xFF060709)

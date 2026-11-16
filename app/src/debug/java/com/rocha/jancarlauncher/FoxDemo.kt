@@ -62,6 +62,8 @@ object FoxDemo {
             headlightOn = t >= 2.5,
             turnLeft = turnLeft,
             turnRight = turnRight,
+            // Farol de milha (dado ainda não confirmado no carro): acende no trecho de cruzeiro.
+            fogOn = t in 12.0..24.0,
         )
         // Gasto: marcha lenta ~0,7 L/h, sobe com o giro e mais ainda acelerando (estimativa só para o demo).
         val lph = 0.7f + rpm / 1000f * (if (accelerating) 1.9f else 1.1f) - 0.8f
