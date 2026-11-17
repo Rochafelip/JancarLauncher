@@ -67,8 +67,8 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
     fun start() {
         if (job?.isActive == true) return
         job = scope.launch {
-            val (l, k) = settings.trip.first()
-            _trip.value = Trip(l, k)
+            val (l, k, e) = settings.trip.first()
+            _trip.value = Trip(l, k, e)
             launch { settings.fuelBlend.collect { blend = FuelModel.Blend.fromName(it) } }
             loop()
         }
@@ -89,7 +89,7 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
 
     private fun persistTrip() {
         val t = _trip.value
-        scope.launch { settings.setTrip(t.liters, t.km) }
+        scope.launch { settings.setTrip(t.liters, t.km, t.ethanolLiters) }
     }
 
     private suspend fun loop() {
@@ -215,7 +215,7 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
                     val lph = air?.let { FuelModel.litersPerHour(it, ethanol?.div(100f) ?: blend.ethanol) }
                     val dt = (now - last) / 1000.0
                     last = now
-                    if (lph != null && speed != null) _trip.value = _trip.value.add(lph, speed, dt)
+                    if (lph != null && speed != null) _trip.value = _trip.value.add(lph, speed, dt, ethanol?.div(100f) ?: blend.ethanol)
                     _live.value = Live(
                         status = if (useMaf || useMap) Status.Connected else Status.NoFuelData,
                         adapter = name,

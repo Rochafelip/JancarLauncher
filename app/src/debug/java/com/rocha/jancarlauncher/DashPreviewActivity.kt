@@ -86,6 +86,7 @@ class DashPreviewActivity : ComponentActivity() {
             var current by remember { mutableStateOf(mode) }
             var blend by remember { mutableStateOf(FuelModel.Blend.Gasolina) }
             var trip by remember { mutableStateOf(if (obd) Trip(liters = 2.9, km = 37.4) else Trip()) }
+            var prices by remember { mutableStateOf<Pair<Int, Int>?>(null) }
             JancarTheme(dark = !light) {
                 DashScreen(
                     state = CarState(headlightOn = true),
@@ -106,6 +107,9 @@ class DashPreviewActivity : ComponentActivity() {
                     onResetTrip = { trip = Trip() },
                     onNextBlend = { blend = blend.next() },
                     health = health,
+                    gasCents = prices?.first,
+                    ethCents = prices?.second,
+                    onPricesChange = { g, e -> prices = g to e },
                 )
             }
         }

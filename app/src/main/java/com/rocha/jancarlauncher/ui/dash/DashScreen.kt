@@ -64,6 +64,7 @@ import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.obd.FuelModel
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
+import com.rocha.jancarlauncher.obd.TripCost
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.CarStateDetails
 import com.rocha.jancarlauncher.can.Cabin
@@ -168,6 +169,8 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}, onOpenObd: () -> U
     val savedBlend by app.settings.fuelBlend.collectAsState(initial = null)
     val blend = FuelModel.Blend.fromName(savedBlend)
     val health by app.health.health.collectAsState()
+    val gasCents by app.settings.gasPriceCents.collectAsState(initial = null)
+    val ethCents by app.settings.ethanolPriceCents.collectAsState(initial = null)
 
     DashScreen(
         state, connected, onBack, canConnected, canDash, canCabin, canLights,
@@ -181,6 +184,9 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}, onOpenObd: () -> U
         onResetTrip = { app.obd.resetTrip() },
         onNextBlend = { scope.launch { app.settings.setFuelBlend(blend.next().name) } },
         health = health,
+        gasCents = gasCents,
+        ethCents = ethCents,
+        onPricesChange = { g, e -> scope.launch { app.settings.setGasPriceCents(g); app.settings.setEthanolPriceCents(e) } },
     )
 }
 
@@ -206,8 +212,14 @@ fun DashScreen(
     onNextBlend: () -> Unit = {},
     /** Avisos de bateria e de água pelo OBD (`obd/HealthMonitor`). */
     health: DashModel.Health = DashModel.Health(),
+    /** Preço do litro (centavos) para o custo da viagem; null = nunca definido. */
+    gasCents: Int? = null,
+    ethCents: Int? = null,
+    onPricesChange: (gas: Int, eth: Int) -> Unit = { _, _ -> },
 ) {
     var diagnostics by remember { mutableStateOf(false) }
+    var pricesOpen by remember { mutableStateOf(false) }
+    BackHandler(enabled = pricesOpen) { pricesOpen = false }
     BackHandler(enabled = diagnostics) { diagnostics = false }
     val r = DashModel.reading(state, canDash, canCabin, canLights)
     val alerts = DashModel.alerts(r, mode, health)
@@ -293,7 +305,11 @@ fun DashScreen(
                 when {
                     unicoVazio -> NoDataCard(obdLive, Modifier.weight(1f))
                     cardAlerts.isNotEmpty() -> AlertCard(cardAlerts, r, health, Modifier.weight(1f))
-                    else -> ConsumptionBlock(obdLive, obdTrip, onResetTrip, Modifier.weight(1f).card(cards))
+                    else -> ConsumptionBlock(
+                        obdLive, obdTrip, onResetTrip, Modifier.weight(1f).card(cards),
+                        cost = TripCost.text(TripCost.reais(obdTrip.liters, obdTrip.ethanolLiters, gasCents, ethCents)),
+                        onOpenPrices = { pricesOpen = true },
+                    )
                 }
                 Column(Modifier.weight(1f).card(cards), horizontalAlignment = Alignment.End) {
                     val rpmColor = when {
@@ -341,6 +357,9 @@ fun DashScreen(
         }
         }
 
+        if (pricesOpen) {
+            PricePanel(gasCents, ethCents, onSave = { g, e -> onPricesChange(g, e); pricesOpen = false }, onClose = { pricesOpen = false })
+        }
         if (diagnostics) {
             DiagnosticsLayer(onClose = { diagnostics = false }) {
                 CarStateDetails(state, connected, Modifier.weight(1f))

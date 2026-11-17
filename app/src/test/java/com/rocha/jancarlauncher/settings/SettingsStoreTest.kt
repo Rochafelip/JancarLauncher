@@ -108,4 +108,18 @@ class SettingsStoreTest {
         assertFalse(store.dark.first())
         assertEquals(80, store.userBrightness.first())
     }
+
+    @Test fun fuelPrices_defaultNull_andPersist() = runBlocking {
+        assertNull(store.gasPriceCents.first())
+        assertNull(store.ethanolPriceCents.first())
+        store.setGasPriceCents(619)
+        store.setEthanolPriceCents(429)
+        assertEquals(619, store.gasPriceCents.first())
+        assertEquals(429, store.ethanolPriceCents.first())
+    }
+
+    @Test fun trip_keepsEthanolLiters() = runBlocking {
+        store.setTrip(3.0, 40.0, 1.5)
+        assertEquals(Triple(3.0, 40.0, 1.5), store.trip.first())
+    }
 }

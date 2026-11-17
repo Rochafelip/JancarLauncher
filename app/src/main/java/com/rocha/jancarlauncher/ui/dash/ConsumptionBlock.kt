@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.rocha.jancarlauncher.obd.FuelModel
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
+import com.rocha.jancarlauncher.obd.TripCost
 import com.rocha.jancarlauncher.ui.components.JIcon
 import com.rocha.jancarlauncher.ui.icons.JIcons
 import com.rocha.jancarlauncher.ui.theme.Dimens
@@ -71,7 +72,12 @@ object ConsumptionText {
  * uma linha discreta dizendo o porquê.
  */
 @Composable
-fun ConsumptionBlock(live: ObdClient.Live, trip: Trip, onResetTrip: () -> Unit, modifier: Modifier = Modifier) {
+fun ConsumptionBlock(
+    live: ObdClient.Live, trip: Trip, onResetTrip: () -> Unit, modifier: Modifier = Modifier,
+    /** Custo da viagem ("R$ 12,40" ou "R$ — definir preço"); toque abre o painel de preços. */
+    cost: String? = null,
+    onOpenPrices: () -> Unit = {},
+) {
     val c = JTheme.colors
     val digits = JancarType.clockLarge.copy(fontWeight = FontWeight.W500, letterSpacing = 0.sp, fontFeatureSettings = "tnum")
     val connected = live.status == ObdClient.Status.Connected
@@ -95,6 +101,17 @@ fun ConsumptionBlock(live: ObdClient.Live, trip: Trip, onResetTrip: () -> Unit, 
                 BasicText("km/L", style = JancarType.tileLabel.copy(color = c.muted))
                 Spacer(Modifier.width(14.dp))
                 ResetButton(onResetTrip)
+            }
+            cost?.let { text ->
+                val unset = text == TripCost.text(null)
+                BasicText(
+                    text,
+                    style = JancarType.chip.copy(color = if (unset) c.faint else c.muted, fontSize = 16.sp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(Dimens.RadiusButton))
+                        .clickable(onClickLabel = "Preço do litro", role = Role.Button, onClick = onOpenPrices)
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                )
             }
         }
         ConsumptionText.status(live)?.let {

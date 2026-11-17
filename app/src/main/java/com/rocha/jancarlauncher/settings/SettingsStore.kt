@@ -42,9 +42,22 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     val fuelBlend: Flow<String?> = ds.data.map { it[fuelBlendKey] }
     suspend fun setFuelBlend(name: String) { ds.edit { it[fuelBlendKey] = name } }
 
-    /** Média da viagem (OBD): litros e km somados desde o último "zerar". */
-    val trip: Flow<Pair<Double, Double>> = ds.data.map { (it[tripLitersKey] ?: 0.0) to (it[tripKmKey] ?: 0.0) }
-    suspend fun setTrip(liters: Double, km: Double) { ds.edit { it[tripLitersKey] = liters; it[tripKmKey] = km } }
+    /** Média da viagem (OBD): litros, km e litros de etanol equivalentes somados desde o último "zerar". */
+    val trip: Flow<Triple<Double, Double, Double>> = ds.data.map {
+        Triple(it[tripLitersKey] ?: 0.0, it[tripKmKey] ?: 0.0, it[tripEthanolKey] ?: 0.0)
+    }
+    suspend fun setTrip(liters: Double, km: Double, ethanolLiters: Double = 0.0) {
+        ds.edit { it[tripLitersKey] = liters; it[tripKmKey] = km; it[tripEthanolKey] = ethanolLiters }
+    }
+    private val tripEthanolKey = doublePreferencesKey("trip_ethanol_liters")
+
+    /** Preço do litro (centavos) para o custo da viagem; null = nunca definido (o custo não aparece). */
+    val gasPriceCents: Flow<Int?> = ds.data.map { it[gasPriceKey] }
+    val ethanolPriceCents: Flow<Int?> = ds.data.map { it[ethanolPriceKey] }
+    suspend fun setGasPriceCents(cents: Int) { ds.edit { it[gasPriceKey] = cents } }
+    suspend fun setEthanolPriceCents(cents: Int) { ds.edit { it[ethanolPriceKey] = cents } }
+    private val gasPriceKey = intPreferencesKey("gas_price_cents")
+    private val ethanolPriceKey = intPreferencesKey("ethanol_price_cents")
 
     val dark: Flow<Boolean> = ds.data.map { it[darkKey] ?: true }
     /** Modo do aviso de troca do Painel (nome do `DashModel.DriveMode`); null = nunca escolheu. */
