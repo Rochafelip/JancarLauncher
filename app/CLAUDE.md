@@ -117,7 +117,7 @@ Nenhuma — Música, Vídeo, Galeria, Arquivos, Música BT, EQ, Veículo, Scrcpy
 - Confirmar se dá pra desativar a depuração ADB sem fio pelas Configurações da própria central.
 - **Painel em movimento:** CAN validado só com o carro parado (velocidade 0); conferir velocidade e RPM rodando.
 - **Apagar tela na central:** conferir se brilho 0 da janela apaga o backlight por completo (no emulador não dá pra ver) e se a central respeita o `FLAG_KEEP_SCREEN_ON` (não suspende com a tela apagada; o toque precisa acender).
-- **1.8.0 no carro (nada disso foi testado na central):** `ATRV` no adaptador do dono (resposta e precisão contra multímetro); modos 03/07/0A e luz de injeção no protocolo do Fox; bipe audível com a música do AA; seletor de arquivos/pendrive e instalar por cima pela tela do Android; se a central já retoma a música sozinha (se sim, deixar o ajuste desligado); viagens fechando ao desligar o carro.
+- **1.8.0 no carro (nada disso foi testado na central):** `ATRV` no adaptador do dono (resposta e precisão contra multímetro); modos 03/07/0A e luz de injeção no protocolo do Fox; bipe audível com a música do AA; seletor de arquivos/pendrive e instalar por cima pela tela do Android; se a central já retoma a música sozinha (se sim, deixar o ajuste desligado); viagens fechando ao desligar o carro (desligar o carro, esperar a central suspender, ligar e sair andando em menos de 3 min: a viagem anterior tem que aparecer fechada); atualização por arquivo numa central API 27 (o caminho `GET_SIGNATURES` só roda lá).
 
 ## Comando de rollback (guardar antes de testar `set-home-activity`)
 
