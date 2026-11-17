@@ -139,4 +139,10 @@ class SettingsStoreTest {
         assertTrue(store.resumeMusic.first())
         assertEquals("jancar", store.lastSource.first())
     }
+
+    @Test fun carPaint_defaultNull_andPersists() = runBlocking {
+        assertNull(store.carPaint.first())
+        store.setCarPaint("Vermelho")
+        assertEquals("Vermelho", store.carPaint.first())
+    }
 }

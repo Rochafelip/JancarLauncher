@@ -13,11 +13,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -71,12 +74,15 @@ fun CarRoute(onBack: () -> Unit) {
     val obdTrip by app.obd.trip.collectAsState()
     val savedMode by app.settings.driveMode.collectAsState(initial = null)
     val health by app.health.health.collectAsState()
+    val savedPaint by app.settings.carPaint.collectAsState(initial = null)
     val scope = rememberCoroutineScope()
     CarScreen(
         DashModel.reading(car, canDash, canCabin, canLights), canConnected, onBack, obdLive, obdTrip,
         DashModel.DriveMode.fromName(savedMode),
         onModeChange = { scope.launch { app.settings.setDriveMode(it.name) } },
         health = health,
+        paint = CarPaint.fromName(savedPaint),
+        onPaintChange = { scope.launch { app.settings.setCarPaint(it.name) } },
     )
 }
 
@@ -93,10 +99,13 @@ fun CarScreen(
     lightTuning: CarPhoto.Tuning = CarPhoto.TUNING,
     /** Avisos de bateria/água pelo OBD: acende a luz da bateria no conta-giros. */
     health: DashModel.Health = DashModel.Health(),
+    /** Cor do Fox (só por diversão; toque na foto abre a fileira de cores). */
+    paint: CarPaint = CarPaint.Original,
+    onPaintChange: (CarPaint) -> Unit = {},
 ) {
     // Painel de carro é escuro de verdade: esta tela fica sempre no tema escuro.
     JancarTheme(dark = true) {
-        CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange, lightTuning, health)
+        CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange, lightTuning, health, paint, onPaintChange)
     }
 }
 
@@ -111,9 +120,15 @@ private fun CarScreenContent(
     onModeChange: (DashModel.DriveMode) -> Unit,
     lightTuning: CarPhoto.Tuning,
     health: DashModel.Health,
+    paint: CarPaint,
+    onPaintChange: (CarPaint) -> Unit,
 ) {
     val c = JTheme.colors
     val photo by rememberCarPhoto()
+    // Fileira de cores: abre tocando na foto e some 6 s depois do último toque.
+    var picking by remember { mutableStateOf(false) }
+    var touchedAt by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(picking, touchedAt) { if (picking) { delay(6_000); picking = false } }
     val r = reading
 
     // Setas: mesmo pisca do Painel (o CAN manda a alavanca fixa em 1); seta do painel e da foto piscam juntas.
@@ -177,9 +192,16 @@ private fun CarScreenContent(
                                 turnLeftLit = left && lit,
                                 turnRightLit = right && lit,
                                 doors = r.doors,
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier.fillMaxSize().clickable(
+                                    enabled = paintAvailable(ph.body),
+                                    onClickLabel = "Trocar a cor do carro",
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) { picking = !picking; touchedAt = System.currentTimeMillis() },
                                 fogLights = r.fogOn == true,
                                 tuning = lightTuning,
+                                body = ph.body,
+                                paint = paint,
                             )
                             PhotoLoad.Missing -> BasicText("Foto do carro não encontrada", style = JancarType.body.copy(color = c.faint))
                             PhotoLoad.Loading -> {}
@@ -193,6 +215,13 @@ private fun CarScreenContent(
                     // Portas abertas: balão com o nome em cima de cada uma, na própria foto (CarPhotoView).
                 }
             }
+        }
+        if (picking) {
+            PaintPicker(
+                current = paint,
+                onPick = { onPaintChange(it); touchedAt = System.currentTimeMillis() },
+                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 18.dp),
+            )
         }
     }
 }

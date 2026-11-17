@@ -82,6 +82,8 @@ class CarPreviewActivity : ComponentActivity() {
             JancarTheme(dark = !light) {
                 if (demo) { DemoCar(tuning) { finish() }; return@JancarTheme }
                 var mode by remember { mutableStateOf(DashModel.DriveMode.fromName(intent.getStringExtra("mode"))) }
+                // Cor do Fox: --es paint Vermelho|Preto|Branco|... (toque na foto troca na prévia).
+                var paint by remember { mutableStateOf(com.rocha.jancarlauncher.ui.car3d.CarPaint.fromName(intent.getStringExtra("paint"))) }
                 CarScreen(
                     reading, canConnected = true, onBack = { finish() },
                     obdLive = if (obd) ObdClient.Live(
@@ -91,6 +93,7 @@ class CarPreviewActivity : ComponentActivity() {
                     trip = if (obd) Trip(liters = 10.3, km = 133.2) else Trip(),
                     mode = mode, onModeChange = { mode = it },
                     lightTuning = tuning,
+                    paint = paint, onPaintChange = { paint = it },
                 )
             }
         }

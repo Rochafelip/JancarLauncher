@@ -56,6 +56,11 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     val ethanolPriceCents: Flow<Int?> = ds.data.map { it[ethanolPriceKey] }
     suspend fun setGasPriceCents(cents: Int) { ds.edit { it[gasPriceKey] = cents } }
     suspend fun setEthanolPriceCents(cents: Int) { ds.edit { it[ethanolPriceKey] = cents } }
+    /** Cor do Fox na tela do Carro (nome do `CarPaint`), só por diversão; null = original (prata). */
+    val carPaint: Flow<String?> = ds.data.map { it[carPaintKey] }
+    suspend fun setCarPaint(name: String) { ds.edit { it[carPaintKey] = name } }
+    private val carPaintKey = stringPreferencesKey("car_paint")
+
     /** Retomar a música ao ligar a central (Ajustes); desligado por padrão até o teste no carro. */
     val resumeMusic: Flow<Boolean> = ds.data.map { it[resumeMusicKey] ?: false }
     suspend fun setResumeMusic(on: Boolean) { ds.edit { it[resumeMusicKey] = on } }

@@ -14,6 +14,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.runtime.remember
@@ -50,6 +52,8 @@ import kotlin.math.roundToInt
  */
 object CarPhoto {
     const val ASSET = "car/photo.png"
+    /** Máscara da lataria (mesmo tamanho da foto; `tools/car-photo/mascara.ps1`). */
+    const val MASK_ASSET = "car/body_mask.png"
 
     /** Posição de um brilho: centro (x, y) e raio, em fração da LARGURA/ALTURA da foto (raio: da largura). */
     data class Glow(val x: Float, val y: Float, val r: Float)
@@ -172,20 +176,35 @@ sealed interface PhotoLoad {
     data object Loading : PhotoLoad
     /** Não há foto no APK: a tela avisa. */
     data object Missing : PhotoLoad
-    class Ready(val image: ImageBitmap) : PhotoLoad
+    /** [body] = só a lataria (foto × máscara), para trocar a cor; `null` = sem máscara no APK (sem troca de cor). */
+    class Ready(val image: ImageBitmap, val body: ImageBitmap? = null) : PhotoLoad
 }
 
-/** Lê a foto fora da thread da tela. */
+/** Lê a foto (e monta a camada da lataria, uma vez) fora da thread da tela. */
 @Composable
 fun rememberCarPhoto(): State<PhotoLoad> {
     val context = LocalContext.current.applicationContext
     return produceState<PhotoLoad>(PhotoLoad.Loading) {
         value = withContext(Dispatchers.IO) {
-            runCatching { context.assets.open(CarPhoto.ASSET).use { BitmapFactory.decodeStream(it) } }.getOrNull()
-                ?.let { PhotoLoad.Ready(it.asImageBitmap()) } ?: PhotoLoad.Missing
+            val photo = runCatching { context.assets.open(CarPhoto.ASSET).use { BitmapFactory.decodeStream(it) } }.getOrNull()
+                ?: return@withContext PhotoLoad.Missing
+            val mask = runCatching { context.assets.open(CarPhoto.MASK_ASSET).use { BitmapFactory.decodeStream(it) } }.getOrNull()
+            PhotoLoad.Ready(photo.asImageBitmap(), mask?.let { bodyLayer(photo, it) }?.asImageBitmap())
         }
     }
 }
+
+/** Foto × máscara (DST_IN): só os pixels da lataria, com a borda suave da máscara. */
+private fun bodyLayer(photo: android.graphics.Bitmap, mask: android.graphics.Bitmap): android.graphics.Bitmap? = runCatching {
+    val out = photo.copy(android.graphics.Bitmap.Config.ARGB_8888, true)
+    val c = android.graphics.Canvas(out)
+    val p = android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply {
+        xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN)
+    }
+    c.drawBitmap(mask, null, android.graphics.Rect(0, 0, out.width, out.height), p)
+    mask.recycle()
+    out
+}.getOrNull()
 
 private val HeadGlow = Color(0xFFDCE9FF)
 /** Lâmpada halógena do farol de milha: branco mais quente que o farol. */
@@ -208,7 +227,11 @@ fun CarPhotoView(
     modifier: Modifier = Modifier,
     fogLights: Boolean = false,
     tuning: CarPhoto.Tuning = CarPhoto.TUNING,
+    /** Só a lataria ([PhotoLoad.Ready.body]); com [paint] diferente de Original, é desenhada tingida por cima. */
+    body: ImageBitmap? = null,
+    paint: CarPaint = CarPaint.Original,
 ) {
+    val paintFilter = remember(paint) { paint.matrix()?.let { ColorFilter.colorMatrix(ColorMatrix(it)) } }
     val head by animateFloatAsState(if (headlights) 1f else 0f, tween(if (headlights) 90 else 220), label = "head")
     val fog by animateFloatAsState(if (fogLights) 1f else 0f, tween(if (fogLights) 90 else 220), label = "fog")
     val left by animateFloatAsState(if (turnLeftLit) 1f else 0f, tween(if (turnLeftLit) 60 else 140), label = "turnL")
@@ -235,6 +258,16 @@ fun CarPhotoView(
             dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
             filterQuality = FilterQuality.High,
         )
+        // Cor nova só na lataria: a camada recortada, tingida pela luminância (reflexos e sombras continuam).
+        if (body != null && paintFilter != null) {
+            drawImage(
+                body,
+                dstOffset = IntOffset(origin.x.roundToInt(), origin.y.roundToInt()),
+                dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
+                filterQuality = FilterQuality.High,
+                colorFilter = paintFilter,
+            )
+        }
         glows(spec.head, head, HeadGlow, origin, size, 2.4f, tuning.head)
         glows(spec.fog, fog, FogGlow, origin, size, 2.4f, tuning.fog)
         glows(spec.turnLeft, left, TurnGlow, origin, size, 2.2f)
