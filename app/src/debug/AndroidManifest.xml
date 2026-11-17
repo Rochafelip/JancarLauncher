@@ -30,6 +30,12 @@
             android:exported="true"
             android:taskAffinity="com.rocha.jancarlauncher.obdpreview"
             android:screenOrientation="landscape" />
+        <!-- Prévia da Home com mídia falsa (player nos 12 temas): só no build debug (ver HomePreviewActivity). -->
+        <activity
+            android:name=".HomePreviewActivity"
+            android:exported="true"
+            android:taskAffinity="com.rocha.jancarlauncher.homepreview"
+            android:screenOrientation="landscape" />
         <!-- Troca o tema da Home por adb: só no build debug (ver ThemeSetActivity). -->
         <activity
             android:name=".ThemeSetActivity"

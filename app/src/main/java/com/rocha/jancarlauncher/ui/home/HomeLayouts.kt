@@ -195,6 +195,13 @@ fun HomeParts.Tiles(modifier: Modifier = Modifier, spacing: Dp = 18.dp) {
     }
 }
 
+/** Player da Home (todos os temas): [card] = Cartão; senão Barra. Sempre visível; ocioso = Música · Rádio. */
+@Composable
+fun HomeParts.Player(card: Boolean, modifier: Modifier = Modifier) {
+    val a = PlayerActions(onPlay, onPause, onNext, onPrevious, onOpenMusic = apps[1].onClick, onOpenRadio = apps[2].onClick)
+    if (card) PlayerCard(nowPlaying, a, modifier) else PlayerBar(nowPlaying, a, modifier)
+}
+
 @Composable
 fun HomeParts.NowPlaying(modifier: Modifier = Modifier) {
     NowPlayingCard(nowPlaying, onPlay, onPause, onNext, onPrevious, modifier)
@@ -545,7 +552,7 @@ private fun BoxScope.LayoutTocando(p: HomeParts) {
         }
     }
     Row(Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal = 48.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-        p.MusicOrIdle(Modifier.weight(1f))
+        p.Player(card = true, modifier = Modifier.weight(1f))
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             p.shortcuts.chunked(2).forEach { row -> Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { RoundIcon(it) } } }
         }
