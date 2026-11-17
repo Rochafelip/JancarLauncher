@@ -56,6 +56,11 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     val ethanolPriceCents: Flow<Int?> = ds.data.map { it[ethanolPriceKey] }
     suspend fun setGasPriceCents(cents: Int) { ds.edit { it[gasPriceKey] = cents } }
     suspend fun setEthanolPriceCents(cents: Int) { ds.edit { it[ethanolPriceKey] = cents } }
+    /** Limite do aviso sonoro de velocidade (km/h); null = desligado (o padrão). */
+    val speedLimit: Flow<Int?> = ds.data.map { it[speedLimitKey] }
+    suspend fun setSpeedLimit(kmh: Int?) { ds.edit { if (kmh == null) it.remove(speedLimitKey) else it[speedLimitKey] = kmh } }
+    private val speedLimitKey = intPreferencesKey("speed_limit_kmh")
+
     private val gasPriceKey = intPreferencesKey("gas_price_cents")
     private val ethanolPriceKey = intPreferencesKey("ethanol_price_cents")
 

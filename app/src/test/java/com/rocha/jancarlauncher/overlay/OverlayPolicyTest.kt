@@ -44,4 +44,10 @@ class OverlayPolicyTest {
         assertEquals("ÁGUA 112 °C", hot.warning)
         assertNull(OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily).warning)
     }
+
+    @Test fun speedOverTurnsRed() {
+        val r = DashModel.Reading(speed = 112f, rpm = 3000f, fuelLiters = null, outsideTempC = null, odoKm = null)
+        assertTrue(OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily, limit = 110).speedOver)
+        assertFalse(OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily).speedOver)
+    }
 }

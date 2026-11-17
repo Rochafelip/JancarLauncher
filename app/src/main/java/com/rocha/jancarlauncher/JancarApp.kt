@@ -24,6 +24,7 @@ import com.rocha.jancarlauncher.power.WakeWelcomeTracker
 import com.rocha.jancarlauncher.settings.SettingsStore
 import com.rocha.jancarlauncher.system.CrashStore
 import com.rocha.jancarlauncher.system.RingLog
+import com.rocha.jancarlauncher.system.SpeedAlarm
 import java.io.File
 
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
@@ -62,6 +63,9 @@ class JancarApp : Application() {
     // Bateria e água pelo OBD (avisos do Painel, da tela Fox e do cartão sobre o AA).
     val health: HealthMonitor by lazy { HealthMonitor(obd.live, appScope, log) }
 
+    // Aviso sonoro acima do limite de velocidade (CAN quando aberto, senão OBD).
+    val speedAlarm: SpeedAlarm by lazy { SpeedAlarm(this) }
+
     // Viagens anteriores (uma por ligada do carro), gravadas quando o ObdClient fecha uma.
     val tripStore: TripStore by lazy { TripStore(File(filesDir, "obd")) }
 
@@ -78,5 +82,6 @@ class JancarApp : Application() {
         super.onCreate()
         CrashRestarter.install(this)
         ScreenStateTracker(this, wakeTracker).register()
+        speedAlarm.start()
     }
 }

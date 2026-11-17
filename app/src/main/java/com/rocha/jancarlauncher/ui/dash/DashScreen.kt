@@ -64,6 +64,7 @@ import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.obd.FuelModel
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
+import com.rocha.jancarlauncher.obd.SpeedAlertRule
 import com.rocha.jancarlauncher.obd.TripCost
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.CarStateDetails
@@ -171,6 +172,7 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}, onOpenObd: () -> U
     val health by app.health.health.collectAsState()
     val gasCents by app.settings.gasPriceCents.collectAsState(initial = null)
     val ethCents by app.settings.ethanolPriceCents.collectAsState(initial = null)
+    val speedLimit by app.speedAlarm.limit.collectAsState()
 
     DashScreen(
         state, connected, onBack, canConnected, canDash, canCabin, canLights,
@@ -187,6 +189,8 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}, onOpenObd: () -> U
         gasCents = gasCents,
         ethCents = ethCents,
         onPricesChange = { g, e -> scope.launch { app.settings.setGasPriceCents(g); app.settings.setEthanolPriceCents(e) } },
+        speedLimit = speedLimit,
+        onSpeedLimitChange = { scope.launch { app.settings.setSpeedLimit(it) } },
     )
 }
 
@@ -216,7 +220,12 @@ fun DashScreen(
     gasCents: Int? = null,
     ethCents: Int? = null,
     onPricesChange: (gas: Int, eth: Int) -> Unit = { _, _ -> },
+    /** Limite do aviso sonoro de velocidade (km/h); null = desligado. */
+    speedLimit: Int? = null,
+    onSpeedLimitChange: (Int?) -> Unit = {},
 ) {
+    var limitOpen by remember { mutableStateOf(false) }
+    BackHandler(enabled = limitOpen) { limitOpen = false }
     var diagnostics by remember { mutableStateOf(false) }
     var pricesOpen by remember { mutableStateOf(false) }
     BackHandler(enabled = pricesOpen) { pricesOpen = false }
@@ -277,6 +286,8 @@ fun DashScreen(
                     FuelBlendButton(fuelBlend, onNextBlend)
                     Spacer(Modifier.width(12.dp))
                 }
+                SpeedLimitChip(speedLimit) { limitOpen = true }
+                Spacer(Modifier.width(12.dp))
                 JIconButton(JIcons.Wrench, "Diagnóstico OBD", onOpenObd)
                 JIconButton(JIcons.Vehicle, "Carro", onOpenCar)
                 Spacer(Modifier.width(12.dp))
@@ -293,7 +304,13 @@ fun DashScreen(
                 Column(Modifier.weight(1.4f).card(cards)) {
                     BasicText(
                         DashModel.speedText(r.speed),
-                        style = digits(156, FontWeight.W600).copy(color = if (r.speed == null) c.faint else c.fg),
+                        style = digits(156, FontWeight.W600).copy(
+                            color = when {
+                                r.speed == null -> c.faint
+                                SpeedAlertRule.over(r.speed, speedLimit) -> p.red
+                                else -> c.fg
+                            },
+                        ),
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BasicText("km/h", style = JancarType.tileLabel.copy(color = c.muted))
@@ -357,6 +374,9 @@ fun DashScreen(
         }
         }
 
+        if (limitOpen) {
+            SpeedLimitPanel(speedLimit, onChange = onSpeedLimitChange, onClose = { limitOpen = false })
+        }
         if (pricesOpen) {
             PricePanel(gasCents, ethCents, onSave = { g, e -> onPricesChange(g, e); pricesOpen = false }, onClose = { pricesOpen = false })
         }

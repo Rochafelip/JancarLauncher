@@ -92,7 +92,7 @@ class AutoOverlay(private val app: JancarApp) {
             app.carService.state.value, app.canBus.dashboard.value, app.canBus.cabin.value, app.canBus.lights.value,
         )
         val gear = gearEstimator.update(r.rpm, r.speed, SystemClock.uptimeMillis())
-        return OverlayPolicy.lines(r, app.obd.live.value, mode, gear, app.health.health.value)
+        return OverlayPolicy.lines(r, app.obd.live.value, mode, gear, app.health.health.value, app.speedAlarm.limit.value)
     }
 
     /** Último app que veio para a frente, pelos eventos de uso desde a última consulta. */
@@ -264,6 +264,7 @@ class AutoOverlay(private val app: JancarApp) {
                 val base = y + speedH * 0.86f
                 val unitW = unitR.measureText("km/h")
                 canvas.drawText("km/h", right, base, unitR)
+                speedP.color = if (l.speedOver) RED else FG
                 canvas.drawText(it, right - unitW - 6 * d, base, speedP)
                 y += speedH + gap
             }

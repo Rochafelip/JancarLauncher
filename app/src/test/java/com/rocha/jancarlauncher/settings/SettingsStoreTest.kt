@@ -122,4 +122,12 @@ class SettingsStoreTest {
         store.setTrip(3.0, 40.0, 1.5)
         assertEquals(Triple(3.0, 40.0, 1.5), store.trip.first())
     }
+
+    @Test fun speedLimit_defaultOff_setAndTurnOff() = runBlocking {
+        assertNull(store.speedLimit.first())
+        store.setSpeedLimit(110)
+        assertEquals(110, store.speedLimit.first())
+        store.setSpeedLimit(null)
+        assertNull(store.speedLimit.first())
+    }
 }

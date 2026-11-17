@@ -1,6 +1,7 @@
 package com.rocha.jancarlauncher.overlay
 
 import com.rocha.jancarlauncher.obd.ObdClient
+import com.rocha.jancarlauncher.obd.SpeedAlertRule
 import com.rocha.jancarlauncher.ui.dash.ConsumptionText
 import com.rocha.jancarlauncher.ui.dash.DashModel
 import com.rocha.jancarlauncher.ui.dash.GearModel
@@ -30,6 +31,8 @@ object OverlayPolicy {
         val hintDown: Boolean = false,
         /** Aviso grave em vermelho (motor esquentando: "ÁGUA 112 °C"); `null` = some. */
         val warning: String? = null,
+        /** Velocidade acima do limite do aviso sonoro (número em vermelho). */
+        val speedOver: Boolean = false,
     ) {
         val isEmpty: Boolean get() = speed == null && rpm == null && consumption == null && warning == null
     }
@@ -37,6 +40,7 @@ object OverlayPolicy {
     fun lines(
         r: DashModel.Reading, live: ObdClient.Live, mode: DashModel.DriveMode, gear: Int? = null,
         health: DashModel.Health = DashModel.Health(),
+        limit: Int? = null,
     ): Lines {
         val (now, unit) = ConsumptionText.instant(live)
         val s = GearModel.suggest(gear, r.rpm, r.speed, mode)
@@ -50,6 +54,7 @@ object OverlayPolicy {
             hint = GearModel.hintText(s),
             hintDown = s.hint == GearModel.Hint.Down,
             warning = health.coolantC?.takeIf { health.overheat }?.let { "ÁGUA ${it.toInt()} °C" },
+            speedOver = SpeedAlertRule.over(r.speed, limit),
         )
     }
 }

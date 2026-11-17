@@ -11,6 +11,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.rocha.jancarlauncher.can.Cabin
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.DashBoard
@@ -45,6 +48,11 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * Modo DEMO: `--ez demo true [--es mode Sport]` roda em loop o roteiro do [FoxDemo] (o mesmo da tela Fox) no Painel.
  */
 class DashPreviewActivity : ComponentActivity() {
+    override fun onDestroy() {
+        (application as JancarApp).speedAlarm.debugSpeed = null
+        super.onDestroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val moving = intent.getBooleanExtra("moving", false)
@@ -52,6 +60,8 @@ class DashPreviewActivity : ComponentActivity() {
         val mode = DashModel.DriveMode.fromName(intent.getStringExtra("mode"))
         val light = intent.getBooleanExtra("light", false)
         val obd = intent.getBooleanExtra("obd", false)
+        // Aviso de velocidade: o alarme do app ouve a velocidade da prévia (só enquanto ela está aberta).
+        (application as JancarApp).speedAlarm.debugSpeed = if (moving) 62f else 0f
         // Avisos de saúde pelo OBD: --ez hot true (água 112 °C) / --es battery NotCharging|HighVoltage|Weak.
         val battery = intent.getStringExtra("battery")?.let { b -> BatteryAlert.entries.firstOrNull { it.name == b } }
         val health = DashModel.Health(
@@ -87,6 +97,9 @@ class DashPreviewActivity : ComponentActivity() {
             var blend by remember { mutableStateOf(FuelModel.Blend.Gasolina) }
             var trip by remember { mutableStateOf(if (obd) Trip(liters = 2.9, km = 37.4) else Trip()) }
             var prices by remember { mutableStateOf<Pair<Int, Int>?>(null) }
+            val app = application as JancarApp
+            val limit by app.speedAlarm.limit.collectAsState()
+            val scope = rememberCoroutineScope()
             JancarTheme(dark = !light) {
                 DashScreen(
                     state = CarState(headlightOn = true),
@@ -110,6 +123,8 @@ class DashPreviewActivity : ComponentActivity() {
                     gasCents = prices?.first,
                     ethCents = prices?.second,
                     onPricesChange = { g, e -> prices = g to e },
+                    speedLimit = limit,
+                    onSpeedLimitChange = { v -> scope.launch { app.settings.setSpeedLimit(v) } },
                 )
             }
         }
