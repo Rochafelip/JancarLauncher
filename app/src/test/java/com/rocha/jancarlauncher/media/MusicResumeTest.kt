@@ -27,4 +27,14 @@ class MusicResumeTest {
         assertNull(LastSource.decode("lixo"))
         assertNull(LastSource.decode(null))
     }
+
+    @Test fun onlyPowerOnWelcomes_count_notWakingFromBlankScreen() {
+        assertTrue(MusicResume.countsAsPowerOn(WelcomeOrigin.Launch))
+        assertTrue(MusicResume.countsAsPowerOn(WelcomeOrigin.WakeFromSuspend))
+        assertFalse(MusicResume.countsAsPowerOn(WelcomeOrigin.ScreenOffWake))
+    }
+
+    @Test fun pausedOnPurpose_clearsLastSource() {
+        assertNull(LastSource.decode(LastSource.CLEARED))
+    }
 }

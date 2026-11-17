@@ -116,11 +116,19 @@ fun AppRoot(
     val adbStatus by rememberAdbStatus(tickKey = clock)
     val wifiStatus by rememberWifiStatus(tickKey = clock)
 
+    // Retomar a música: conta só as Boas-vindas de ligar a central (abrir o app ou acordar da suspensão), nunca a de
+    // acordar do "Apagar tela". Contador para não cancelar se o dono tocar logo na Boas-vindas.
+    var welcomes by remember { mutableIntStateOf(0) }
+    fun powerOnWelcome(origin: com.rocha.jancarlauncher.media.WelcomeOrigin) {
+        if (com.rocha.jancarlauncher.media.MusicResume.countsAsPowerOn(origin)) welcomes++
+    }
+
     // Tela inicial: Boas-vindas na 1ª abertura após reinício (ou quando a ativação por "acordar" pediu).
     LaunchedEffect(Unit) {
         if (screen == null) {
             val saved = settings.lastBootCount.first()
             screen = if (forceWelcome || WelcomePolicy.shouldShowOnLaunch(bootCount, saved)) Screen.Welcome else Screen.Home
+            if (screen == Screen.Welcome) powerOnWelcome(com.rocha.jancarlauncher.media.WelcomeOrigin.Launch)
         }
     }
     // Brilho: só reaplica o que o usuário escolheu; sem escolha, não mexe no brilho da central.
@@ -130,7 +138,13 @@ fun AppRoot(
             brightness.apply(it)
         }
     }
-    LaunchedEffect(events) { events.collect { screen = it } }
+    LaunchedEffect(events) {
+        events.collect {
+            screen = it
+            // Boas-vindas pela MainActivity = a central acordou da suspensão (ScreenStateTracker).
+            if (it == Screen.Welcome) powerOnWelcome(com.rocha.jancarlauncher.media.WelcomeOrigin.WakeFromSuspend)
+        }
+    }
 
     // Última fonte tocando (para retomar ao ligar): grava sempre que algo está tocando.
     LaunchedEffect(nowSource, shownNow.isPlaying) {
@@ -139,10 +153,8 @@ fun AppRoot(
         else nowPlaying.packageName?.let { com.rocha.jancarlauncher.media.LastSource.Session(it) }
         src?.let { settings.setLastSource(it.encode()) }
     }
-    // Retomar a música ao ligar (Ajustes; desligado por padrão): a cada Boas-vindas (boot ou acordar), depois de
-    // alguns segundos. Contador para não cancelar se o dono tocar logo na Boas-vindas.
-    var welcomes by remember { mutableIntStateOf(0) }
-    LaunchedEffect(screen) { if (screen == Screen.Welcome) welcomes++ }
+    // Retomar a música ao ligar (Ajustes; desligado por padrão): a cada Boas-vindas de ligar a central, depois de
+    // alguns segundos.
     LaunchedEffect(welcomes) {
         if (welcomes == 0) return@LaunchedEffect
         kotlinx.coroutines.delay(com.rocha.jancarlauncher.media.MusicResume.DELAY_MS)
@@ -268,7 +280,11 @@ fun AppRoot(
                 nowPlaying = shownNow,
                 // Botões vão para a fonte que o card está mostrando.
                 onPlay = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.play() else nowPlaying.play() },
-                onPause = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.pause() else nowPlaying.pause() },
+                onPause = {
+                    if (nowSource == NowPlayingSource.Jancar) jancarMedia.pause() else nowPlaying.pause()
+                    // Pausou de propósito: não retomar ao ligar a central.
+                    scope.launch { settings.setLastSource(com.rocha.jancarlauncher.media.LastSource.CLEARED) }
+                },
                 onNext = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.next() else nowPlaying.next() },
                 onPrevious = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.previous() else nowPlaying.previous() },
                 adbStatus = adbStatus,

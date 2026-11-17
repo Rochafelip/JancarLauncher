@@ -11,6 +11,9 @@ sealed interface LastSource {
     }
 
     companion object {
+        /** Gravado quando o dono pausa pelo launcher: não retomar o que ele parou de propósito. */
+        const val CLEARED = ""
+
         fun decode(s: String?): LastSource? = when {
             s == "jancar" -> Jancar
             s != null && s.startsWith("session:") && s.length > 8 -> Session(s.removePrefix("session:"))
@@ -31,4 +34,10 @@ object MusicResume {
 
     /** Espera depois da Boas-vindas aparecer (a central ainda está acordando os serviços de mídia). */
     const val DELAY_MS = 4_000L
+
+    /** Só ligar a central conta: abrir o app (boot) ou acordar da suspensão; acordar do "Apagar tela" não. */
+    fun countsAsPowerOn(origin: WelcomeOrigin): Boolean = origin != WelcomeOrigin.ScreenOffWake
 }
+
+/** De onde veio a Boas-vindas. */
+enum class WelcomeOrigin { Launch, WakeFromSuspend, ScreenOffWake }
