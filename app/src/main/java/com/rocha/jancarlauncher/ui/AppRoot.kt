@@ -258,7 +258,10 @@ fun AppRoot(
             Screen.Car -> CarRoute(onBack = { screen = Screen.Dash })
             Screen.Settings -> com.rocha.jancarlauncher.ui.settings.SettingsScreen(
                 onBack = { screen = Screen.Home },
-                sections = listOf({ com.rocha.jancarlauncher.ui.settings.CrashReportSection() }),
+                sections = listOf(
+                    { com.rocha.jancarlauncher.ui.settings.UpdateSection() },
+                    { com.rocha.jancarlauncher.ui.settings.CrashReportSection() },
+                ),
             )
             Screen.Off -> ScreenOffScreen(onWake = { screen = ScreenOffPolicy.afterWake(Screen.Off) })
             Screen.Drawer -> DrawerScreen(

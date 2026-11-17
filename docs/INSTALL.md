@@ -86,6 +86,20 @@ adb shell appops set com.rocha.jancarlauncher GET_USAGE_STATS allow
 A primeira deixa desenhar por cima de outros apps; a segunda deixa saber qual app está na frente. Sem qualquer
 uma delas, a faixa simplesmente não aparece. Para desligar: as mesmas linhas com `deny`.
 
+### 5.3 Permissões opcionais: atualizar sem ADB
+
+Em **Ajustes do launcher** (painel de brilho › Ajustes do launcher) dá para atualizar pela última release do
+GitHub (precisa de internet, ex.: roteador do celular) ou por um APK no pendrive. Libere uma vez:
+
+```
+adb shell appops set com.rocha.jancarlauncher REQUEST_INSTALL_PACKAGES allow
+adb shell pm grant com.rocha.jancarlauncher android.permission.READ_EXTERNAL_STORAGE
+```
+
+A primeira deixa o launcher abrir a tela de instalação do Android; a segunda só é usada se a central não tiver
+seletor de arquivos (aí o launcher procura `*.apk` no pendrive). O launcher só instala o **mesmo app**, assinado com a
+**mesma chave** e com versão **mais nova**; a atualização mantém o HOME e as preferências, como o `adb install -r`.
+
 ## 6. Desligar a depuração sem fio
 
 A porta 5555 fica aberta **sem senha**. Quando terminar:
