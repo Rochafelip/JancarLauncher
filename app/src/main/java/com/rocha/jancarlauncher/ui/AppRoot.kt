@@ -201,6 +201,7 @@ fun AppRoot(
             screen == Screen.Off -> screen = ScreenOffPolicy.afterWake(Screen.Off)
             screen == Screen.Drawer || screen == Screen.Dash || screen == Screen.Settings -> screen = Screen.Home
             screen == Screen.Car -> screen = Screen.Dash
+            screen == Screen.Obd -> screen = Screen.Dash
             // Home/Boas-vindas: a tela inicial não "sai" com o botão voltar.
         }
     }
@@ -254,7 +255,8 @@ fun AppRoot(
                 onLayoutChange = { scope.launch { settings.setHomeLayout(it.name) } },
                 onStyleChange = { key, value -> scope.launch { settings.setScreenStyle(key, value) } },
             )
-            Screen.Dash -> DashRoute(onBack = { screen = Screen.Home }, onOpenCar = { screen = Screen.Car })
+            Screen.Dash -> DashRoute(onBack = { screen = Screen.Home }, onOpenCar = { screen = Screen.Car }, onOpenObd = { screen = Screen.Obd })
+            Screen.Obd -> com.rocha.jancarlauncher.ui.obd.ObdRoute(onBack = { screen = Screen.Dash })
             Screen.Car -> CarRoute(onBack = { screen = Screen.Dash })
             Screen.Settings -> com.rocha.jancarlauncher.ui.settings.SettingsScreen(
                 onBack = { screen = Screen.Home },

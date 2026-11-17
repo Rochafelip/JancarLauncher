@@ -140,7 +140,7 @@ private fun digits(size: Int, weight: FontWeight) = TextStyle(
  * única do CAN enquanto está na tela (a do ICar é do AppRoot). Toque longo abre o diagnóstico.
  */
 @Composable
-fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}) {
+fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}, onOpenObd: () -> Unit = {}) {
     val app = LocalContext.current.applicationContext as JancarApp
     // ICar: conexão aberta pelo AppRoot (o farol comanda o modo noturno); aqui só lê.
     val client = app.carService
@@ -174,6 +174,7 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}) {
         mode = DashModel.DriveMode.fromName(savedMode),
         onModeChange = { scope.launch { app.settings.setDriveMode(it.name) } },
         onOpenCar = onOpenCar,
+        onOpenObd = onOpenObd,
         obdLive = obdLive,
         obdTrip = obdTrip,
         fuelBlend = blend,
@@ -196,6 +197,8 @@ fun DashScreen(
     onModeChange: (DashModel.DriveMode) -> Unit = {},
     /** Abre a tela do Carro (botão do topo ou toque no desenho das portas). */
     onOpenCar: () -> Unit = {},
+    /** Abre a tela OBD (viagens e falhas), botão de chave inglesa no topo. */
+    onOpenObd: () -> Unit = {},
     obdLive: ObdClient.Live = ObdClient.Live(),
     obdTrip: Trip = Trip(),
     fuelBlend: FuelModel.Blend = FuelModel.Blend.Gasolina,
@@ -262,6 +265,7 @@ fun DashScreen(
                     FuelBlendButton(fuelBlend, onNextBlend)
                     Spacer(Modifier.width(12.dp))
                 }
+                JIconButton(JIcons.Wrench, "Diagnóstico OBD", onOpenObd)
                 JIconButton(JIcons.Vehicle, "Carro", onOpenCar)
                 Spacer(Modifier.width(12.dp))
                 ModeButton(mode) { onModeChange(mode.next()) }

@@ -45,4 +45,8 @@ class ScreenRestoreTest {
     @Test fun settingsRestoresToHome() {
         assertEquals(Screen.Home, ScreenRestore.restore("Settings"))
     }
+
+    @Test fun obdRestoresToHome() {
+        assertEquals(Screen.Home, ScreenRestore.restore("Obd"))
+    }
 }

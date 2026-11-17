@@ -162,6 +162,11 @@ object JIcons {
     val Thermometer = icon("Thermometer", 1.7f) {
         line("M14 14.76V4.5a2 2 0 0 0-4 0v10.26a4 4 0 1 0 4 0z"); line("M12 9v8")
     }
+    /** Chave inglesa (diagnóstico OBD). */
+    val Wrench = icon("Wrench", 1.7f) {
+        line("M14 13a5 5 0 0 0 6.6-6.6l-3 3-2.4-.6-.6-2.4 3-3A5 5 0 0 0 11 10")
+        line("M11 10l-7.4 7.4a2.1 2.1 0 0 0 3 3L14 13")
+    }
     /** Bateria (luz-espia do painel): caixa com + e −. */
     val Battery = icon("Battery", 1.7f) {
         rect(3f, 7f, 16f, 11f, 2f); line("M21 11v3")

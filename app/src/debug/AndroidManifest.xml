@@ -24,6 +24,12 @@
             android:exported="true"
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <!-- Prévia da tela OBD com leitura de falhas falsa: só no build debug (ver ObdPreviewActivity). -->
+        <activity
+            android:name=".ObdPreviewActivity"
+            android:exported="true"
+            android:taskAffinity="com.rocha.jancarlauncher.obdpreview"
+            android:screenOrientation="landscape" />
         <!-- Troca o tema da Home por adb: só no build debug (ver ThemeSetActivity). -->
         <activity
             android:name=".ThemeSetActivity"

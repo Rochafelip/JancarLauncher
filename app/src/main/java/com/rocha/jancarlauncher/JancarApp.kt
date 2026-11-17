@@ -8,7 +8,9 @@ import com.rocha.jancarlauncher.boot.CrashRestarter
 import com.rocha.jancarlauncher.can.CanBusClient
 import com.rocha.jancarlauncher.can.JancarCarClient
 import com.rocha.jancarlauncher.media.JancarMediaClient
+import com.rocha.jancarlauncher.obd.DtcCatalog
 import com.rocha.jancarlauncher.obd.HealthMonitor
+import com.rocha.jancarlauncher.obd.ScanHistory
 import com.rocha.jancarlauncher.obd.ObdClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +58,12 @@ class JancarApp : Application() {
 
     // Bateria e água pelo OBD (avisos do Painel, da tela Fox e do cartão sobre o AA).
     val health: HealthMonitor by lazy { HealthMonitor(obd.live, appScope, log) }
+
+    // Scanner de falhas: últimas leituras e a tabela própria de códigos em português.
+    val scanHistory: ScanHistory by lazy { ScanHistory(File(filesDir, "obd")) }
+    val dtcCatalog: DtcCatalog by lazy {
+        DtcCatalog(runCatching { assets.open("obd/dtc_pt.json").bufferedReader().use { it.readText() } }.getOrDefault("{}"))
+    }
 
     // Faixa do Painel por cima do Android Auto/CarPlay; ligada pelo AppRoot.
     val autoOverlay: AutoOverlay by lazy { AutoOverlay(this) }
