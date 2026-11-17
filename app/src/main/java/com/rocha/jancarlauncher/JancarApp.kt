@@ -47,7 +47,7 @@ class JancarApp : Application() {
     val carService: JancarCarClient by lazy { JancarCarClient(this) }
 
     // Serviço de mídia da Jancar (faixa do app Música); instância única, conectada pelo AppRoot.
-    val media: JancarMediaClient by lazy { JancarMediaClient(this) }
+    val media: JancarMediaClient by lazy { JancarMediaClient(this, log) }
 
     // Leitor OBD-II (ELM327 Bluetooth): consumo para o Painel; ligado pelo AppRoot o tempo todo.
     val obd: ObdClient by lazy {

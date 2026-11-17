@@ -7,6 +7,8 @@ data class NowPlayingState(
     val art: ByteArray?,
     val isPlaying: Boolean,
     val supportsShuffle: Boolean,
+    /** O que toca é o rádio da central (serviço de mídia com `mediaType` RADIO): título = frequência/estação. */
+    val isRadio: Boolean = false,
 ) {
     companion object {
         val EMPTY = NowPlayingState(title = null, artist = null, art = null, isPlaying = false, supportsShuffle = false)
@@ -17,7 +19,7 @@ data class NowPlayingState(
         if (this === other) return true
         if (other !is NowPlayingState) return false
         return title == other.title && artist == other.artist && art.contentEquals(other.art) &&
-            isPlaying == other.isPlaying && supportsShuffle == other.supportsShuffle
+            isPlaying == other.isPlaying && supportsShuffle == other.supportsShuffle && isRadio == other.isRadio
     }
 
     override fun hashCode(): Int {
@@ -26,6 +28,7 @@ data class NowPlayingState(
         result = 31 * result + (art?.contentHashCode() ?: 0)
         result = 31 * result + isPlaying.hashCode()
         result = 31 * result + supportsShuffle.hashCode()
+        result = 31 * result + isRadio.hashCode()
         return result
     }
 }

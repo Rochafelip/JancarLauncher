@@ -79,4 +79,11 @@ class JancarNowPlayingTest {
     @Test fun nothingAtAll_fallsBackToSession() {
         assertEquals(NowPlayingSource.Session, JancarNowPlaying.pick(NowPlayingState.EMPTY, NowPlayingState.EMPTY))
     }
+
+    @Test fun map_radioType_setsIsRadio() {
+        val radio = JancarNowPlaying.map(info.copy(mediaType = JancarNowPlaying.RADIO_TYPE, text1 = "FM 99.1"), null, null)
+        assertEquals(true, radio.isRadio)
+        assertEquals("FM 99.1", radio.title)
+        assertEquals(false, JancarNowPlaying.map(info, null, null).isRadio)
+    }
 }

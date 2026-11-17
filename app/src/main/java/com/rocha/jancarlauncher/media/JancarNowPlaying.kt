@@ -11,6 +11,8 @@ enum class NowPlayingSource { Session, Jancar }
  */
 object JancarNowPlaying {
     private const val STATE_PLAYING = 3
+    /** `IVIMedia.MediaType.RADIO` (ivi-services descompilado): o app de Rádio da central publica a estação no `IMedia`. */
+    const val RADIO_TYPE = 1
     private val audioExtension = Regex("""\.(mp3|flac|wav|aac|m4a|ogg|wma|ape|opus)$""", RegexOption.IGNORE_CASE)
 
     /** [artPng] = capa já convertida para PNG (a conversão usa Bitmap, fica fora daqui). */
@@ -22,6 +24,7 @@ object JancarNowPlaying {
             art = artPng,
             isPlaying = play?.b == STATE_PLAYING,
             supportsShuffle = false,
+            isRadio = info.mediaType == RADIO_TYPE,
         )
     }
 
