@@ -55,6 +55,7 @@ data class JancarPlayState(val a: Int, val b: Int, val c: Int, val d: Int)
 class JancarMediaClient(context: Context, private val log: com.rocha.jancarlauncher.system.RingLog? = null) {
 
     private val appContext = context.applicationContext
+    private val logRule = MediaLogRule()
     private val worker = HandlerThread("JancarMediaClient").apply { start() }
     private val bg = Handler(worker.looper)
     private val main = Handler(Looper.getMainLooper())
@@ -89,7 +90,9 @@ class JancarMediaClient(context: Context, private val log: com.rocha.jancarlaunc
                     )
                     // Registro (Ajustes › Relatório de erros): no carro, com o rádio ligado, mostra se ele publica aqui (tipo=1).
                     val old = _info.value
-                    if (old == null || old.mediaType != info.mediaType || old.text1 != info.text1 || old.text2 != info.text2) {
+                    if ((old == null || old.mediaType != info.mediaType || old.text1 != info.text1 || old.text2 != info.text2) &&
+                        logRule.shouldLog(info.mediaType, android.os.SystemClock.elapsedRealtime())
+                    ) {
                         log?.add("midia", "tipo=${info.mediaType} t1=${info.text1} t2=${info.text2}")
                     }
                     _info.value = info
