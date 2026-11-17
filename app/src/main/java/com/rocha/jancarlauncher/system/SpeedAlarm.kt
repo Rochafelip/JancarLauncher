@@ -29,8 +29,11 @@ class SpeedAlarm(private val app: JancarApp) {
     fun start() {
         app.appScope.launch {
             while (true) {
-                val beep = rule.update(currentSpeed(), limit.value, SystemClock.elapsedRealtime())
-                if (beep != null) play(beep)
+                // Uma volta com erro não pode parar o aviso nem derrubar a HOME: registra e segue.
+                runCatching {
+                    val beep = rule.update(currentSpeed(), limit.value, SystemClock.elapsedRealtime())
+                    if (beep != null) play(beep)
+                }.onFailure { app.log.add("velocidade", "erro: ${it.javaClass.simpleName}: ${it.message}") }
                 delay(250)
             }
         }

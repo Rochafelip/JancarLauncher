@@ -13,9 +13,6 @@ import com.rocha.jancarlauncher.obd.HealthMonitor
 import com.rocha.jancarlauncher.obd.ScanHistory
 import com.rocha.jancarlauncher.obd.TripStore
 import com.rocha.jancarlauncher.obd.ObdClient
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import com.rocha.jancarlauncher.overlay.AutoOverlay
 import com.rocha.jancarlauncher.launch.LaunchController
 import com.rocha.jancarlauncher.power.ScreenStateTracker
@@ -58,7 +55,7 @@ class JancarApp : Application() {
     }
 
     /** Escopo do app (vida do processo) para monitores que não pertencem a uma tela. */
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val appScope = com.rocha.jancarlauncher.system.appScope(log)
 
     // Bateria e água pelo OBD (avisos do Painel, da tela Fox e do cartão sobre o AA).
     val health: HealthMonitor by lazy { HealthMonitor(obd.live, appScope, log) }
