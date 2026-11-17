@@ -63,6 +63,20 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
     private val _trip = MutableStateFlow(Trip())
     val trip: StateFlow<Trip> = _trip
 
+    /** Viagens por ligada do carro: a atual (ao vivo) e o aviso de viagem fechada (o `JancarApp` guarda). */
+    private val recorder = TripRecorder()
+    private val _currentTrip = MutableStateFlow<TripRecord?>(null)
+    val currentTrip: StateFlow<TripRecord?> = _currentTrip
+     var onTripFinished: ((TripRecord) -> Unit)? = null
+
+    private fun finish(closed: TripRecord?) {
+        if (closed != null) {
+            log?.add("obd", "viagem fechada: %.1f km, %.2f L".format(closed.km, closed.liters))
+            runCatching { onTripFinished?.invoke(closed) }
+        }
+        _currentTrip.value = recorder.current
+    }
+
     /** Chamado no thread principal pelo AppRoot. */
     fun start() {
         if (job?.isActive == true) return
@@ -94,6 +108,7 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
 
     private suspend fun loop() {
         while (coroutineContext.isActive) {
+            finish(recorder.tick(SystemClock.elapsedRealtime()))
             val device = findAdapter()
             if (device == null) {
                 _live.value = Live(Status.NoAdapter)
@@ -110,6 +125,7 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
             } finally {
                 closeSocket()
                 persistTrip()
+                recorder.disconnected(SystemClock.elapsedRealtime(), System.currentTimeMillis())
             }
             _live.value = Live(Status.Connecting, name)
             delay(10_000)
@@ -216,6 +232,7 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
                     val dt = (now - last) / 1000.0
                     last = now
                     if (lph != null && speed != null) _trip.value = _trip.value.add(lph, speed, dt, ethanol?.div(100f) ?: blend.ethanol)
+                    finish(recorder.sample(now, System.currentTimeMillis(), speed, lph, ethanol?.div(100f) ?: blend.ethanol, dt))
                     _live.value = Live(
                         status = if (useMaf || useMap) Status.Connected else Status.NoFuelData,
                         adapter = name,
