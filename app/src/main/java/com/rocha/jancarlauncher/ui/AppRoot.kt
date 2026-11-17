@@ -287,6 +287,7 @@ fun AppRoot(
                 },
                 onNext = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.next() else nowPlaying.next() },
                 onPrevious = { if (nowSource == NowPlayingSource.Jancar) jancarMedia.previous() else nowPlaying.previous() },
+                onOpenSource = com.rocha.jancarlauncher.media.PlayerSource.target(nowSource, jancarInfo?.mediaType, nowPlaying.packageName)?.let { t -> { actions.open(t) } },
                 adbStatus = adbStatus,
                 onOpenAdbSettings = { actions.openSettings(SettingsActions.DEVELOPER_OPTIONS) },
                 wifi = wifiStatus,

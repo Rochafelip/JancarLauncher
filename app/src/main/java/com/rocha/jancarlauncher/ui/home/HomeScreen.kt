@@ -47,6 +47,8 @@ fun HomeScreen(
     onScreenOff: () -> Unit = {},
     onOpenDash: () -> Unit = {},
     onOpenSettings: () -> Unit = {},
+    /** Toque no texto do player: abre o app da fonte do que toca (`null` = não tocável). */
+    onOpenSource: (() -> Unit)? = null,
     /** Tema (arranjo) da Home; trocado pela galeria (segurar o botão de tema, ou pelo painel de brilho). */
     layout: HomeLayout = HomeLayout.Atual,
     onLayoutChange: (HomeLayout) -> Unit = {},
@@ -65,6 +67,7 @@ fun HomeScreen(
         onOpenDash = onOpenDash,
         onScreenOff = onScreenOff,
         onOpenAdbSettings = onOpenAdbSettings,
+        onOpenSource = onOpenSource,
     )
     Box(Modifier.fillMaxSize().background(c.bg)) {
         // Fundo: a foto real do carro, com o véu do tema (HomeWallpaper).

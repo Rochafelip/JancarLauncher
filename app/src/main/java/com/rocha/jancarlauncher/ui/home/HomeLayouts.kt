@@ -77,6 +77,8 @@ class HomeParts(
     val onOpenDash: () -> Unit,
     val onScreenOff: () -> Unit,
     val onOpenAdbSettings: () -> Unit,
+    /** Abre o app da fonte do que toca (toque no texto do player); `null` = fonte desconhecida. */
+    val onOpenSource: (() -> Unit)? = null,
 ) {
     val apps = listOf(
         HomeItem("auto", JIcons.Auto, "Auto") { actions.openAuto() },
@@ -198,7 +200,7 @@ fun HomeParts.Tiles(modifier: Modifier = Modifier, spacing: Dp = 18.dp) {
 /** Player da Home (todos os temas): [card] = Cartão; senão Barra. Sempre visível; ocioso = Música · Rádio. */
 @Composable
 fun HomeParts.Player(card: Boolean, modifier: Modifier = Modifier) {
-    val a = PlayerActions(onPlay, onPause, onNext, onPrevious, onOpenMusic = apps[1].onClick, onOpenRadio = apps[2].onClick)
+    val a = PlayerActions(onPlay, onPause, onNext, onPrevious, onOpenMusic = apps[1].onClick, onOpenRadio = apps[2].onClick, onOpenSource = onOpenSource)
     if (card) PlayerCard(nowPlaying, a, modifier) else PlayerBar(nowPlaying, a, modifier)
 }
 

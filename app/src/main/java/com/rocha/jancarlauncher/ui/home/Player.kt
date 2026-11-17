@@ -48,6 +48,8 @@ class PlayerActions(
     val onPrevious: () -> Unit,
     val onOpenMusic: () -> Unit,
     val onOpenRadio: () -> Unit,
+    /** Abre o app da fonte do que toca; `null` = fonte desconhecida (o texto não é tocável). */
+    val onOpenSource: (() -> Unit)? = null,
 )
 
 /**
@@ -201,19 +203,21 @@ private fun SmallTransport(icon: ImageVector, description: String, onClick: () -
     }
 }
 
-private fun openSource(v: PlayerView, a: PlayerActions): () -> Unit = if (v.mode == PlayerMode.Radio) a.onOpenRadio else a.onOpenMusic
-private fun sourceLabel(v: PlayerView) = if (v.mode == PlayerMode.Radio) "Abrir o Rádio" else "Abrir a Música"
 private fun prevLabel(v: PlayerView) = if (v.mode == PlayerMode.Radio) "Estação anterior" else "Faixa anterior"
 private fun nextLabel(v: PlayerView) = if (v.mode == PlayerMode.Radio) "Próxima estação" else "Próxima faixa"
 
-
-/** Área do texto (capa + título): toque abre o app da fonte. Sem fundo próprio (o cartão já tem). */
+/**
+ * Área do texto (capa + título): o toque abre o app da **fonte** ([PlayerActions.onOpenSource], `media/PlayerSource`).
+ * Sem fonte conhecida (ou "Nada tocando", que já tem os botões Música · Rádio), não é tocável: abrir a Música da
+ * central sem querer trocaria a fonte de áudio. Sem fundo próprio (o cartão já tem).
+ */
 @Composable
 private fun SourceArea(v: PlayerView, a: PlayerActions, modifier: Modifier, content: @Composable () -> Unit) {
+    val open = a.onOpenSource.takeIf { v.mode != PlayerMode.Idle }
     Box(
         modifier
             .clip(RoundedCornerShape(Dimens.RadiusButton))
-            .clickable(onClickLabel = sourceLabel(v), role = Role.Button, onClick = openSource(v, a)),
+            .then(if (open != null) Modifier.clickable(onClickLabel = "Abrir o app que está tocando", role = Role.Button, onClick = open) else Modifier),
         contentAlignment = Alignment.CenterStart,
     ) { content() }
 }
