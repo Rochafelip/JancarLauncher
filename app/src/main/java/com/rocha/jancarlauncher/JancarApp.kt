@@ -15,10 +15,19 @@ import com.rocha.jancarlauncher.power.ScreenStateTracker
 import com.rocha.jancarlauncher.power.SharedPrefsScreenOffStore
 import com.rocha.jancarlauncher.power.WakeWelcomeTracker
 import com.rocha.jancarlauncher.settings.SettingsStore
+import com.rocha.jancarlauncher.system.CrashStore
+import com.rocha.jancarlauncher.system.RingLog
+import java.io.File
 
 private val Context.settingsDataStore by preferencesDataStore(name = "settings")
 
 class JancarApp : Application() {
+    /** Eventos importantes (OBD/CAN, atualização, avisos), para o relatório de erros. */
+    val log = RingLog()
+
+    /** Crashes gravados no aparelho, lidos em Ajustes › Relatório de erros. */
+    val crashes: CrashStore by lazy { CrashStore(File(filesDir, "crash")) }
+
     val settings: SettingsStore by lazy { SettingsStore(settingsDataStore) }
     val launchController: LaunchController by lazy { LaunchController.create(this) }
 
@@ -27,7 +36,7 @@ class JancarApp : Application() {
     }
 
     // Instância única por processo (fase de calibração do CAN bus, ver can/VehicleInfoCard.kt).
-    val canBus: CanBusClient by lazy { CanBusClient(this) }
+    val canBus: CanBusClient by lazy { CanBusClient(this, log) }
 
     // Via principal (servico ICar da Jancar, somente leitura); instancia unica, ver can/CarStateCard.kt.
     val carService: JancarCarClient by lazy { JancarCarClient(this) }
@@ -36,7 +45,7 @@ class JancarApp : Application() {
     val media: JancarMediaClient by lazy { JancarMediaClient(this) }
 
     // Leitor OBD-II (ELM327 Bluetooth): consumo para o Painel; ligado pelo AppRoot o tempo todo.
-    val obd: ObdClient by lazy { ObdClient(this, settings) }
+    val obd: ObdClient by lazy { ObdClient(this, settings, log) }
 
     // Faixa do Painel por cima do Android Auto/CarPlay; ligada pelo AppRoot.
     val autoOverlay: AutoOverlay by lazy { AutoOverlay(this) }

@@ -8,6 +8,7 @@ import android.content.Context
 import android.os.SystemClock
 import android.util.Log
 import com.rocha.jancarlauncher.settings.SettingsStore
+import com.rocha.jancarlauncher.system.RingLog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -30,7 +31,7 @@ import kotlin.coroutines.coroutineContext
  * Fica conectado sempre que o launcher roda (escolha do dono: a média da viagem conta tudo até zerar). Enquanto
  * isso, outro app de OBD não consegue usar o adaptador (o ELM327 aceita uma conexão só).
  */
-class ObdClient(context: Context, private val settings: SettingsStore) {
+class ObdClient(context: Context, private val settings: SettingsStore, private val log: RingLog? = null) {
     enum class Status { Off, NoAdapter, Connecting, Connected, NoFuelData }
 
     data class Live(
@@ -98,6 +99,7 @@ class ObdClient(context: Context, private val settings: SettingsStore) {
                 session(device, name)
             } catch (e: Exception) {
                 Log.w(TAG, "OBD: ${e.javaClass.simpleName}: ${e.message}")
+                log?.add("obd", "caiu: ${e.javaClass.simpleName}: ${e.message}")
             } finally {
                 closeSocket()
                 persistTrip()
@@ -140,6 +142,7 @@ class ObdClient(context: Context, private val settings: SettingsStore) {
                 ?.let { supported += ElmProtocol.supported(it, base) }
         }
         Log.i(TAG, "OBD conectado em $name; PIDs: ${supported.sorted().joinToString { "%02X".format(it) }}")
+        log?.add("obd", "conectado em $name")
         val useMaf = ElmProtocol.MAF in supported
         val useMap = !useMaf && listOf(ElmProtocol.MAP, ElmProtocol.IAT, ElmProtocol.RPM).all { it in supported }
         val hasEthanol = ElmProtocol.ETHANOL in supported

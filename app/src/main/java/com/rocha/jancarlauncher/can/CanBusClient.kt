@@ -44,7 +44,7 @@ data class Lights(
  * NÃO validada com dados reais. Calibrar com `adb logcat -s CanBusClient` + o carro ligado antes de confiar
  * nos valores (ver `restante` no log: se != 0 em algum Parcel, a ordem/tamanho dos campos está errada).
  */
-class CanBusClient(context: Context) {
+class CanBusClient(context: Context, private val log: com.rocha.jancarlauncher.system.RingLog? = null) {
 
     private val appContext = context.applicationContext
     private val worker = HandlerThread("CanBusClient").apply { start() }
@@ -106,16 +106,17 @@ class CanBusClient(context: Context) {
                 }
                 remote = canBus
                 _connected.value = true
+                log?.add("can", "conectado")
                 runCatching { transact(T_REGISTER_LISTENER) { it.writeStrongBinder(listener) }?.recycle() }
                     .onFailure { Log.w(TAG, "registerListener falhou", it) }
                 refresh()
             }
         }
         override fun onServiceDisconnected(name: ComponentName) {
-            remote = null; _connected.value = false; scheduleReconnect()
+            remote = null; _connected.value = false; log?.add("can", "caiu"); scheduleReconnect()
         }
         override fun onBindingDied(name: ComponentName) {
-            remote = null; _connected.value = false; scheduleReconnect()
+            remote = null; _connected.value = false; log?.add("can", "caiu"); scheduleReconnect()
         }
     }
 

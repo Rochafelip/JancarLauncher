@@ -3,6 +3,8 @@ package com.rocha.jancarlauncher.boot
 import android.app.Application
 import android.content.Intent
 import android.util.Log
+import com.rocha.jancarlauncher.BuildConfig
+import com.rocha.jancarlauncher.JancarApp
 import com.rocha.jancarlauncher.MainActivity
 
 /**
@@ -16,6 +18,10 @@ object CrashRestarter {
         Thread.setDefaultUncaughtExceptionHandler { thread, error ->
             try {
                 Log.e("JancarCrash", "crash em ${thread.name}", error)
+                // Grava antes de reabrir: o ADB sem fio cai muito, então o relatório fica no aparelho (Ajustes).
+                (app as? JancarApp)?.let {
+                    runCatching { it.crashes.write(System.currentTimeMillis(), BuildConfig.VERSION_NAME, error, it.log.lines()) }
+                }
                 if (policy.allow(System.currentTimeMillis())) {
                     Log.w("JancarCrash", "reinício automático autorizado")
                     app.startActivity(
