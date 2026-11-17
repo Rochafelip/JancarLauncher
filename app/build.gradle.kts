@@ -13,8 +13,8 @@ android {
         applicationId = "com.rocha.jancarlauncher"
         minSdk = 27
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.8.0"
+        versionCode = 17
+        versionName = "1.9.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
