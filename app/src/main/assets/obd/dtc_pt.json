@@ -1,0 +1,1745 @@
+{
+ "P0010": {
+  "t": "Circuito do atuador do comando de válvulas (banco 1)",
+  "s": "media",
+  "c": [
+   "Correia ou corrente dentada fora do ponto",
+   "Atuador do comando com defeito",
+   "Óleo com nível baixo ou viscosidade errada"
+  ],
+  "v": [
+   "Conferir nível e especificação do óleo",
+   "Conferir o sincronismo do motor"
+  ]
+ },
+ "P0011": {
+  "t": "Comando de válvulas adiantado demais (banco 1)",
+  "s": "media",
+  "c": [
+   "Correia ou corrente dentada fora do ponto",
+   "Atuador do comando com defeito",
+   "Óleo com nível baixo ou viscosidade errada"
+  ],
+  "v": [
+   "Conferir nível e especificação do óleo",
+   "Conferir o sincronismo do motor"
+  ]
+ },
+ "P0012": {
+  "t": "Comando de válvulas atrasado demais (banco 1)",
+  "s": "media",
+  "c": [
+   "Correia ou corrente dentada fora do ponto",
+   "Atuador do comando com defeito",
+   "Óleo com nível baixo ou viscosidade errada"
+  ],
+  "v": [
+   "Conferir nível e especificação do óleo",
+   "Conferir o sincronismo do motor"
+  ]
+ },
+ "P0016": {
+  "t": "Rotação e comando de válvulas fora de sincronismo (sensor A)",
+  "s": "alta",
+  "c": [
+   "Correia ou corrente dentada fora do ponto",
+   "Atuador do comando com defeito",
+   "Óleo com nível baixo ou viscosidade errada"
+  ],
+  "v": [
+   "Conferir nível e especificação do óleo",
+   "Conferir o sincronismo do motor"
+  ]
+ },
+ "P0017": {
+  "t": "Rotação e comando de válvulas fora de sincronismo (sensor B)",
+  "s": "alta",
+  "c": [
+   "Correia ou corrente dentada fora do ponto",
+   "Atuador do comando com defeito",
+   "Óleo com nível baixo ou viscosidade errada"
+  ],
+  "v": [
+   "Conferir nível e especificação do óleo",
+   "Conferir o sincronismo do motor"
+  ]
+ },
+ "P0100": {
+  "t": "Circuito do sensor de fluxo de ar (MAF) com falha",
+  "s": "media",
+  "c": [
+   "Sensor de fluxo de ar sujo ou com defeito",
+   "Entrada falsa de ar depois do sensor",
+   "Filtro de ar muito sujo"
+  ],
+  "v": [
+   "Conferir mangueiras e braçadeiras entre o filtro e a borboleta",
+   "Limpar o sensor com produto próprio e testar de novo"
+  ]
+ },
+ "P0101": {
+  "t": "Sensor de fluxo de ar (MAF) com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Sensor de fluxo de ar sujo ou com defeito",
+   "Entrada falsa de ar depois do sensor",
+   "Filtro de ar muito sujo"
+  ],
+  "v": [
+   "Conferir mangueiras e braçadeiras entre o filtro e a borboleta",
+   "Limpar o sensor com produto próprio e testar de novo"
+  ]
+ },
+ "P0102": {
+  "t": "Sensor de fluxo de ar (MAF) com sinal baixo",
+  "s": "media",
+  "c": [
+   "Sensor de fluxo de ar sujo ou com defeito",
+   "Entrada falsa de ar depois do sensor",
+   "Filtro de ar muito sujo"
+  ],
+  "v": [
+   "Conferir mangueiras e braçadeiras entre o filtro e a borboleta",
+   "Limpar o sensor com produto próprio e testar de novo"
+  ]
+ },
+ "P0103": {
+  "t": "Sensor de fluxo de ar (MAF) com sinal alto",
+  "s": "media",
+  "c": [
+   "Sensor de fluxo de ar sujo ou com defeito",
+   "Entrada falsa de ar depois do sensor",
+   "Filtro de ar muito sujo"
+  ],
+  "v": [
+   "Conferir mangueiras e braçadeiras entre o filtro e a borboleta",
+   "Limpar o sensor com produto próprio e testar de novo"
+  ]
+ },
+ "P0105": {
+  "t": "Circuito do sensor de pressão do coletor (MAP) com falha",
+  "s": "media",
+  "c": [
+   "Mangueira de vácuo do sensor solta ou furada",
+   "Sensor de pressão do coletor com defeito",
+   "Entrada falsa de ar no coletor"
+  ],
+  "v": [
+   "Conferir a mangueira e o conector do sensor",
+   "Procurar vazamento de vácuo com o motor ligado"
+  ]
+ },
+ "P0106": {
+  "t": "Sensor de pressão do coletor (MAP) com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Mangueira de vácuo do sensor solta ou furada",
+   "Sensor de pressão do coletor com defeito",
+   "Entrada falsa de ar no coletor"
+  ],
+  "v": [
+   "Conferir a mangueira e o conector do sensor",
+   "Procurar vazamento de vácuo com o motor ligado"
+  ]
+ },
+ "P0107": {
+  "t": "Sensor de pressão do coletor (MAP) com sinal baixo",
+  "s": "media",
+  "c": [
+   "Mangueira de vácuo do sensor solta ou furada",
+   "Sensor de pressão do coletor com defeito",
+   "Entrada falsa de ar no coletor"
+  ],
+  "v": [
+   "Conferir a mangueira e o conector do sensor",
+   "Procurar vazamento de vácuo com o motor ligado"
+  ]
+ },
+ "P0108": {
+  "t": "Sensor de pressão do coletor (MAP) com sinal alto",
+  "s": "media",
+  "c": [
+   "Mangueira de vácuo do sensor solta ou furada",
+   "Sensor de pressão do coletor com defeito",
+   "Entrada falsa de ar no coletor"
+  ],
+  "v": [
+   "Conferir a mangueira e o conector do sensor",
+   "Procurar vazamento de vácuo com o motor ligado"
+  ]
+ },
+ "P0110": {
+  "t": "Circuito do sensor de temperatura do ar admitido com falha",
+  "s": "baixa",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0111": {
+  "t": "Sensor de temperatura do ar admitido com leitura fora do esperado",
+  "s": "baixa",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0112": {
+  "t": "Sensor de temperatura do ar admitido com sinal baixo",
+  "s": "baixa",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0113": {
+  "t": "Sensor de temperatura do ar admitido com sinal alto",
+  "s": "baixa",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0115": {
+  "t": "Circuito do sensor de temperatura do motor com falha",
+  "s": "media",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0116": {
+  "t": "Sensor de temperatura do motor com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0117": {
+  "t": "Sensor de temperatura do motor com sinal baixo",
+  "s": "media",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0118": {
+  "t": "Sensor de temperatura do motor com sinal alto",
+  "s": "media",
+  "c": [
+   "Sensor de temperatura com defeito",
+   "Conector oxidado ou fiação rompida"
+  ],
+  "v": [
+   "Com o motor frio, comparar a leitura com a temperatura ambiente",
+   "Conferir o conector e o chicote do sensor"
+  ]
+ },
+ "P0120": {
+  "t": "Circuito do sensor de posição da borboleta com falha",
+  "s": "media",
+  "c": [
+   "Sensor de posição da borboleta gasto ou com defeito",
+   "Corpo de borboleta sujo",
+   "Conector com mau contato"
+  ],
+  "v": [
+   "Ver se a % do acelerador sobe suave, sem saltos, ao pisar devagar",
+   "Limpar o corpo de borboleta e fazer o reaprendizado"
+  ]
+ },
+ "P0121": {
+  "t": "Sensor de posição da borboleta com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Sensor de posição da borboleta gasto ou com defeito",
+   "Corpo de borboleta sujo",
+   "Conector com mau contato"
+  ],
+  "v": [
+   "Ver se a % do acelerador sobe suave, sem saltos, ao pisar devagar",
+   "Limpar o corpo de borboleta e fazer o reaprendizado"
+  ]
+ },
+ "P0122": {
+  "t": "Sensor de posição da borboleta com sinal baixo",
+  "s": "media",
+  "c": [
+   "Sensor de posição da borboleta gasto ou com defeito",
+   "Corpo de borboleta sujo",
+   "Conector com mau contato"
+  ],
+  "v": [
+   "Ver se a % do acelerador sobe suave, sem saltos, ao pisar devagar",
+   "Limpar o corpo de borboleta e fazer o reaprendizado"
+  ]
+ },
+ "P0123": {
+  "t": "Sensor de posição da borboleta com sinal alto",
+  "s": "media",
+  "c": [
+   "Sensor de posição da borboleta gasto ou com defeito",
+   "Corpo de borboleta sujo",
+   "Conector com mau contato"
+  ],
+  "v": [
+   "Ver se a % do acelerador sobe suave, sem saltos, ao pisar devagar",
+   "Limpar o corpo de borboleta e fazer o reaprendizado"
+  ]
+ },
+ "P0125": {
+  "t": "Motor demora para chegar à temperatura de controle da mistura",
+  "s": "baixa",
+  "c": [
+   "Válvula termostática travada aberta",
+   "Sensor de temperatura lendo errado"
+  ],
+  "v": [
+   "Ver no OBD se a água chega a ~85–95 °C depois de 15 min rodando",
+   "Conferir o sensor de temperatura"
+  ]
+ },
+ "P0128": {
+  "t": "Temperatura do motor abaixo do esperado (válvula termostática)",
+  "s": "baixa",
+  "c": [
+   "Válvula termostática travada aberta",
+   "Sensor de temperatura lendo errado"
+  ],
+  "v": [
+   "Ver no OBD se a água chega a ~85–95 °C depois de 15 min rodando",
+   "Conferir o sensor de temperatura"
+  ]
+ },
+ "P0130": {
+  "t": "Circuito da sonda lambda dianteira (banco 1) com falha",
+  "s": "media",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0131": {
+  "t": "Sonda lambda dianteira (banco 1) com tensão baixa",
+  "s": "media",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0132": {
+  "t": "Sonda lambda dianteira (banco 1) com tensão alta",
+  "s": "media",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0133": {
+  "t": "Sonda lambda dianteira (banco 1) com resposta lenta",
+  "s": "media",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0134": {
+  "t": "Sonda lambda dianteira (banco 1) sem atividade",
+  "s": "media",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0135": {
+  "t": "Aquecimento da sonda lambda dianteira (banco 1) com falha",
+  "s": "media",
+  "c": [
+   "Resistência de aquecimento da sonda queimada",
+   "Fusível ou relé do aquecimento",
+   "Fiação da sonda danificada"
+  ],
+  "v": [
+   "Conferir o fusível do aquecimento da sonda",
+   "Medir a resistência do aquecedor da sonda"
+  ]
+ },
+ "P0136": {
+  "t": "Circuito da sonda lambda traseira (banco 1) com falha",
+  "s": "baixa",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0137": {
+  "t": "Sonda lambda traseira (banco 1) com tensão baixa",
+  "s": "baixa",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0138": {
+  "t": "Sonda lambda traseira (banco 1) com tensão alta",
+  "s": "baixa",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0139": {
+  "t": "Sonda lambda traseira (banco 1) com resposta lenta",
+  "s": "baixa",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0140": {
+  "t": "Sonda lambda traseira (banco 1) sem atividade",
+  "s": "baixa",
+  "c": [
+   "Sonda lambda gasta ou contaminada",
+   "Fiação da sonda encostando no escapamento",
+   "Vazamento no escapamento antes da sonda"
+  ],
+  "v": [
+   "Inspecionar o chicote e o conector da sonda",
+   "Ver se o sinal da sonda oscila em marcha lenta acelerada"
+  ]
+ },
+ "P0141": {
+  "t": "Aquecimento da sonda lambda traseira (banco 1) com falha",
+  "s": "baixa",
+  "c": [
+   "Resistência de aquecimento da sonda queimada",
+   "Fusível ou relé do aquecimento",
+   "Fiação da sonda danificada"
+  ],
+  "v": [
+   "Conferir o fusível do aquecimento da sonda",
+   "Medir a resistência do aquecedor da sonda"
+  ]
+ },
+ "P0170": {
+  "t": "Correção de combustível (banco 1) fora do limite",
+  "s": "media",
+  "c": [
+   "Entrada falsa de ar (mangueiras, junta do coletor)",
+   "Pressão de combustível baixa (bomba ou filtro)",
+   "Bico injetor entupido"
+  ],
+  "v": [
+   "Procurar vazamento de vácuo",
+   "Medir a pressão de combustível",
+   "Resolver antes qualquer código de sonda ou de falha de combustão"
+  ]
+ },
+ "P0171": {
+  "t": "Mistura pobre no banco 1 (ar demais ou combustível de menos)",
+  "s": "media",
+  "c": [
+   "Entrada falsa de ar (mangueiras, junta do coletor)",
+   "Pressão de combustível baixa (bomba ou filtro)",
+   "Bico injetor entupido"
+  ],
+  "v": [
+   "Procurar vazamento de vácuo",
+   "Medir a pressão de combustível",
+   "Resolver antes qualquer código de sonda ou de falha de combustão"
+  ]
+ },
+ "P0172": {
+  "t": "Mistura rica no banco 1 (combustível demais ou ar de menos)",
+  "s": "media",
+  "c": [
+   "Bico injetor pingando",
+   "Pressão de combustível alta (regulador)",
+   "Sensor de temperatura do motor lendo frio"
+  ],
+  "v": [
+   "Medir a pressão de combustível",
+   "Ver se a temperatura do motor sobe normalmente no OBD"
+  ]
+ },
+ "P0173": {
+  "t": "Correção de combustível (banco 2) fora do limite",
+  "s": "media",
+  "c": [
+   "Entrada falsa de ar (mangueiras, junta do coletor)",
+   "Pressão de combustível baixa (bomba ou filtro)",
+   "Bico injetor entupido"
+  ],
+  "v": [
+   "Procurar vazamento de vácuo",
+   "Medir a pressão de combustível",
+   "Resolver antes qualquer código de sonda ou de falha de combustão"
+  ]
+ },
+ "P0174": {
+  "t": "Mistura pobre no banco 2",
+  "s": "media",
+  "c": [
+   "Entrada falsa de ar (mangueiras, junta do coletor)",
+   "Pressão de combustível baixa (bomba ou filtro)",
+   "Bico injetor entupido"
+  ],
+  "v": [
+   "Procurar vazamento de vácuo",
+   "Medir a pressão de combustível",
+   "Resolver antes qualquer código de sonda ou de falha de combustão"
+  ]
+ },
+ "P0175": {
+  "t": "Mistura rica no banco 2",
+  "s": "media",
+  "c": [
+   "Bico injetor pingando",
+   "Pressão de combustível alta (regulador)",
+   "Sensor de temperatura do motor lendo frio"
+  ],
+  "v": [
+   "Medir a pressão de combustível",
+   "Ver se a temperatura do motor sobe normalmente no OBD"
+  ]
+ },
+ "P0190": {
+  "t": "Circuito do sensor de pressão de combustível com falha",
+  "s": "media",
+  "c": [
+   "Bomba ou filtro de combustível fracos",
+   "Regulador de pressão com defeito",
+   "Sensor de pressão de combustível com defeito"
+  ],
+  "v": [
+   "Medir a pressão de combustível em oficina",
+   "Conferir o conector do sensor de pressão"
+  ]
+ },
+ "P0191": {
+  "t": "Sensor de pressão de combustível com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Bomba ou filtro de combustível fracos",
+   "Regulador de pressão com defeito",
+   "Sensor de pressão de combustível com defeito"
+  ],
+  "v": [
+   "Medir a pressão de combustível em oficina",
+   "Conferir o conector do sensor de pressão"
+  ]
+ },
+ "P0192": {
+  "t": "Sensor de pressão de combustível com sinal baixo",
+  "s": "media",
+  "c": [
+   "Bomba ou filtro de combustível fracos",
+   "Regulador de pressão com defeito",
+   "Sensor de pressão de combustível com defeito"
+  ],
+  "v": [
+   "Medir a pressão de combustível em oficina",
+   "Conferir o conector do sensor de pressão"
+  ]
+ },
+ "P0193": {
+  "t": "Sensor de pressão de combustível com sinal alto",
+  "s": "media",
+  "c": [
+   "Bomba ou filtro de combustível fracos",
+   "Regulador de pressão com defeito",
+   "Sensor de pressão de combustível com defeito"
+  ],
+  "v": [
+   "Medir a pressão de combustível em oficina",
+   "Conferir o conector do sensor de pressão"
+  ]
+ },
+ "P0200": {
+  "t": "Circuito dos bicos injetores com falha",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0201": {
+  "t": "Circuito do bico injetor do cilindro 1 com falha",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0202": {
+  "t": "Circuito do bico injetor do cilindro 2 com falha",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0203": {
+  "t": "Circuito do bico injetor do cilindro 3 com falha",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0204": {
+  "t": "Circuito do bico injetor do cilindro 4 com falha",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0217": {
+  "t": "Superaquecimento do motor detectado",
+  "s": "alta",
+  "c": [
+   "Nível de líquido de arrefecimento baixo ou vazamento",
+   "Eletroventilador sem funcionar",
+   "Válvula termostática travada",
+   "Bomba d'água com defeito"
+  ],
+  "v": [
+   "Parar em local seguro e esperar esfriar antes de abrir o reservatório",
+   "Conferir o nível com o motor frio",
+   "Ver se o ventilador liga"
+  ]
+ },
+ "P0219": {
+  "t": "Rotação do motor passou do limite",
+  "s": "media",
+  "c": [
+   "Marcha reduzida com o carro rápido demais",
+   "Sensor de rotação com sinal errado"
+  ],
+  "v": [
+   "Evitar reduzir marcha em velocidade alta",
+   "Conferir o sensor de rotação e o conector"
+  ]
+ },
+ "P0230": {
+  "t": "Circuito do relé da bomba de combustível com falha",
+  "s": "alta",
+  "c": [
+   "Relé da bomba de combustível",
+   "Fusível da bomba",
+   "Fiação da bomba"
+  ],
+  "v": [
+   "Conferir relé e fusível da bomba",
+   "Ouvir se a bomba liga ao dar a ignição"
+  ]
+ },
+ "P0261": {
+  "t": "Bico injetor do cilindro 1 com circuito em nível baixo",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0262": {
+  "t": "Bico injetor do cilindro 1 com circuito em nível alto",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0264": {
+  "t": "Bico injetor do cilindro 2 com circuito em nível baixo",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0265": {
+  "t": "Bico injetor do cilindro 2 com circuito em nível alto",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0267": {
+  "t": "Bico injetor do cilindro 3 com circuito em nível baixo",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0268": {
+  "t": "Bico injetor do cilindro 3 com circuito em nível alto",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0270": {
+  "t": "Bico injetor do cilindro 4 com circuito em nível baixo",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0271": {
+  "t": "Bico injetor do cilindro 4 com circuito em nível alto",
+  "s": "alta",
+  "c": [
+   "Bico injetor com defeito",
+   "Fiação ou conector do bico",
+   "Falha no circuito do módulo de injeção"
+  ],
+  "v": [
+   "Conferir o conector do bico e o chicote",
+   "Medir a resistência do bico e comparar com os outros"
+  ]
+ },
+ "P0300": {
+  "t": "Falhas de combustão em cilindros variados",
+  "s": "alta",
+  "c": [
+   "Vela gasta ou com folga errada",
+   "Bobina ou cabo de vela com falha",
+   "Bico injetor entupido",
+   "Entrada falsa de ar"
+  ],
+  "v": [
+   "Trocar a bobina de lugar e ver se a falha muda de cilindro",
+   "Inspecionar velas e cabos",
+   "Teste de compressão se a falha continuar"
+  ]
+ },
+ "P0301": {
+  "t": "Falha de combustão no cilindro 1",
+  "s": "alta",
+  "c": [
+   "Vela gasta ou com folga errada",
+   "Bobina ou cabo de vela com falha",
+   "Bico injetor entupido",
+   "Entrada falsa de ar"
+  ],
+  "v": [
+   "Trocar a bobina de lugar e ver se a falha muda de cilindro",
+   "Inspecionar velas e cabos",
+   "Teste de compressão se a falha continuar"
+  ]
+ },
+ "P0302": {
+  "t": "Falha de combustão no cilindro 2",
+  "s": "alta",
+  "c": [
+   "Vela gasta ou com folga errada",
+   "Bobina ou cabo de vela com falha",
+   "Bico injetor entupido",
+   "Entrada falsa de ar"
+  ],
+  "v": [
+   "Trocar a bobina de lugar e ver se a falha muda de cilindro",
+   "Inspecionar velas e cabos",
+   "Teste de compressão se a falha continuar"
+  ]
+ },
+ "P0303": {
+  "t": "Falha de combustão no cilindro 3",
+  "s": "alta",
+  "c": [
+   "Vela gasta ou com folga errada",
+   "Bobina ou cabo de vela com falha",
+   "Bico injetor entupido",
+   "Entrada falsa de ar"
+  ],
+  "v": [
+   "Trocar a bobina de lugar e ver se a falha muda de cilindro",
+   "Inspecionar velas e cabos",
+   "Teste de compressão se a falha continuar"
+  ]
+ },
+ "P0304": {
+  "t": "Falha de combustão no cilindro 4",
+  "s": "alta",
+  "c": [
+   "Vela gasta ou com folga errada",
+   "Bobina ou cabo de vela com falha",
+   "Bico injetor entupido",
+   "Entrada falsa de ar"
+  ],
+  "v": [
+   "Trocar a bobina de lugar e ver se a falha muda de cilindro",
+   "Inspecionar velas e cabos",
+   "Teste de compressão se a falha continuar"
+  ]
+ },
+ "P0325": {
+  "t": "Circuito do sensor de detonação 1 com falha",
+  "s": "media",
+  "c": [
+   "Sensor de detonação solto ou com defeito",
+   "Fiação do sensor",
+   "Combustível de baixa qualidade"
+  ],
+  "v": [
+   "Conferir o aperto e o conector do sensor de detonação",
+   "Abastecer em posto de confiança e observar"
+  ]
+ },
+ "P0326": {
+  "t": "Sensor de detonação 1 com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Sensor de detonação solto ou com defeito",
+   "Fiação do sensor",
+   "Combustível de baixa qualidade"
+  ],
+  "v": [
+   "Conferir o aperto e o conector do sensor de detonação",
+   "Abastecer em posto de confiança e observar"
+  ]
+ },
+ "P0327": {
+  "t": "Sensor de detonação 1 com sinal baixo",
+  "s": "media",
+  "c": [
+   "Sensor de detonação solto ou com defeito",
+   "Fiação do sensor",
+   "Combustível de baixa qualidade"
+  ],
+  "v": [
+   "Conferir o aperto e o conector do sensor de detonação",
+   "Abastecer em posto de confiança e observar"
+  ]
+ },
+ "P0328": {
+  "t": "Sensor de detonação 1 com sinal alto",
+  "s": "media",
+  "c": [
+   "Sensor de detonação solto ou com defeito",
+   "Fiação do sensor",
+   "Combustível de baixa qualidade"
+  ],
+  "v": [
+   "Conferir o aperto e o conector do sensor de detonação",
+   "Abastecer em posto de confiança e observar"
+  ]
+ },
+ "P0335": {
+  "t": "Circuito do sensor de rotação (virabrequim) com falha",
+  "s": "alta",
+  "c": [
+   "Sensor de rotação com defeito ou sujo",
+   "Roda fônica (dentada) danificada",
+   "Fiação do sensor com mau contato"
+  ],
+  "v": [
+   "Inspecionar o sensor e o conector",
+   "Conferir a folga e a roda fônica",
+   "Se o motor falhar ou morrer, não rodar e levar à oficina"
+  ]
+ },
+ "P0336": {
+  "t": "Sensor de rotação (virabrequim) com sinal fora do esperado",
+  "s": "alta",
+  "c": [
+   "Sensor de rotação com defeito ou sujo",
+   "Roda fônica (dentada) danificada",
+   "Fiação do sensor com mau contato"
+  ],
+  "v": [
+   "Inspecionar o sensor e o conector",
+   "Conferir a folga e a roda fônica",
+   "Se o motor falhar ou morrer, não rodar e levar à oficina"
+  ]
+ },
+ "P0337": {
+  "t": "Sensor de rotação (virabrequim) com sinal baixo",
+  "s": "alta",
+  "c": [
+   "Sensor de rotação com defeito ou sujo",
+   "Roda fônica (dentada) danificada",
+   "Fiação do sensor com mau contato"
+  ],
+  "v": [
+   "Inspecionar o sensor e o conector",
+   "Conferir a folga e a roda fônica",
+   "Se o motor falhar ou morrer, não rodar e levar à oficina"
+  ]
+ },
+ "P0338": {
+  "t": "Sensor de rotação (virabrequim) com sinal alto",
+  "s": "alta",
+  "c": [
+   "Sensor de rotação com defeito ou sujo",
+   "Roda fônica (dentada) danificada",
+   "Fiação do sensor com mau contato"
+  ],
+  "v": [
+   "Inspecionar o sensor e o conector",
+   "Conferir a folga e a roda fônica",
+   "Se o motor falhar ou morrer, não rodar e levar à oficina"
+  ]
+ },
+ "P0339": {
+  "t": "Sensor de rotação (virabrequim) com sinal intermitente",
+  "s": "alta",
+  "c": [
+   "Sensor de rotação com defeito ou sujo",
+   "Roda fônica (dentada) danificada",
+   "Fiação do sensor com mau contato"
+  ],
+  "v": [
+   "Inspecionar o sensor e o conector",
+   "Conferir a folga e a roda fônica",
+   "Se o motor falhar ou morrer, não rodar e levar à oficina"
+  ]
+ },
+ "P0340": {
+  "t": "Circuito do sensor de fase (comando de válvulas) com falha",
+  "s": "media",
+  "c": [
+   "Sensor de fase com defeito",
+   "Correia dentada fora do ponto",
+   "Fiação do sensor"
+  ],
+  "v": [
+   "Conferir o sincronismo da correia dentada",
+   "Inspecionar o sensor e o conector"
+  ]
+ },
+ "P0341": {
+  "t": "Sensor de fase com sinal fora do esperado",
+  "s": "media",
+  "c": [
+   "Sensor de fase com defeito",
+   "Correia dentada fora do ponto",
+   "Fiação do sensor"
+  ],
+  "v": [
+   "Conferir o sincronismo da correia dentada",
+   "Inspecionar o sensor e o conector"
+  ]
+ },
+ "P0342": {
+  "t": "Sensor de fase com sinal baixo",
+  "s": "media",
+  "c": [
+   "Sensor de fase com defeito",
+   "Correia dentada fora do ponto",
+   "Fiação do sensor"
+  ],
+  "v": [
+   "Conferir o sincronismo da correia dentada",
+   "Inspecionar o sensor e o conector"
+  ]
+ },
+ "P0343": {
+  "t": "Sensor de fase com sinal alto",
+  "s": "media",
+  "c": [
+   "Sensor de fase com defeito",
+   "Correia dentada fora do ponto",
+   "Fiação do sensor"
+  ],
+  "v": [
+   "Conferir o sincronismo da correia dentada",
+   "Inspecionar o sensor e o conector"
+  ]
+ },
+ "P0344": {
+  "t": "Sensor de fase com sinal intermitente",
+  "s": "media",
+  "c": [
+   "Sensor de fase com defeito",
+   "Correia dentada fora do ponto",
+   "Fiação do sensor"
+  ],
+  "v": [
+   "Conferir o sincronismo da correia dentada",
+   "Inspecionar o sensor e o conector"
+  ]
+ },
+ "P0351": {
+  "t": "Circuito da bobina de ignição A com falha",
+  "s": "alta",
+  "c": [
+   "Bobina de ignição com defeito",
+   "Fiação ou conector da bobina",
+   "Driver de ignição no módulo"
+  ],
+  "v": [
+   "Conferir o conector da bobina",
+   "Trocar a bobina de posição e ver se o código acompanha"
+  ]
+ },
+ "P0352": {
+  "t": "Circuito da bobina de ignição B com falha",
+  "s": "alta",
+  "c": [
+   "Bobina de ignição com defeito",
+   "Fiação ou conector da bobina",
+   "Driver de ignição no módulo"
+  ],
+  "v": [
+   "Conferir o conector da bobina",
+   "Trocar a bobina de posição e ver se o código acompanha"
+  ]
+ },
+ "P0353": {
+  "t": "Circuito da bobina de ignição C com falha",
+  "s": "alta",
+  "c": [
+   "Bobina de ignição com defeito",
+   "Fiação ou conector da bobina",
+   "Driver de ignição no módulo"
+  ],
+  "v": [
+   "Conferir o conector da bobina",
+   "Trocar a bobina de posição e ver se o código acompanha"
+  ]
+ },
+ "P0354": {
+  "t": "Circuito da bobina de ignição D com falha",
+  "s": "alta",
+  "c": [
+   "Bobina de ignição com defeito",
+   "Fiação ou conector da bobina",
+   "Driver de ignição no módulo"
+  ],
+  "v": [
+   "Conferir o conector da bobina",
+   "Trocar a bobina de posição e ver se o código acompanha"
+  ]
+ },
+ "P0400": {
+  "t": "Fluxo da válvula EGR com falha",
+  "s": "media",
+  "c": [
+   "Válvula EGR travada ou suja",
+   "Passagens de EGR entupidas de carvão",
+   "Atuador ou sensor da válvula"
+  ],
+  "v": [
+   "Limpar a válvula e as passagens",
+   "Conferir o conector da válvula"
+  ]
+ },
+ "P0401": {
+  "t": "Fluxo da válvula EGR abaixo do esperado",
+  "s": "media",
+  "c": [
+   "Válvula EGR travada ou suja",
+   "Passagens de EGR entupidas de carvão",
+   "Atuador ou sensor da válvula"
+  ],
+  "v": [
+   "Limpar a válvula e as passagens",
+   "Conferir o conector da válvula"
+  ]
+ },
+ "P0402": {
+  "t": "Fluxo da válvula EGR acima do esperado",
+  "s": "media",
+  "c": [
+   "Válvula EGR travada ou suja",
+   "Passagens de EGR entupidas de carvão",
+   "Atuador ou sensor da válvula"
+  ],
+  "v": [
+   "Limpar a válvula e as passagens",
+   "Conferir o conector da válvula"
+  ]
+ },
+ "P0420": {
+  "t": "Eficiência do catalisador abaixo do limite (banco 1)",
+  "s": "media",
+  "c": [
+   "Catalisador gasto",
+   "Falhas de combustão antigas danificaram o catalisador",
+   "Sonda lambda traseira com defeito"
+  ],
+  "v": [
+   "Resolver primeiro códigos de falha de combustão ou de mistura",
+   "Conferir a sonda traseira antes de trocar o catalisador"
+  ]
+ },
+ "P0421": {
+  "t": "Catalisador demora a aquecer (banco 1)",
+  "s": "media",
+  "c": [
+   "Catalisador gasto",
+   "Falhas de combustão antigas danificaram o catalisador",
+   "Sonda lambda traseira com defeito"
+  ],
+  "v": [
+   "Resolver primeiro códigos de falha de combustão ou de mistura",
+   "Conferir a sonda traseira antes de trocar o catalisador"
+  ]
+ },
+ "P0430": {
+  "t": "Eficiência do catalisador abaixo do limite (banco 2)",
+  "s": "media",
+  "c": [
+   "Catalisador gasto",
+   "Falhas de combustão antigas danificaram o catalisador",
+   "Sonda lambda traseira com defeito"
+  ],
+  "v": [
+   "Resolver primeiro códigos de falha de combustão ou de mistura",
+   "Conferir a sonda traseira antes de trocar o catalisador"
+  ]
+ },
+ "P0440": {
+  "t": "Sistema de emissões evaporativas (EVAP) com falha",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0441": {
+  "t": "Fluxo de purga do EVAP incorreto",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0442": {
+  "t": "Pequeno vazamento no sistema EVAP",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0443": {
+  "t": "Circuito da válvula de purga do cânister com falha",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0446": {
+  "t": "Circuito de ventilação do EVAP com falha",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0449": {
+  "t": "Válvula de ventilação do EVAP com falha",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0451": {
+  "t": "Sensor de pressão do tanque com leitura fora do esperado",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0455": {
+  "t": "Grande vazamento no sistema EVAP",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0456": {
+  "t": "Vazamento muito pequeno no sistema EVAP",
+  "s": "baixa",
+  "c": [
+   "Tampa do tanque mal fechada ou com vedação gasta",
+   "Mangueira do cânister solta ou rachada",
+   "Válvula de purga com defeito"
+  ],
+  "v": [
+   "Fechar a tampa até estalar e rodar alguns dias",
+   "Inspecionar as mangueiras do cânister",
+   "Teste de fumaça em oficina"
+  ]
+ },
+ "P0480": {
+  "t": "Circuito do eletroventilador 1 com falha",
+  "s": "alta",
+  "c": [
+   "Eletroventilador ou relé com defeito",
+   "Fusível queimado",
+   "Fiação do ventilador"
+  ],
+  "v": [
+   "Conferir fusível e relé do ventilador",
+   "Ver se o ventilador liga com o motor quente",
+   "Acompanhar a temperatura da água"
+  ]
+ },
+ "P0481": {
+  "t": "Circuito do eletroventilador 2 com falha",
+  "s": "media",
+  "c": [
+   "Eletroventilador ou relé com defeito",
+   "Fusível queimado",
+   "Fiação do ventilador"
+  ],
+  "v": [
+   "Conferir fusível e relé do ventilador",
+   "Ver se o ventilador liga com o motor quente",
+   "Acompanhar a temperatura da água"
+  ]
+ },
+ "P0500": {
+  "t": "Sensor de velocidade do veículo com falha",
+  "s": "media",
+  "c": [
+   "Sensor de velocidade com defeito",
+   "Fiação ou conector do sensor",
+   "Engrenagem do sensor gasta"
+  ],
+  "v": [
+   "Conferir o conector do sensor de velocidade",
+   "Ver se o velocímetro funciona normalmente"
+  ]
+ },
+ "P0501": {
+  "t": "Sensor de velocidade com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Sensor de velocidade com defeito",
+   "Fiação ou conector do sensor",
+   "Engrenagem do sensor gasta"
+  ],
+  "v": [
+   "Conferir o conector do sensor de velocidade",
+   "Ver se o velocímetro funciona normalmente"
+  ]
+ },
+ "P0502": {
+  "t": "Sensor de velocidade com sinal baixo",
+  "s": "media",
+  "c": [
+   "Sensor de velocidade com defeito",
+   "Fiação ou conector do sensor",
+   "Engrenagem do sensor gasta"
+  ],
+  "v": [
+   "Conferir o conector do sensor de velocidade",
+   "Ver se o velocímetro funciona normalmente"
+  ]
+ },
+ "P0503": {
+  "t": "Sensor de velocidade com sinal intermitente",
+  "s": "media",
+  "c": [
+   "Sensor de velocidade com defeito",
+   "Fiação ou conector do sensor",
+   "Engrenagem do sensor gasta"
+  ],
+  "v": [
+   "Conferir o conector do sensor de velocidade",
+   "Ver se o velocímetro funciona normalmente"
+  ]
+ },
+ "P0505": {
+  "t": "Controle de marcha lenta com falha",
+  "s": "media",
+  "c": [
+   "Corpo de borboleta ou válvula de marcha lenta sujos",
+   "Entrada falsa de ar",
+   "Reaprendizado da borboleta não feito"
+  ],
+  "v": [
+   "Limpar o corpo de borboleta",
+   "Fazer o reaprendizado indicado pelo fabricante",
+   "Procurar vazamento de vácuo"
+  ]
+ },
+ "P0506": {
+  "t": "Marcha lenta abaixo do esperado",
+  "s": "media",
+  "c": [
+   "Corpo de borboleta ou válvula de marcha lenta sujos",
+   "Entrada falsa de ar",
+   "Reaprendizado da borboleta não feito"
+  ],
+  "v": [
+   "Limpar o corpo de borboleta",
+   "Fazer o reaprendizado indicado pelo fabricante",
+   "Procurar vazamento de vácuo"
+  ]
+ },
+ "P0507": {
+  "t": "Marcha lenta acima do esperado",
+  "s": "media",
+  "c": [
+   "Corpo de borboleta ou válvula de marcha lenta sujos",
+   "Entrada falsa de ar",
+   "Reaprendizado da borboleta não feito"
+  ],
+  "v": [
+   "Limpar o corpo de borboleta",
+   "Fazer o reaprendizado indicado pelo fabricante",
+   "Procurar vazamento de vácuo"
+  ]
+ },
+ "P0520": {
+  "t": "Circuito do sensor de pressão do óleo com falha",
+  "s": "media",
+  "c": [
+   "Nível de óleo baixo",
+   "Sensor ou interruptor de pressão com defeito",
+   "Bomba de óleo gasta"
+  ],
+  "v": [
+   "Desligar o motor e conferir o nível do óleo",
+   "Não rodar se a luz do óleo acender no painel",
+   "Medir a pressão com manômetro em oficina"
+  ]
+ },
+ "P0521": {
+  "t": "Sensor de pressão do óleo com leitura fora do esperado",
+  "s": "media",
+  "c": [
+   "Nível de óleo baixo",
+   "Sensor ou interruptor de pressão com defeito",
+   "Bomba de óleo gasta"
+  ],
+  "v": [
+   "Desligar o motor e conferir o nível do óleo",
+   "Não rodar se a luz do óleo acender no painel",
+   "Medir a pressão com manômetro em oficina"
+  ]
+ },
+ "P0522": {
+  "t": "Sensor de pressão do óleo com sinal baixo",
+  "s": "media",
+  "c": [
+   "Nível de óleo baixo",
+   "Sensor ou interruptor de pressão com defeito",
+   "Bomba de óleo gasta"
+  ],
+  "v": [
+   "Desligar o motor e conferir o nível do óleo",
+   "Não rodar se a luz do óleo acender no painel",
+   "Medir a pressão com manômetro em oficina"
+  ]
+ },
+ "P0524": {
+  "t": "Pressão do óleo do motor muito baixa",
+  "s": "alta",
+  "c": [
+   "Nível de óleo baixo",
+   "Sensor ou interruptor de pressão com defeito",
+   "Bomba de óleo gasta"
+  ],
+  "v": [
+   "Desligar o motor e conferir o nível do óleo",
+   "Não rodar se a luz do óleo acender no painel",
+   "Medir a pressão com manômetro em oficina"
+  ]
+ },
+ "P0530": {
+  "t": "Circuito do sensor de pressão do ar-condicionado com falha",
+  "s": "baixa",
+  "c": [
+   "Sensor de pressão do ar-condicionado",
+   "Carga de gás baixa",
+   "Fiação do sensor"
+  ],
+  "v": [
+   "Conferir o conector do sensor",
+   "Verificar a carga do ar-condicionado em oficina"
+  ]
+ },
+ "P0560": {
+  "t": "Tensão do sistema com falha",
+  "s": "media",
+  "c": [
+   "Alternador com carga baixa ou alta",
+   "Bateria fraca",
+   "Terminais da bateria oxidados ou cabo terra com mau contato"
+  ],
+  "v": [
+   "Medir a tensão com o motor desligado (≈12,6 V) e ligado (≈13,8 a 14,6 V)",
+   "Limpar e apertar os terminais da bateria"
+  ]
+ },
+ "P0562": {
+  "t": "Tensão do sistema baixa",
+  "s": "media",
+  "c": [
+   "Alternador com carga baixa ou alta",
+   "Bateria fraca",
+   "Terminais da bateria oxidados ou cabo terra com mau contato"
+  ],
+  "v": [
+   "Medir a tensão com o motor desligado (≈12,6 V) e ligado (≈13,8 a 14,6 V)",
+   "Limpar e apertar os terminais da bateria"
+  ]
+ },
+ "P0563": {
+  "t": "Tensão do sistema alta",
+  "s": "media",
+  "c": [
+   "Alternador com carga baixa ou alta",
+   "Bateria fraca",
+   "Terminais da bateria oxidados ou cabo terra com mau contato"
+  ],
+  "v": [
+   "Medir a tensão com o motor desligado (≈12,6 V) e ligado (≈13,8 a 14,6 V)",
+   "Limpar e apertar os terminais da bateria"
+  ]
+ },
+ "P0600": {
+  "t": "Falha na comunicação serial do módulo de injeção",
+  "s": "media",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0601": {
+  "t": "Erro de memória interna do módulo de injeção",
+  "s": "alta",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0602": {
+  "t": "Módulo de injeção com erro de programação",
+  "s": "alta",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0603": {
+  "t": "Erro na memória de manutenção do módulo de injeção",
+  "s": "media",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0604": {
+  "t": "Erro de memória RAM do módulo de injeção",
+  "s": "alta",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0605": {
+  "t": "Erro de memória ROM do módulo de injeção",
+  "s": "alta",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0606": {
+  "t": "Falha no processador do módulo de injeção",
+  "s": "alta",
+  "c": [
+   "Falha interna do módulo de injeção",
+   "Alimentação ou terra do módulo instável",
+   "Software do módulo corrompido"
+  ],
+  "v": [
+   "Conferir fusíveis, alimentação e terras do módulo",
+   "Levar a uma oficina com equipamento da marca"
+  ]
+ },
+ "P0620": {
+  "t": "Circuito de controle do alternador com falha",
+  "s": "media",
+  "c": [
+   "Regulador do alternador com defeito",
+   "Fiação entre o módulo e o alternador",
+   "Alternador com defeito"
+  ],
+  "v": [
+   "Medir a tensão de carga com o motor ligado",
+   "Conferir o conector do alternador"
+  ]
+ },
+ "P0622": {
+  "t": "Circuito de campo do alternador com falha",
+  "s": "media",
+  "c": [
+   "Regulador do alternador com defeito",
+   "Fiação entre o módulo e o alternador",
+   "Alternador com defeito"
+  ],
+  "v": [
+   "Medir a tensão de carga com o motor ligado",
+   "Conferir o conector do alternador"
+  ]
+ },
+ "P0638": {
+  "t": "Atuador do corpo de borboleta fora do esperado",
+  "s": "alta",
+  "c": [
+   "Corpo de borboleta motorizado com defeito",
+   "Borboleta suja ou travando",
+   "Fiação do atuador"
+  ],
+  "v": [
+   "Limpar o corpo de borboleta",
+   "Conferir o conector do corpo de borboleta",
+   "Fazer o reaprendizado da borboleta"
+  ]
+ },
+ "P0641": {
+  "t": "Tensão de referência A dos sensores com falha",
+  "s": "media",
+  "c": [
+   "Curto na alimentação de 5 V de algum sensor",
+   "Sensor em curto puxando a referência",
+   "Fiação danificada"
+  ],
+  "v": [
+   "Desligar os sensores um a um e ver se a tensão volta",
+   "Inspecionar o chicote do motor"
+  ]
+ },
+ "P0700": {
+  "t": "Módulo da transmissão registrou uma falha",
+  "s": "media",
+  "c": [
+   "Falha registrada pelo módulo da transmissão",
+   "Fiação ou conector da transmissão"
+  ],
+  "v": [
+   "Ler os códigos do módulo da transmissão com equipamento da marca"
+  ]
+ }
+}
