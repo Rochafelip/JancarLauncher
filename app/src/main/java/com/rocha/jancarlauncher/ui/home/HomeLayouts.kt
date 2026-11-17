@@ -293,7 +293,8 @@ private fun LayoutAtual(p: HomeParts) {
                 p.TopButtons()
             }
         }
-        p.Player(card = true, modifier = Modifier.padding(top = 20.dp).widthIn(max = 560.dp))
+        // Barra (64dp): com o Cartão a Home não cabe nos ~534dp da central (a barra da Jancar ocupa o topo).
+        p.Player(card = false, modifier = Modifier.padding(top = 18.dp).width(560.dp))
         Spacer(Modifier.weight(1f))
         Box(Modifier.padding(bottom = 22.dp)) { p.Chips() }
         p.Tiles()
@@ -500,11 +501,11 @@ private fun <T> kotlinx.coroutines.flow.StateFlow<T>.collectAsStateValue() = col
 @Composable
 private fun BoxScope.LayoutColuna(p: HomeParts) {
     SideScrim(left = true, from = .36f, to = .56f)
-    Column(Modifier.align(Alignment.TopStart).width(368.dp).padding(start = 40.dp, top = 30.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
-        p.Clock(timeSize = 80)
+    Column(Modifier.align(Alignment.TopStart).width(368.dp).padding(start = 40.dp, top = 30.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        p.Clock(timeSize = 64)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             p.apps.chunked(2).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { CompactTile(it, Modifier.weight(1f), height = 104.dp, topLeft = true) } }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { CompactTile(it, Modifier.weight(1f), height = 92.dp, topLeft = true) } }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -572,8 +573,9 @@ private fun LayoutCarro(p: HomeParts) {
     Column(Modifier.fillMaxSize().padding(start = 48.dp, end = 48.dp, top = 30.dp, bottom = 30.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                p.Clock(timeSize = 80)
-                p.Player(card = true, modifier = Modifier.widthIn(max = 460.dp))
+                p.Clock(timeSize = 72)
+                // 500dp: o Cartão fica numa linha só (abaixo de 480 ele empilha e não cabe nos ~534dp da central).
+                p.Player(card = true, modifier = Modifier.widthIn(max = 500.dp))
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 p.StatusLine(showLabel = false)
@@ -626,7 +628,7 @@ private fun BoxScope.LayoutTrilho(p: HomeParts) {
         p.Clock(timeSize = 84, horizontal = Alignment.End)
     }
     // Player à direita, embaixo do relógio.
-    p.Player(card = false, modifier = Modifier.align(Alignment.TopEnd).padding(end = 40.dp, top = 170.dp).width(460.dp))
+    p.Player(card = false, modifier = Modifier.align(Alignment.TopEnd).padding(end = 40.dp, top = 190.dp).width(460.dp))
     Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 140.dp, end = 40.dp, bottom = 26.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         p.shortcuts.forEach { RoundIcon(it, size = 52.dp, iconSize = 20.dp) }
         Spacer(Modifier.width(6.dp))
@@ -687,7 +689,7 @@ private fun BoxScope.LayoutPilulas(p: HomeParts) {
     SideScrim(left = false, from = .34f, to = .58f)
     Box(Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 30.dp)) { p.Clock(timeSize = 84) }
     // Player à esquerda, embaixo do relógio (as pílulas ficam à direita).
-    p.Player(card = false, modifier = Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 170.dp).width(460.dp))
+    p.Player(card = false, modifier = Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 190.dp).width(460.dp))
     Column(Modifier.align(Alignment.TopEnd).padding(end = 36.dp, top = 26.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 52.dp, iconSize = 20.dp, shape = CircleShape)

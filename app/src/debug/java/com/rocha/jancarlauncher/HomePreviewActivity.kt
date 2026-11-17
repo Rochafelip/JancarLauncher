@@ -11,11 +11,13 @@ import com.rocha.jancarlauncher.ui.home.ClockInfo
 import com.rocha.jancarlauncher.ui.home.HomeLayout
 import com.rocha.jancarlauncher.ui.home.HomeScreen
 import com.rocha.jancarlauncher.ui.theme.JancarTheme
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 
 /**
  * Só debug: a Home de um tema com mídia falsa, para conferir o player nos 12 temas sem música tocando.
  * `adb shell am start -f 0x10008000 -n com.rocha.jancarlauncher/.HomePreviewActivity --es layout Grade
- *  [--es media none|music|radio|long] [--ez light true] [--ez paused true]`
+ *  [--es media none|music|radio|long] [--ez light true] [--ez paused true] [--ei top 66]`
  */
 class HomePreviewActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,6 +26,8 @@ class HomePreviewActivity : ComponentActivity() {
         val layout = HomeLayout.fromName(intent.getStringExtra("layout"))
         val light = intent.getBooleanExtra("light", false)
         val playing = !intent.getBooleanExtra("paused", false)
+        // Barra da Jancar no topo da central (~66px): --ei top 66 deixa a Home com os ~534dp de lá.
+        val top = intent.getIntExtra("top", 0)
         val np = when (intent.getStringExtra("media")) {
             "music" -> NowPlayingState("Garota de Ipanema", "Tom Jobim", null, playing, false)
             "radio" -> NowPlayingState("FM 99.1", null, null, playing, false, isRadio = true)
@@ -36,6 +40,7 @@ class HomePreviewActivity : ComponentActivity() {
         val actions = UiActions(this, app.launchController, SystemSettingsOpener(ContextSettingsStarter(this)))
         setContent {
             JancarTheme(dark = !light) {
+                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(top = top.dp)) {
                 HomeScreen(
                     clock = ClockInfo("18:41", "Terça-feira, 17 de novembro"),
                     isDark = !light,
@@ -51,6 +56,7 @@ class HomePreviewActivity : ComponentActivity() {
                     nowPlaying = np,
                     layout = layout,
                 )
+                }
             }
         }
     }
