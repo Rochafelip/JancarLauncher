@@ -202,11 +202,6 @@ fun HomeParts.Player(card: Boolean, modifier: Modifier = Modifier) {
     if (card) PlayerCard(nowPlaying, a, modifier) else PlayerBar(nowPlaying, a, modifier)
 }
 
-@Composable
-fun HomeParts.NowPlaying(modifier: Modifier = Modifier) {
-    NowPlayingCard(nowPlaying, onPlay, onPause, onNext, onPrevious, modifier)
-}
-
 /** Botão do dock: ícone + nome lado a lado, altura de toque folgada (68dp). */
 @Composable
 fun DockButton(item: HomeItem, modifier: Modifier = Modifier, height: Dp = 68.dp) {
@@ -296,7 +291,7 @@ private fun LayoutAtual(p: HomeParts) {
                 p.TopButtons()
             }
         }
-        p.NowPlaying(Modifier.padding(top = 20.dp))
+        p.Player(card = true, modifier = Modifier.padding(top = 20.dp).widthIn(max = 560.dp))
         Spacer(Modifier.weight(1f))
         Box(Modifier.padding(bottom = 22.dp)) { p.Chips() }
         p.Tiles()
@@ -312,7 +307,7 @@ private fun BoxScope.LayoutDock(p: HomeParts) {
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.weight(1f)) {
             p.Clock(timeSize = 72)
-            p.NowPlaying(Modifier.widthIn(max = 560.dp))
+            p.Player(card = true, modifier = Modifier.widthIn(max = 560.dp))
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
             p.StatusLine(showLabel = false)
@@ -341,6 +336,8 @@ private fun BoxScope.LayoutVitrine(p: HomeParts) {
         BasicText(p.clock.date, style = JancarType.date.copy(color = c.muted), modifier = Modifier.weight(1f))
         p.StatusLine(showLabel = false)
     }
+    // Player logo acima do dock (o dock tem 84dp + 20 de margem).
+    p.Player(card = false, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 118.dp).width(480.dp))
     Bar(Modifier.align(Alignment.BottomCenter).padding(bottom = 20.dp), radius = 28.dp) {
         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             val square = RoundedCornerShape(20.dp)
@@ -440,29 +437,6 @@ private fun BoxScope.SideScrim(left: Boolean, from: Float, to: Float) {
     Box(Modifier.fillMaxSize().background(androidx.compose.ui.graphics.Brush.horizontalGradient(*stops)))
 }
 
-/** Cartão de música quando nada toca (temas D e I): convida a abrir a Música, em vez de deixar o espaço vazio. */
-@Composable
-private fun HomeParts.MusicOrIdle(modifier: Modifier = Modifier) {
-    val c = JTheme.colors
-    val playing = nowPlaying.title != null || nowPlaying.artist != null
-    if (playing) {
-        NowPlaying(modifier)
-    } else {
-        val music = apps[1]
-        Pressable(onClick = music.onClick, shape = RoundedCornerShape(Dimens.RadiusTile), modifier = modifier.height(96.dp), description = "Abrir a Música") { _, _ ->
-            Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Box(Modifier.size(64.dp).background(c.surfaceHover, RoundedCornerShape(12.dp)), contentAlignment = Alignment.Center) {
-                    JIcon(JIcons.Music, c.muted, 28.dp)
-                }
-                Column {
-                    BasicText("Nada tocando", style = JancarType.tileLabel.copy(color = c.fg, fontSize = 19.sp))
-                    BasicText("Toque para abrir a Música", style = JancarType.appTag.copy(color = c.muted))
-                }
-            }
-        }
-    }
-}
-
 /**
  * Resumo do carro (temas F e I): combustível, temperatura externa, km, portas e média da viagem, dos mesmos dados do
  * Painel (CAN contado + OBD). Toque abre o Painel. Sem dado = "—".
@@ -528,13 +502,15 @@ private fun BoxScope.LayoutColuna(p: HomeParts) {
         p.Clock(timeSize = 80)
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             p.apps.chunked(2).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { CompactTile(it, Modifier.weight(1f), height = 118.dp, topLeft = true) } }
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { row.forEach { CompactTile(it, Modifier.weight(1f), height = 104.dp, topLeft = true) } }
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             p.shortcuts.forEach { RoundIcon(it) }
         }
     }
+    // Player embaixo da coluna, um pouco mais largo que ela (a coluna é estreita para a Barra).
+    p.Player(card = false, modifier = Modifier.align(Alignment.BottomStart).padding(start = 40.dp, bottom = 18.dp).width(460.dp))
     Column(Modifier.align(Alignment.TopEnd).padding(end = 32.dp, top = 30.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         p.TopButtons(size = 56.dp, iconSize = 22.dp)
         p.StatusLine(showLabel = false)
@@ -579,6 +555,8 @@ private fun BoxScope.LayoutCentral(p: HomeParts) {
         JIconButton(JIcons.Gauge, "Painel de velocidade", p.onOpenDash, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
         JIconButton(JIcons.Settings, "Ajustes", p.shortcuts[3].onClick, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
     }
+    // Player logo acima da fileira de botões redondos.
+    p.Player(card = false, modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 162.dp).width(480.dp))
     Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 26.dp), horizontalArrangement = Arrangement.spacedBy(40.dp)) {
         p.apps.forEach { BigRound(it) }
         BigRound(p.shortcuts[0].copy(label = "Wi-Fi"))
@@ -593,7 +571,7 @@ private fun LayoutCarro(p: HomeParts) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 p.Clock(timeSize = 80)
-                p.NowPlaying(Modifier.widthIn(max = 460.dp))
+                p.Player(card = true, modifier = Modifier.widthIn(max = 460.dp))
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 p.StatusLine(showLabel = false)
@@ -616,6 +594,8 @@ private fun BoxScope.LayoutGrade(p: HomeParts) {
     Row(Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 28.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         p.shortcuts.forEach { RoundIcon(it, size = 52.dp, iconSize = 20.dp) }
     }
+    // Player no canto de cima à esquerda, embaixo dos atalhos (espaço livre sobre o para-brisa).
+    p.Player(card = true, modifier = Modifier.align(Alignment.TopStart).padding(start = 32.dp, top = 96.dp).width(420.dp))
     Box(Modifier.align(Alignment.BottomStart).padding(start = 40.dp, bottom = 34.dp)) {
         p.Clock(timeSize = 96, dateExtra = p.wifi.takeIf { it.connected }?.ssid)
     }
@@ -643,6 +623,8 @@ private fun BoxScope.LayoutTrilho(p: HomeParts) {
     Box(Modifier.align(Alignment.TopEnd).padding(end = 40.dp, top = 28.dp)) {
         p.Clock(timeSize = 84, horizontal = Alignment.End)
     }
+    // Player à direita, embaixo do relógio.
+    p.Player(card = false, modifier = Modifier.align(Alignment.TopEnd).padding(end = 40.dp, top = 170.dp).width(460.dp))
     Row(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(start = 140.dp, end = 40.dp, bottom = 26.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         p.shortcuts.forEach { RoundIcon(it, size = 52.dp, iconSize = 20.dp) }
         Spacer(Modifier.width(6.dp))
@@ -666,14 +648,16 @@ private fun BoxScope.LayoutWidgets(p: HomeParts) {
         Divider(length = 28.dp)
         p.TopButtons(size = 48.dp, iconSize = 20.dp)
     }
-    Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(start = 32.dp, end = 32.dp, top = 80.dp).height(132.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    // 150dp de altura: o player empilha (botões embaixo) nesta célula estreita.
+    Row(Modifier.align(Alignment.TopStart).fillMaxWidth().padding(start = 32.dp, end = 32.dp, top = 80.dp).height(150.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Pressable(onClick = p.onToggleBrightness, shape = RoundedCornerShape(20.dp), modifier = Modifier.weight(0.9f).fillMaxHeight(), description = "Relógio") { _, _ ->
             Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 14.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 BasicText(p.clock.time, style = JancarType.clockLarge.copy(color = c.fg, fontSize = 58.sp, lineHeight = 58.sp))
-                BasicText(p.clock.date, style = JancarType.appTag.copy(color = c.muted, fontSize = 15.sp))
+                // Uma linha só (antes quebrava em duas e encostava na borda).
+                BasicText(p.clock.date, style = JancarType.appTag.copy(color = c.muted, fontSize = 13.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
-        Box(Modifier.weight(1.4f).fillMaxHeight(), contentAlignment = Alignment.Center) { p.MusicOrIdle(Modifier.fillMaxWidth()) }
+        Box(Modifier.weight(1.4f).fillMaxHeight(), contentAlignment = Alignment.Center) { p.Player(card = true, modifier = Modifier.fillMaxSize()) }
         CarSummaryCard(p.onOpenDash, Modifier.weight(1f).fillMaxHeight(), compact = true)
     }
     Row(Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(start = 32.dp, end = 32.dp, bottom = 26.dp), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -688,6 +672,8 @@ private fun BoxScope.LayoutOito(p: HomeParts) {
         Box(Modifier.weight(1f)) { p.Clock(timeSize = 80, dateExtra = p.wifi.takeIf { it.connected }?.ssid) }
         p.TopButtons(size = 52.dp, iconSize = 20.dp)
     }
+    // Player acima da fileira dos 8 botões, alinhado com o começo dela (8 × 104 + 7 × 10 = 902dp, centrada).
+    p.Player(card = false, modifier = Modifier.align(Alignment.BottomStart).padding(start = 61.dp, bottom = 148.dp).width(560.dp))
     Row(Modifier.align(Alignment.BottomCenter).padding(bottom = 30.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         (p.apps + p.shortcuts).forEach { SquareButton(it) }
     }
@@ -698,6 +684,8 @@ private fun BoxScope.LayoutOito(p: HomeParts) {
 private fun BoxScope.LayoutPilulas(p: HomeParts) {
     SideScrim(left = false, from = .34f, to = .58f)
     Box(Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 30.dp)) { p.Clock(timeSize = 84) }
+    // Player à esquerda, embaixo do relógio (as pílulas ficam à direita).
+    p.Player(card = false, modifier = Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 170.dp).width(460.dp))
     Column(Modifier.align(Alignment.TopEnd).padding(end = 36.dp, top = 26.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 52.dp, iconSize = 20.dp, shape = CircleShape)

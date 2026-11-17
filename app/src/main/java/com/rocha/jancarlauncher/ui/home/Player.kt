@@ -6,6 +6,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -56,42 +58,63 @@ class PlayerActions(
 fun PlayerCard(np: NowPlayingState, a: PlayerActions, modifier: Modifier = Modifier) {
     val c = JTheme.colors
     val v = PlayerModel.of(np)
-    Row(
+    BoxWithConstraints(
         modifier
             .heightIn(min = 112.dp)
             .clip(RoundedCornerShape(Dimens.RadiusTile))
             .background(c.surface)
             .padding(horizontal = 18.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
-        SourceArea(v, a, Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                Cover(np, v, 72.dp, 32.dp)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    BasicText(v.title, style = JancarType.nowPlayingTitle.copy(color = c.fg), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    v.subtitle?.let {
-                        BasicText(it, style = JancarType.nowPlayingArtist.copy(color = c.muted), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                }
-            }
-        }
-        if (v.mode == PlayerMode.Idle) {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                SourceButton(JIcons.Music, "Música", a.onOpenMusic, 56.dp)
-                SourceButton(JIcons.Radio, "Rádio", a.onOpenRadio, 56.dp)
+        // Estreito (ex.: célula do tema I): capa e texto em cima, botões embaixo, para o título não sumir.
+        if (maxWidth < STACK_BELOW) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SourceArea(v, a, Modifier.fillMaxWidth()) { CoverAndText(np, v, 52.dp, 26.dp) }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { CardControls(v, a) }
             }
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                TransportButton(JIcons.Previous, prevLabel(v), a.onPrevious)
-                TransportButton(
-                    if (v.playing) JIcons.Pause else JIcons.Play,
-                    if (v.playing) "Pausar" else "Tocar",
-                    { if (v.playing) a.onPause() else a.onPlay() },
-                    accent = true,
-                )
-                TransportButton(JIcons.Next, nextLabel(v), a.onNext)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                SourceArea(v, a, Modifier.weight(1f)) { CoverAndText(np, v, 72.dp, 32.dp) }
+                CardControls(v, a)
             }
+        }
+    }
+}
+
+/** Abaixo desta largura o Cartão empilha (botões embaixo). */
+private val STACK_BELOW = 480.dp
+
+@Composable
+private fun CoverAndText(np: NowPlayingState, v: PlayerView, cover: Dp, icon: Dp) {
+    val c = JTheme.colors
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        Cover(np, v, cover, icon)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            BasicText(v.title, style = JancarType.nowPlayingTitle.copy(color = c.fg), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            v.subtitle?.let {
+                BasicText(it, style = JancarType.nowPlayingArtist.copy(color = c.muted), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CardControls(v: PlayerView, a: PlayerActions) {
+    if (v.mode == PlayerMode.Idle) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SourceButton(JIcons.Music, "Música", a.onOpenMusic, 56.dp)
+            SourceButton(JIcons.Radio, "Rádio", a.onOpenRadio, 56.dp)
+        }
+    } else {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            TransportButton(JIcons.Previous, prevLabel(v), a.onPrevious)
+            TransportButton(
+                if (v.playing) JIcons.Pause else JIcons.Play,
+                if (v.playing) "Pausar" else "Tocar",
+                { if (v.playing) a.onPause() else a.onPlay() },
+                accent = true,
+            )
+            TransportButton(JIcons.Next, nextLabel(v), a.onNext)
         }
     }
 }
@@ -153,7 +176,7 @@ private fun SourceButton(icon: ImageVector, label: String, onClick: () -> Unit, 
     val c = JTheme.colors
     Pressable(onClick = onClick, shape = RoundedCornerShape(Dimens.RadiusButton), modifier = Modifier.height(height), description = "Abrir $label") { _, _ ->
         Row(
-            Modifier.background(c.surfaceHover, RoundedCornerShape(Dimens.RadiusButton)).height(height).padding(horizontal = 16.dp),
+            Modifier.background(c.surfaceHover, RoundedCornerShape(Dimens.RadiusButton)).height(height).padding(horizontal = if (height < 56.dp) 12.dp else 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
