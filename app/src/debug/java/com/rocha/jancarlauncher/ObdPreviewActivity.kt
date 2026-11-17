@@ -9,6 +9,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.rocha.jancarlauncher.obd.MilStatus
 import com.rocha.jancarlauncher.obd.ScanResult
+import com.rocha.jancarlauncher.obd.TripRecord
+import com.rocha.jancarlauncher.ui.obd.TripsTab
 import com.rocha.jancarlauncher.ui.obd.FaultsTab
 import com.rocha.jancarlauncher.ui.obd.ObdScreen
 import com.rocha.jancarlauncher.ui.obd.ObdTab
@@ -32,12 +34,18 @@ class ObdPreviewActivity : ComponentActivity() {
             fake,
             ScanResult(now - 86_400_000L * 3, MilStatus(false, 0), emptyList(), emptyList(), emptyList()),
         )
+        val h = 3_600_000L
+        val currentTrip = TripRecord(now - 25 * 60_000L, now, 21 * 60.0, 14.2, 1.02, 0.0, 87f)
+        val trips = listOf(
+            TripRecord(now - 26 * h, now - 25 * h - 40 * 60_000L, 18 * 60.0, 12.4, 0.94, 0.0, 98f),
+            TripRecord(now - 74 * h, now - 73 * h, 52 * 60.0, 61.8, 4.3, 4.3, 121f),
+        )
         setContent {
             var result by remember { mutableStateOf<ScanResult?>(null) }
             JancarTheme(dark = !light) {
                 ObdScreen(
                     onBack = { finish() },
-                    tripsTab = PreviewTrips.content,
+                    tripsTab = { TripsTab(currentTrip, trips, 619, 429, now) },
                     faultsTab = {
                         FaultsTab(
                             canScan = !moving, scanning = false, result = result, history = if (result == null) old.drop(1) else old,
@@ -49,9 +57,4 @@ class ObdPreviewActivity : ComponentActivity() {
             }
         }
     }
-}
-
-/** Conteúdo da aba Viagens na prévia (preenchido quando a aba existir). */
-object PreviewTrips {
-    var content: @androidx.compose.runtime.Composable () -> Unit = {}
 }

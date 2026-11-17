@@ -112,10 +112,16 @@ fun ObdRoute(onBack: () -> Unit) {
     var result by remember { mutableStateOf<ScanResult?>(null) }
     var history by remember { mutableStateOf(emptyList<ScanResult>()) }
     val scope = rememberCoroutineScope()
+    val currentTrip by app.obd.currentTrip.collectAsState()
+    val gasCents by app.settings.gasPriceCents.collectAsState(initial = null)
+    val ethCents by app.settings.ethanolPriceCents.collectAsState(initial = null)
+    var trips by remember { mutableStateOf(emptyList<com.rocha.jancarlauncher.obd.TripRecord>()) }
+    // Recarrega a lista quando a viagem atual some (acabou de ser fechada e gravada).
+    LaunchedEffect(currentTrip == null) { trips = withContext(Dispatchers.IO) { app.tripStore.list() } }
     LaunchedEffect(Unit) { history = withContext(Dispatchers.IO) { app.scanHistory.list() } }
     ObdScreen(
         onBack = onBack,
-        tripsTab = { BasicText("Em breve", style = JancarType.body.copy(color = JTheme.colors.muted)) },
+        tripsTab = { TripsTab(currentTrip, trips, gasCents, ethCents, System.currentTimeMillis()) },
         faultsTab = {
             FaultsTab(
                 canScan = ScanGate.allowed(live.speedKmh),
