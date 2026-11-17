@@ -46,6 +46,7 @@ fun HomeScreen(
     wifi: WifiStatus = WifiStatus.Disconnected,
     onScreenOff: () -> Unit = {},
     onOpenDash: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
     /** Tema (arranjo) da Home; trocado pela galeria (segurar o botão de tema, ou pelo painel de brilho). */
     layout: HomeLayout = HomeLayout.Atual,
     onLayoutChange: (HomeLayout) -> Unit = {},
@@ -90,6 +91,7 @@ fun HomeScreen(
                 onChangeFinished = onBrightnessChangeFinished,
                 modifier = Modifier.align(Alignment.TopEnd).padding(top = 146.dp, end = 64.dp),
                 onOpenThemes = parts.onOpenThemes,
+                onOpenSettings = { onCloseBrightness(); onOpenSettings() },
                 themeLabel = "${layout.letter} · ${layout.label}",
             )
         }

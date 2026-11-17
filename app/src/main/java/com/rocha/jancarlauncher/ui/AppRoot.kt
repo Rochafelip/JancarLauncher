@@ -199,7 +199,7 @@ fun AppRoot(
         when {
             brightnessOpen -> brightnessOpen = false
             screen == Screen.Off -> screen = ScreenOffPolicy.afterWake(Screen.Off)
-            screen == Screen.Drawer || screen == Screen.Dash -> screen = Screen.Home
+            screen == Screen.Drawer || screen == Screen.Dash || screen == Screen.Settings -> screen = Screen.Home
             screen == Screen.Car -> screen = Screen.Dash
             // Home/Boas-vindas: a tela inicial não "sai" com o botão voltar.
         }
@@ -249,12 +249,17 @@ fun AppRoot(
                 wifi = wifiStatus,
                 onScreenOff = { brightnessOpen = false; screen = Screen.Off },
                 onOpenDash = { brightnessOpen = false; screen = Screen.Dash },
+                onOpenSettings = { brightnessOpen = false; screen = Screen.Settings },
                 layout = com.rocha.jancarlauncher.ui.home.HomeLayout.fromName(homeLayoutName),
                 onLayoutChange = { scope.launch { settings.setHomeLayout(it.name) } },
                 onStyleChange = { key, value -> scope.launch { settings.setScreenStyle(key, value) } },
             )
             Screen.Dash -> DashRoute(onBack = { screen = Screen.Home }, onOpenCar = { screen = Screen.Car })
             Screen.Car -> CarRoute(onBack = { screen = Screen.Dash })
+            Screen.Settings -> com.rocha.jancarlauncher.ui.settings.SettingsScreen(
+                onBack = { screen = Screen.Home },
+                sections = listOf({ com.rocha.jancarlauncher.ui.settings.CrashReportSection() }),
+            )
             Screen.Off -> ScreenOffScreen(onWake = { screen = ScreenOffPolicy.afterWake(Screen.Off) })
             Screen.Drawer -> DrawerScreen(
                 isDark = isDark,

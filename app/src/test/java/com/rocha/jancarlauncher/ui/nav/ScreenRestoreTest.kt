@@ -41,4 +41,8 @@ class ScreenRestoreTest {
         // Estado gravado por uma versão antiga do app com uma tela que não existe mais.
         assertNull(ScreenRestore.restore("TelaQueSumiu"))
     }
+
+    @Test fun settingsRestoresToHome() {
+        assertEquals(Screen.Home, ScreenRestore.restore("Settings"))
+    }
 }

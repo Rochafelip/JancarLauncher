@@ -56,6 +56,8 @@ fun BrightnessPanel(
     /** Atalho para a galeria de temas (segurar o botão de tema é difícil de descobrir sozinho). */
     onOpenThemes: (() -> Unit)? = null,
     themeLabel: String? = null,
+    /** Ajustes do launcher (relatório de erros, atualização, retomar a música). */
+    onOpenSettings: (() -> Unit)? = null,
 ) {
     val c = JTheme.colors
     val shape = RoundedCornerShape(Dimens.RadiusPanel)
@@ -88,6 +90,20 @@ fun BrightnessPanel(
             ) {
                 BasicText("Escolher tema", style = JancarType.body.copy(color = c.fg), modifier = Modifier.weight(1f))
                 if (themeLabel != null) BasicText(themeLabel, style = JancarType.appTag.copy(color = c.muted))
+            }
+        }
+        if (onOpenSettings != null) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Dimens.MinTouch)
+                    .clip(RoundedCornerShape(Dimens.RadiusButton))
+                    .background(c.surfaceHover)
+                    .clickable(onClickLabel = "Abrir os ajustes do launcher", onClick = onOpenSettings)
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                BasicText("Ajustes do launcher", style = JancarType.body.copy(color = c.fg), modifier = Modifier.weight(1f))
             }
         }
     }
