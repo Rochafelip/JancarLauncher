@@ -27,3 +27,8 @@ docs/releases/
 .agents/
 skills-lock.json
 .claude/skills/
+
+# Cache do Kotlin, configurações locais do Claude Code e fotos originais do carro (placa) + APKs de terceiros
+.kotlin/
+.claude/
+docs/Fox-photos/
