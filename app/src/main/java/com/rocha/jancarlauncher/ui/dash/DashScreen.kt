@@ -167,6 +167,7 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}) {
     val obdTrip by app.obd.trip.collectAsState()
     val savedBlend by app.settings.fuelBlend.collectAsState(initial = null)
     val blend = FuelModel.Blend.fromName(savedBlend)
+    val health by app.health.health.collectAsState()
 
     DashScreen(
         state, connected, onBack, canConnected, canDash, canCabin, canLights,
@@ -178,6 +179,7 @@ fun DashRoute(onBack: () -> Unit, onOpenCar: () -> Unit = {}) {
         fuelBlend = blend,
         onResetTrip = { app.obd.resetTrip() },
         onNextBlend = { scope.launch { app.settings.setFuelBlend(blend.next().name) } },
+        health = health,
     )
 }
 
@@ -199,11 +201,13 @@ fun DashScreen(
     fuelBlend: FuelModel.Blend = FuelModel.Blend.Gasolina,
     onResetTrip: () -> Unit = {},
     onNextBlend: () -> Unit = {},
+    /** Avisos de bateria e de água pelo OBD (`obd/HealthMonitor`). */
+    health: DashModel.Health = DashModel.Health(),
 ) {
     var diagnostics by remember { mutableStateOf(false) }
     BackHandler(enabled = diagnostics) { diagnostics = false }
     val r = DashModel.reading(state, canDash, canCabin, canLights)
-    val alerts = DashModel.alerts(r, mode)
+    val alerts = DashModel.alerts(r, mode, health)
     val stage = DashModel.shiftStage(r.rpm, mode)
     // Marcha pela relação RPM ÷ km/h e sugestão de troca (GearModel).
     val gear = rememberGear(r.rpm, r.speed)
@@ -284,7 +288,7 @@ fun DashScreen(
                 // Consumo pelo OBD-II na coluna do meio, entre velocidade e giro.
                 when {
                     unicoVazio -> NoDataCard(obdLive, Modifier.weight(1f))
-                    cardAlerts.isNotEmpty() -> AlertCard(cardAlerts, r, Modifier.weight(1f))
+                    cardAlerts.isNotEmpty() -> AlertCard(cardAlerts, r, health, Modifier.weight(1f))
                     else -> ConsumptionBlock(obdLive, obdTrip, onResetTrip, Modifier.weight(1f).card(cards))
                 }
                 Column(Modifier.weight(1f).card(cards), horizontalAlignment = Alignment.End) {
@@ -305,7 +309,7 @@ fun DashScreen(
 
             // Faixa de aviso: só existe quando algo acontece.
             if (stripAlerts.isNotEmpty()) {
-                AlertBanner(stripAlerts, r, blink)
+                AlertBanner(stripAlerts, r, health, blink)
                 Spacer(Modifier.height(16.dp))
             }
 
@@ -532,7 +536,7 @@ private fun DoorsDiagram(d: DashModel.Doors) {
 
 /** Faixa de aviso (vermelha = grave, âmbar = atenção). Com mais de um aviso, alterna a cada 3 s. */
 @Composable
-private fun AlertBanner(alerts: List<DashModel.Alert>, r: DashModel.Reading, blink: State<Float>?) {
+private fun AlertBanner(alerts: List<DashModel.Alert>, r: DashModel.Reading, health: DashModel.Health, blink: State<Float>?) {
     // Hora de trocar (modo bravo): enquanto durar, só a faixa SHIFT aparece.
     if (DashModel.Alert.Shift in alerts) {
         ShiftBanner(blink)
@@ -547,6 +551,10 @@ private fun AlertBanner(alerts: List<DashModel.Alert>, r: DashModel.Reading, bli
         DashModel.Alert.Shift -> return // tratado acima
         DashModel.Alert.DoorOpen -> Triple(JIcons.DoorOpen, "PORTA ABERTA", DashModel.openDoorsText(r.doors))
         DashModel.Alert.LowFuel -> Triple(JIcons.Fuel, "COMBUSTÍVEL NA RESERVA", "${DashModel.valueText(r.fuelLiters)} L no tanque")
+        DashModel.Alert.Overheat -> Triple(JIcons.Thermometer, "MOTOR ESQUENTANDO", coolantText(health))
+        DashModel.Alert.BatteryNotCharging -> Triple(JIcons.Battery, "BATERIA NÃO CARREGA", "${voltText(health)} com o motor ligado")
+        DashModel.Alert.BatteryHigh -> Triple(JIcons.Battery, "TENSÃO ALTA", voltText(health))
+        DashModel.Alert.BatteryWeak -> Triple(JIcons.Battery, "BATERIA FRACA", voltText(health))
     }
     val bg = if (alert.red) ZoneRed else ZoneWarn
     val fg = if (alert.red) Color.White else Color(0xFF0A0B0F)
@@ -637,7 +645,7 @@ private fun shiftLabel(s: GearModel.Suggestion): String =
 
 /** Aviso em cartão no meio da tela (versão "Cartão"): borda vermelha pulsando, alterna a cada 3 s se houver mais de um. */
 @Composable
-private fun AlertCard(alerts: List<DashModel.Alert>, r: DashModel.Reading, modifier: Modifier = Modifier) {
+private fun AlertCard(alerts: List<DashModel.Alert>, r: DashModel.Reading, health: DashModel.Health, modifier: Modifier = Modifier) {
     var tick by remember { mutableIntStateOf(0) }
     LaunchedEffect(alerts.size) {
         while (alerts.size > 1) { delay(3_000); tick++ }
@@ -647,6 +655,10 @@ private fun AlertCard(alerts: List<DashModel.Alert>, r: DashModel.Reading, modif
         DashModel.Alert.DoorOpen -> Triple(JIcons.DoorOpen, "PORTA ABERTA", DashModel.openDoorsText(r.doors))
         DashModel.Alert.LowFuel -> Triple(JIcons.Fuel, "RESERVA", "${DashModel.valueText(r.fuelLiters)} L no tanque")
         DashModel.Alert.Shift -> Triple(JIcons.Gauge, "SHIFT", "")
+        DashModel.Alert.Overheat -> Triple(JIcons.Thermometer, "MOTOR QUENTE", coolantText(health))
+        DashModel.Alert.BatteryNotCharging -> Triple(JIcons.Battery, "SEM CARGA", voltText(health))
+        DashModel.Alert.BatteryHigh -> Triple(JIcons.Battery, "TENSÃO ALTA", voltText(health))
+        DashModel.Alert.BatteryWeak -> Triple(JIcons.Battery, "BATERIA FRACA", voltText(health))
     }
     val tone = if (alert.red) ZoneRed else ZoneWarn
     val pulse by rememberInfiniteTransition(label = "aviso").animateFloat(
@@ -699,3 +711,6 @@ private fun NoDataCard(obd: ObdClient.Live, modifier: Modifier = Modifier) {
         }
     }
 }
+
+private fun coolantText(h: DashModel.Health): String = h.coolantC?.let { "${it.toInt()} °C" } ?: DashModel.DASH
+private fun voltText(h: DashModel.Health): String = "${DashModel.valueText(h.batteryV)} V"

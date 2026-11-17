@@ -28,11 +28,16 @@ object OverlayPolicy {
         val gear: String? = null,
         val hint: String? = null,
         val hintDown: Boolean = false,
+        /** Aviso grave em vermelho (motor esquentando: "ÁGUA 112 °C"); `null` = some. */
+        val warning: String? = null,
     ) {
-        val isEmpty: Boolean get() = speed == null && rpm == null && consumption == null
+        val isEmpty: Boolean get() = speed == null && rpm == null && consumption == null && warning == null
     }
 
-    fun lines(r: DashModel.Reading, live: ObdClient.Live, mode: DashModel.DriveMode, gear: Int? = null): Lines {
+    fun lines(
+        r: DashModel.Reading, live: ObdClient.Live, mode: DashModel.DriveMode, gear: Int? = null,
+        health: DashModel.Health = DashModel.Health(),
+    ): Lines {
         val (now, unit) = ConsumptionText.instant(live)
         val s = GearModel.suggest(gear, r.rpm, r.speed, mode)
         return Lines(
@@ -44,6 +49,7 @@ object OverlayPolicy {
             gear = gear?.toString(),
             hint = GearModel.hintText(s),
             hintDown = s.hint == GearModel.Hint.Down,
+            warning = health.coolantC?.takeIf { health.overheat }?.let { "ÁGUA ${it.toInt()} °C" },
         )
     }
 }

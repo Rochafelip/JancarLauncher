@@ -1,5 +1,6 @@
 package com.rocha.jancarlauncher.ui.dash
 
+import com.rocha.jancarlauncher.obd.BatteryAlert
 import com.rocha.jancarlauncher.can.Cabin
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.DashBoard
@@ -199,7 +200,20 @@ object DashModel {
     private const val LIGHT_FRONT_FOG = 4
 
     /** Avisos do Painel; a faixa só aparece quando há algum. [red] = grave (vermelho), senão âmbar. */
-    enum class Alert(val red: Boolean) { Shift(true), DoorOpen(true), LowFuel(false) }
+    enum class Alert(val red: Boolean) {
+        Shift(true), Overheat(true), BatteryNotCharging(true), BatteryHigh(true), DoorOpen(true), LowFuel(false), BatteryWeak(false),
+    }
+
+    /**
+     * Saúde do motor pelo OBD (`obd/HealthMonitor`): avisos de bateria e de água, com os valores para o texto.
+     * Nunca vira número fixo no Painel (decisão de 2026-11-07: Painel limpo, avisos só quando acontecem).
+     */
+    data class Health(
+        val battery: BatteryAlert? = null,
+        val overheat: Boolean = false,
+        val coolantC: Float? = null,
+        val batteryV: Float? = null,
+    )
 
     /** Andando acima disto com porta aberta vira aviso vermelho (parado é normal). */
     const val DOOR_ALERT_KMH = 5f
@@ -218,12 +232,19 @@ object DashModel {
     const val LOW_FUEL_LITERS = 7f
 
     /** Avisos ativos, o mais grave primeiro; lista vazia = tudo bem, nada aparece. */
-    fun alerts(r: Reading, mode: DriveMode = DriveMode.Daily): List<Alert> = buildList {
+    fun alerts(r: Reading, mode: DriveMode = DriveMode.Daily, health: Health = Health()): List<Alert> = buildList {
         // Hora de trocar no modo bravo: vem antes de tudo enquanto durar (a tela mostra só ele).
         if (mode.shiftBanner && shiftStage(r.rpm, mode) == ShiftStage.Shift) add(Alert.Shift)
+        if (health.overheat) add(Alert.Overheat)
+        when (health.battery) {
+            BatteryAlert.NotCharging -> add(Alert.BatteryNotCharging)
+            BatteryAlert.HighVoltage -> add(Alert.BatteryHigh)
+            else -> {}
+        }
         if (r.doors.anyOpen && r.speed != null && r.speed >= DOOR_ALERT_KMH) add(Alert.DoorOpen)
         // 0 L costuma ser o CAN ainda sem leitura logo após a partida, não tanque vazio.
         if (r.fuelLiters != null && r.fuelLiters > 0f && r.fuelLiters <= LOW_FUEL_LITERS) add(Alert.LowFuel)
+        if (health.battery == BatteryAlert.Weak) add(Alert.BatteryWeak)
     }
 
     private const val CAN_TEMP_OFFSET = 40f

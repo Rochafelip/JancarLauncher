@@ -37,4 +37,11 @@ class OverlayPolicyTest {
         assertEquals("14,1 km/L", l.consumption)
         assertEquals(DashModel.ShiftStage.None, OverlayPolicy.lines(r, live, DashModel.DriveMode.Sport).stage)
     }
+
+    @Test fun overheatWarningLine() {
+        val r = DashModel.Reading(speed = 60f, rpm = 2000f, fuelLiters = null, outsideTempC = null, odoKm = null)
+        val hot = OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily, health = DashModel.Health(overheat = true, coolantC = 112f))
+        assertEquals("ÁGUA 112 °C", hot.warning)
+        assertNull(OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily).warning)
+    }
 }

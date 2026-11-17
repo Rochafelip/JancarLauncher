@@ -27,6 +27,7 @@ import com.rocha.jancarlauncher.can.Cabin
 import com.rocha.jancarlauncher.can.CarState
 import com.rocha.jancarlauncher.can.DashBoard
 import com.rocha.jancarlauncher.can.Lights
+import com.rocha.jancarlauncher.obd.BatteryAlert
 import com.rocha.jancarlauncher.obd.FuelModel
 import com.rocha.jancarlauncher.obd.ObdClient
 import com.rocha.jancarlauncher.obd.Trip
@@ -51,6 +52,14 @@ class DashPreviewActivity : ComponentActivity() {
         val mode = DashModel.DriveMode.fromName(intent.getStringExtra("mode"))
         val light = intent.getBooleanExtra("light", false)
         val obd = intent.getBooleanExtra("obd", false)
+        // Avisos de saúde pelo OBD: --ez hot true (água 112 °C) / --es battery NotCharging|HighVoltage|Weak.
+        val battery = intent.getStringExtra("battery")?.let { b -> BatteryAlert.entries.firstOrNull { it.name == b } }
+        val health = DashModel.Health(
+            battery = battery,
+            overheat = intent.getBooleanExtra("hot", false),
+            coolantC = 112f,
+            batteryV = when (battery) { BatteryAlert.HighVoltage -> 15.2f; BatteryAlert.Weak -> 12.0f; else -> 12.4f },
+        )
         if (intent.getBooleanExtra("demo", false)) {
             setContent { JancarTheme(dark = !light) { DemoDash(mode) { finish() } } }
             return
@@ -96,6 +105,7 @@ class DashPreviewActivity : ComponentActivity() {
                     fuelBlend = blend,
                     onResetTrip = { trip = Trip() },
                     onNextBlend = { blend = blend.next() },
+                    health = health,
                 )
             }
         }

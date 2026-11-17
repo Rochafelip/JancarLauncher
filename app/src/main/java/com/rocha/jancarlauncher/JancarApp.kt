@@ -8,7 +8,11 @@ import com.rocha.jancarlauncher.boot.CrashRestarter
 import com.rocha.jancarlauncher.can.CanBusClient
 import com.rocha.jancarlauncher.can.JancarCarClient
 import com.rocha.jancarlauncher.media.JancarMediaClient
+import com.rocha.jancarlauncher.obd.HealthMonitor
 import com.rocha.jancarlauncher.obd.ObdClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import com.rocha.jancarlauncher.overlay.AutoOverlay
 import com.rocha.jancarlauncher.launch.LaunchController
 import com.rocha.jancarlauncher.power.ScreenStateTracker
@@ -46,6 +50,12 @@ class JancarApp : Application() {
 
     // Leitor OBD-II (ELM327 Bluetooth): consumo para o Painel; ligado pelo AppRoot o tempo todo.
     val obd: ObdClient by lazy { ObdClient(this, settings, log) }
+
+    /** Escopo do app (vida do processo) para monitores que não pertencem a uma tela. */
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    // Bateria e água pelo OBD (avisos do Painel, da tela Fox e do cartão sobre o AA).
+    val health: HealthMonitor by lazy { HealthMonitor(obd.live, appScope, log) }
 
     // Faixa do Painel por cima do Android Auto/CarPlay; ligada pelo AppRoot.
     val autoOverlay: AutoOverlay by lazy { AutoOverlay(this) }

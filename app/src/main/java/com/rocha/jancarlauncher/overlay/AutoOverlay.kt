@@ -92,7 +92,7 @@ class AutoOverlay(private val app: JancarApp) {
             app.carService.state.value, app.canBus.dashboard.value, app.canBus.cabin.value, app.canBus.lights.value,
         )
         val gear = gearEstimator.update(r.rpm, r.speed, SystemClock.uptimeMillis())
-        return OverlayPolicy.lines(r, app.obd.live.value, mode, gear)
+        return OverlayPolicy.lines(r, app.obd.live.value, mode, gear, app.health.health.value)
     }
 
     /** Último app que veio para a frente, pelos eventos de uso desde a última consulta. */
@@ -212,7 +212,8 @@ class AutoOverlay(private val app: JancarApp) {
             val old = lines
             lines = l
             val shape = old == null || (old.speed == null) != (l.speed == null) || (old.rpm == null) != (l.rpm == null) ||
-                (old.consumption == null) != (l.consumption == null) || (old.gear == null) != (l.gear == null)
+                (old.consumption == null) != (l.consumption == null) || (old.gear == null) != (l.gear == null) ||
+                (old.warning == null) != (l.warning == null)
             if (shape) requestLayout()
             invalidate()
         }
@@ -230,6 +231,7 @@ class AutoOverlay(private val app: JancarApp) {
             if (l.rpm != null && l.consumption != null) h += gap + 1 * d + gap
             if (l.consumption != null) h += rowH
             if (l.gear != null) h += rowH
+            if (l.warning != null) h += rowH
             return h + 12 * d
         }
 
@@ -318,6 +320,14 @@ class AutoOverlay(private val app: JancarApp) {
                     valueP.color = FG
                 }
                 canvas.drawText(g, x, base, valueP)
+                y += rowH
+            }
+            // Aviso grave (motor esquentando), em vermelho, no fim do cartão.
+            l.warning?.let {
+                val base = y + rowH * 0.72f
+                valueP.color = RED
+                canvas.drawText(it, right, base, valueP)
+                valueP.color = FG
             }
         }
 

@@ -340,4 +340,21 @@ class DashModelTest {
         assertTrue(DashModel.alerts(r).isEmpty())
     }
 
+    @Test fun alerts_orderWithHealth() {
+        val r = reading(speed = 60f, fuel = 5f).copy(rpm = 5200f, doors = DashModel.Doors(frontLeft = true))
+        val all = DashModel.alerts(
+            r, sport,
+            DashModel.Health(battery = com.rocha.jancarlauncher.obd.BatteryAlert.NotCharging, overheat = true),
+        )
+        assertEquals(
+            listOf(
+                DashModel.Alert.Shift, DashModel.Alert.Overheat, DashModel.Alert.BatteryNotCharging,
+                DashModel.Alert.DoorOpen, DashModel.Alert.LowFuel,
+            ),
+            all,
+        )
+        val weak = DashModel.alerts(reading(speed = 0f, fuel = 5f), daily, DashModel.Health(battery = com.rocha.jancarlauncher.obd.BatteryAlert.Weak))
+        assertEquals(listOf(DashModel.Alert.LowFuel, DashModel.Alert.BatteryWeak), weak)
+        assertTrue(DashModel.Alert.Overheat.red && DashModel.Alert.BatteryHigh.red && !DashModel.Alert.BatteryWeak.red)
+    }
 }

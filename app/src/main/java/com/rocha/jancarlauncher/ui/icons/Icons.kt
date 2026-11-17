@@ -162,6 +162,11 @@ object JIcons {
     val Thermometer = icon("Thermometer", 1.7f) {
         line("M14 14.76V4.5a2 2 0 0 0-4 0v10.26a4 4 0 1 0 4 0z"); line("M12 9v8")
     }
+    /** Bateria (luz-espia do painel): caixa com + e −. */
+    val Battery = icon("Battery", 1.7f) {
+        rect(3f, 7f, 16f, 11f, 2f); line("M21 11v3")
+        line("M6.5 12.5h3M8 11v3"); line("M12.5 12.5h3")
+    }
     val Road = icon("Road", 1.7f) { line("M5 21L9 3"); line("M19 21L15 3"); line("M12 5v2.5M12 11v2.5M12 17v2.5") }
     /** Farol baixo (símbolo do painel do carro): lente + fachos inclinados para baixo. */
     val Headlight = icon("Headlight", 1.7f) {

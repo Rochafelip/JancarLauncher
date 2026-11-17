@@ -70,11 +70,13 @@ fun CarRoute(onBack: () -> Unit) {
     val obdLive by app.obd.live.collectAsState()
     val obdTrip by app.obd.trip.collectAsState()
     val savedMode by app.settings.driveMode.collectAsState(initial = null)
+    val health by app.health.health.collectAsState()
     val scope = rememberCoroutineScope()
     CarScreen(
         DashModel.reading(car, canDash, canCabin, canLights), canConnected, onBack, obdLive, obdTrip,
         DashModel.DriveMode.fromName(savedMode),
         onModeChange = { scope.launch { app.settings.setDriveMode(it.name) } },
+        health = health,
     )
 }
 
@@ -89,10 +91,12 @@ fun CarScreen(
     onModeChange: (DashModel.DriveMode) -> Unit = {},
     /** Tamanho/intensidade das luzes da foto (a prévia de debug troca para testar; o app usa [CarPhoto.TUNING]). */
     lightTuning: CarPhoto.Tuning = CarPhoto.TUNING,
+    /** Avisos de bateria/água pelo OBD: acende a luz da bateria no conta-giros. */
+    health: DashModel.Health = DashModel.Health(),
 ) {
     // Painel de carro é escuro de verdade: esta tela fica sempre no tema escuro.
     JancarTheme(dark = true) {
-        CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange, lightTuning)
+        CarScreenContent(reading, canConnected, onBack, obdLive, trip, mode, onModeChange, lightTuning, health)
     }
 }
 
@@ -106,6 +110,7 @@ private fun CarScreenContent(
     mode: DashModel.DriveMode,
     onModeChange: (DashModel.DriveMode) -> Unit,
     lightTuning: CarPhoto.Tuning,
+    health: DashModel.Health,
 ) {
     val c = JTheme.colors
     val photo by rememberCarPhoto()
@@ -151,6 +156,7 @@ private fun CarScreenContent(
                     size = GAUGE, modifier = Modifier.align(Alignment.CenterStart),
                     shiftMode = mode,
                     shiftBlink = if (atShift) shiftBlink() else null,
+                    battery = health.batteryV?.let { health.battery != null },
                 )
                 AnalogGauge(
                     GaugeKind.Speed, r.speed, FoxCluster.fuelFraction(r.fuelLiters), lamp = null,

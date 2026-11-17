@@ -148,6 +148,8 @@ private val ZoneRed = Color(0xFFC8141D)
 private val TickWhite = Color(0xFFF2F3F4)
 private val LampGreen = Color(0xFF2FD06B)
 private val LampOff = Color(0xFF1D2A22)
+private val LampRed = Color(0xFFFF3030)
+private val LampRedOff = Color(0xFF2A1C1C)
 private val LedGreen = Color(0xFF3DFF7E)
 private val LedAmber = Color(0xFFFFB020)
 private val LedRed = Color(0xFFFF2424)
@@ -167,6 +169,8 @@ fun AnalogGauge(
     shiftMode: DashModel.DriveMode? = null,
     /** No ponto de troca: pisca (lido só no desenho), todos os LEDs vermelhos. */
     shiftBlink: State<Float>? = null,
+    /** Só conta-giros: luz da bateria, vermelha com aviso de bateria (OBD); apagada sem aviso; `null` = não desenha. */
+    battery: Boolean? = null,
 ) {
     val tach = kind == GaugeKind.Tach
     val max = if (tach) 8f else 200f
@@ -176,6 +180,7 @@ fun AnalogGauge(
     val subShown by animateFloatAsState(sub ?: 0f, tween(400), label = "ponteiro pequeno")
     val measurer = rememberTextMeasurer()
     val lampPainter = rememberVectorPainter(JIcons.Headlight)
+    val batteryPainter = rememberVectorPainter(JIcons.Battery)
 
     Canvas(modifier.size(size)) {
         val k = this.size.minDimension / 320f
@@ -269,6 +274,13 @@ fun AnalogGauge(
             val s = 26f * k
             translate(218f * k, 104f * k) {
                 with(lampPainter) { draw(Size(s, s), colorFilter = ColorFilter.tint(if (lamp) LampGreen else LampOff)) }
+            }
+        }
+        // Luz da bateria (lado oposto ao da lanterna), como a luz-espia do painel original.
+        if (tach && battery != null) {
+            val s = 26f * k
+            translate(76f * k, 104f * k) {
+                with(batteryPainter) { draw(Size(s, s), colorFilter = ColorFilter.tint(if (battery) LampRed else LampRedOff)) }
             }
         }
 
