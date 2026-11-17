@@ -43,3 +43,17 @@ setas/portas são "de perto". Para conferir sem o carro: `CarPreviewActivity` (s
 ```
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/car-photo/papel-de-parede.ps1
 ```
+
+## Máscara da lataria (cor do Fox)
+
+`mascara.ps1` gera `app/src/main/assets/car/body_mask.png` a partir da `photo.png` (mesmo tamanho; alfa = lataria),
+usada para trocar a cor do carro por diversão (`ui/car3d/CarPaint.kt`). Lataria = pixel prata (pouca saturação,
+luminância ≥ 0,25) **menos** os polígonos e elipses do script (vidros, faróis, grade e emblema, placa, rodas de
+liga, farol de milha), que também são cinza/cromados. **Regenerar sempre que a foto mudar** e conferir a prévia
+(lataria pintada de vermelho sobre xadrez):
+
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/car-photo/mascara.ps1 -preview $env:TEMP/mascara.png
+```
+
+Para ajustar um polígono, medir com `grade.ps1` (coordenadas da `photo.png`, 1228×690).
