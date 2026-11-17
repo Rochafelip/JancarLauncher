@@ -242,6 +242,14 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
      */
     suspend fun <T> exclusive(block: (ElmLink) -> T): T? = kotlinx.coroutines.withContext(Dispatchers.IO) { gate.use(block) }
 
+    /** Lê as falhas do carro (só leitura). Desconectado = resultado com erro, sem códigos. */
+    suspend fun scan(): ScanResult {
+        val now = System.currentTimeMillis()
+        val r = exclusive { Scanner.run(it, now) } ?: ScanResult(now, null, emptyList(), emptyList(), null, "OBD não conectado")
+        log?.add("obd", "falhas: luz=${r.mil?.milOn} c=${r.confirmed} p=${r.pending} x=${r.permanent} erro=${r.error}")
+        return r
+    }
+
     private fun closeSocket() {
         runCatching { socket?.close() }
         socket = null
