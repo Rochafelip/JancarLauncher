@@ -44,7 +44,14 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
         val ethanolPercent: Float? = null,
         /** Temperatura da água do motor (PID 05), °C; `null` = o carro não informa ou ainda não leu. */
         val coolantC: Float? = null,
+        /** Tensão da bateria pelo `ATRV` (pino 16 do conector), V; `null` = sem leitura. */
+        val batteryV: Float? = null,
+        /** Giro do motor (PID 0C), rpm; `null` = o carro não informa ou ainda não leu. */
+        val rpm: Float? = null,
     )
+
+    /** Porta única do socket: o ciclo de leitura e os pedidos avulsos ([exclusive]) se revezam. */
+    private val gate = ElmGate()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var job: Job? = null
@@ -148,56 +155,92 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
         val hasEthanol = ElmProtocol.ETHANOL in supported
         val hasCoolant = ElmProtocol.COOLANT in supported
 
+        val hasRpm = ElmProtocol.RPM in supported
+
         var last = SystemClock.elapsedRealtime()
         var lastPersist = last
         var lastEthanolRead = 0L
         var ethanol: Float? = null
         var coolant: Float? = null
         var lastCoolantRead = 0L
+        var battery: Float? = null
+        var lastBatteryRead = 0L
+        var rpm: Float? = null
+        var lastRpmRead = 0L
         var misses = 0
-        while (coroutineContext.isActive) {
-            val speed = io.read(ElmProtocol.SPEED, 1)?.let(ElmProtocol::speed)
-            val air = when {
-                useMaf -> io.read(ElmProtocol.MAF, 2)?.let(ElmProtocol::mafGramsPerSecond)
-                useMap -> {
-                    val map = io.read(ElmProtocol.MAP, 1)?.let(ElmProtocol::manifoldPressure)
-                    val iat = io.read(ElmProtocol.IAT, 1)?.let(ElmProtocol::intakeTemp)
-                    val rpm = io.read(ElmProtocol.RPM, 2)?.let(ElmProtocol::rpm)
-                    if (map != null && iat != null && rpm != null) FuelModel.airFromManifold(map, iat, rpm) else null
-                }
-                else -> null
-            }
-            val now = SystemClock.elapsedRealtime()
-            if (hasEthanol && now - lastEthanolRead > 30_000) {
-                ethanol = io.read(ElmProtocol.ETHANOL, 1)?.let(ElmProtocol::ethanolPercent) ?: ethanol
-                lastEthanolRead = now
-            }
-            // Temperatura da água muda devagar: a cada 2 s basta.
-            if (hasCoolant && now - lastCoolantRead > 2_000) {
-                coolant = io.read(ElmProtocol.COOLANT, 1)?.let(ElmProtocol::coolantTemp) ?: coolant
-                lastCoolantRead = now
-            }
-            // Sem resposta seguida (ignição desligada, adaptador travado): cai para reconectar.
-            misses = if (speed == null) misses + 1 else 0
-            if (misses >= 8) throw IllegalStateException("sem resposta do carro")
+        gate.link = io
+        try {
+            while (coroutineContext.isActive) {
+                // Um ciclo inteiro de cada vez na porta: a leitura de falhas espera o fim do ciclo.
+                gate.use { link ->
+                    fun read(pid: Int, bytes: Int) = ElmProtocol.parse(link.send(ElmProtocol.request(pid)), pid, bytes)
+                    val speed = read(ElmProtocol.SPEED, 1)?.let(ElmProtocol::speed)
+                    val air = when {
+                        useMaf -> read(ElmProtocol.MAF, 2)?.let(ElmProtocol::mafGramsPerSecond)
+                        useMap -> {
+                            val map = read(ElmProtocol.MAP, 1)?.let(ElmProtocol::manifoldPressure)
+                            val iat = read(ElmProtocol.IAT, 1)?.let(ElmProtocol::intakeTemp)
+                            rpm = read(ElmProtocol.RPM, 2)?.let(ElmProtocol::rpm)
+                            val r = rpm
+                            if (map != null && iat != null && r != null) FuelModel.airFromManifold(map, iat, r) else null
+                        }
+                        else -> null
+                    }
+                    val now = SystemClock.elapsedRealtime()
+                    if (hasEthanol && now - lastEthanolRead > 30_000) {
+                        ethanol = read(ElmProtocol.ETHANOL, 1)?.let(ElmProtocol::ethanolPercent) ?: ethanol
+                        lastEthanolRead = now
+                    }
+                    // Temperatura da água muda devagar: a cada 2 s basta.
+                    if (hasCoolant && now - lastCoolantRead > 2_000) {
+                        coolant = read(ElmProtocol.COOLANT, 1)?.let(ElmProtocol::coolantTemp) ?: coolant
+                        lastCoolantRead = now
+                    }
+                    // Giro: no MAP já vem a cada ciclo; senão, a cada 1 s (aviso de bateria precisa saber se o motor roda).
+                    if (!useMap && hasRpm && now - lastRpmRead > 1_000) {
+                        rpm = read(ElmProtocol.RPM, 2)?.let(ElmProtocol::rpm)
+                        lastRpmRead = now
+                    }
+                    // Bateria (ATRV) a cada 5 s.
+                    if (now - lastBatteryRead > 5_000) {
+                        val v = ElmProtocol.parseVoltage(link.send(ElmProtocol.VOLTAGE))?.plus(ElmProtocol.ATRV_OFFSET_V)
+                        if ((v == null) != (battery == null)) log?.add("obd", if (v == null) "tensão sumiu" else "tensão %.1f V".format(v))
+                        battery = v
+                        lastBatteryRead = now
+                    }
+                    // Sem resposta seguida (ignição desligada, adaptador travado): cai para reconectar.
+                    misses = if (speed == null) misses + 1 else 0
+                    if (misses >= 8) throw IllegalStateException("sem resposta do carro")
 
-            val lph = air?.let { FuelModel.litersPerHour(it, ethanol?.div(100f) ?: blend.ethanol) }
-            val dt = (now - last) / 1000.0
-            last = now
-            if (lph != null && speed != null) _trip.value = _trip.value.add(lph, speed, dt)
-            _live.value = Live(
-                status = if (useMaf || useMap) Status.Connected else Status.NoFuelData,
-                adapter = name,
-                speedKmh = speed,
-                litersPerHour = lph,
-                kmPerLiter = if (lph != null && speed != null) FuelModel.kmPerLiter(speed, lph) else null,
-                ethanolPercent = ethanol,
-                coolantC = coolant,
-            )
-            if (now - lastPersist > 15_000) { persistTrip(); lastPersist = now }
-            delay(250)
+                    val lph = air?.let { FuelModel.litersPerHour(it, ethanol?.div(100f) ?: blend.ethanol) }
+                    val dt = (now - last) / 1000.0
+                    last = now
+                    if (lph != null && speed != null) _trip.value = _trip.value.add(lph, speed, dt)
+                    _live.value = Live(
+                        status = if (useMaf || useMap) Status.Connected else Status.NoFuelData,
+                        adapter = name,
+                        speedKmh = speed,
+                        litersPerHour = lph,
+                        kmPerLiter = if (lph != null && speed != null) FuelModel.kmPerLiter(speed, lph) else null,
+                        ethanolPercent = ethanol,
+                        coolantC = coolant,
+                        batteryV = battery,
+                        rpm = rpm,
+                    )
+                    if (now - lastPersist > 15_000) { persistTrip(); lastPersist = now }
+                }
+                delay(250)
+            }
+        } finally {
+            gate.link = null
         }
     }
+
+    /**
+     * Pedido avulso ao adaptador (ex.: leitura de falhas), entre dois ciclos de leitura, sem segunda conexão.
+     * `null` = OBD desconectado.
+     */
+    suspend fun <T> exclusive(block: (ElmLink) -> T): T? = kotlinx.coroutines.withContext(Dispatchers.IO) { gate.use(block) }
 
     private fun closeSocket() {
         runCatching { socket?.close() }
@@ -205,8 +248,8 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
     }
 
     /** Envia um comando ao ELM e lê até o prompt '>' (ou o tempo acabar). */
-    private class ElmIo(private val input: InputStream, private val output: OutputStream) {
-        fun send(cmd: String, timeoutMs: Long = 1_500): String {
+    private class ElmIo(private val input: InputStream, private val output: OutputStream) : ElmLink {
+        override fun send(cmd: String, timeoutMs: Long): String {
             while (input.available() > 0) input.read() // descarta sobra de resposta anterior
             output.write("$cmd\r".toByteArray())
             output.flush()
@@ -225,7 +268,6 @@ class ObdClient(context: Context, private val settings: SettingsStore, private v
             return sb.toString()
         }
 
-        fun read(pid: Int, bytes: Int): IntArray? = ElmProtocol.parse(send(ElmProtocol.request(pid)), pid, bytes)
     }
 
     companion object {

@@ -41,6 +41,18 @@ class ElmProtocolTest {
         assertTrue(ElmProtocol.MAP !in s)
         assertTrue(0x20 in s)
     }
+
+    @Test fun parseVoltage_readsAtrvAnswer() {
+        assertEquals(12.6f, ElmProtocol.parseVoltage("12.6V")!!, 0.001f)
+        assertEquals(14.1f, ElmProtocol.parseVoltage("14.1 V\r>")!!, 0.001f)
+    }
+
+    @Test fun parseVoltage_garbageOrImpossible_isNull() {
+        assertNull(ElmProtocol.parseVoltage("?"))
+        assertNull(ElmProtocol.parseVoltage(""))
+        assertNull(ElmProtocol.parseVoltage("3.0V"))
+        assertNull(ElmProtocol.parseVoltage("25.0V"))
+    }
 }
 
 class FuelModelTest {

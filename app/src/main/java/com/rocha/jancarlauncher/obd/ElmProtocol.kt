@@ -55,4 +55,17 @@ object ElmProtocol {
     fun manifoldPressure(d: IntArray) = d[0].toFloat()
     fun mafGramsPerSecond(d: IntArray) = (256 * d[0] + d[1]) / 100f
     fun ethanolPercent(d: IntArray) = d[0] * 100f / 255f
+
+    /** Lê a tensão no pino 16 do conector OBD (bateria do carro). */
+    const val VOLTAGE = "ATRV"
+
+    /** Correção da tensão do `ATRV` para este adaptador (clones erram ±0,3 V); calibrar com um multímetro. */
+    const val ATRV_OFFSET_V = 0f
+
+    /** Resposta do `ATRV` ("12.6V", "14.1 V") → volts; fora de 5..20 V é leitura ruim (`null`). */
+    fun parseVoltage(raw: String): Float? {
+        val v = Regex("""(\d{1,2}(?:\.\d+)?)\s*V""", RegexOption.IGNORE_CASE).find(raw)?.groupValues?.get(1)?.toFloatOrNull()
+            ?: return null
+        return v.takeIf { it in 5f..20f }
+    }
 }
