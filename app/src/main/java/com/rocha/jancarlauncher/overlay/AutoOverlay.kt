@@ -55,7 +55,10 @@ class AutoOverlay(private val app: JancarApp) {
     private var mode = DashModel.DriveMode.Daily
     private val gearEstimator = GearEstimator()
 
-    private var foreground: String? = null
+    @Volatile private var foreground: String? = null
+
+    /** Último app que veio para a frente (eventos de uso; precisa do GET_USAGE_STATS). `null` = não sabe. */
+    val foregroundPackage: String? get() = foreground
     private var loggedForeground: String? = null
     private var lastQuery = 0L
     private val prefs by lazy { app.getSharedPreferences(PREFS, Context.MODE_PRIVATE) }

@@ -27,6 +27,9 @@ class NowPlayingHandle(
         runCatching { action(c) }.onFailure { Log.w(TAG, "comando de transporte falhou", it) }
     }
 
+    /** Pacote do app da sessão escolhida (para lembrar a última fonte tocando). */
+    val packageName: String? get() = runCatching { controllerRef()?.packageName }.getOrNull()
+
     fun play() = safe { it.transportControls.play() }
     fun pause() = safe { it.transportControls.pause() }
     fun next() = safe { it.transportControls.skipToNext() }

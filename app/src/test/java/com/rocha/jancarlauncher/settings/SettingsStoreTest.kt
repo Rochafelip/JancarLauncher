@@ -130,4 +130,13 @@ class SettingsStoreTest {
         store.setSpeedLimit(null)
         assertNull(store.speedLimit.first())
     }
+
+    @Test fun resumeMusic_defaultOff_andLastSourcePersists() = runBlocking {
+        assertFalse(store.resumeMusic.first())
+        assertNull(store.lastSource.first())
+        store.setResumeMusic(true)
+        store.setLastSource("jancar")
+        assertTrue(store.resumeMusic.first())
+        assertEquals("jancar", store.lastSource.first())
+    }
 }

@@ -132,6 +132,32 @@ fun AppRoot(
     }
     LaunchedEffect(events) { events.collect { screen = it } }
 
+    // Última fonte tocando (para retomar ao ligar): grava sempre que algo está tocando.
+    LaunchedEffect(nowSource, shownNow.isPlaying) {
+        if (!shownNow.isPlaying) return@LaunchedEffect
+        val src = if (nowSource == NowPlayingSource.Jancar) com.rocha.jancarlauncher.media.LastSource.Jancar
+        else nowPlaying.packageName?.let { com.rocha.jancarlauncher.media.LastSource.Session(it) }
+        src?.let { settings.setLastSource(it.encode()) }
+    }
+    // Retomar a música ao ligar (Ajustes; desligado por padrão): a cada Boas-vindas (boot ou acordar), depois de
+    // alguns segundos. Contador para não cancelar se o dono tocar logo na Boas-vindas.
+    var welcomes by remember { mutableIntStateOf(0) }
+    LaunchedEffect(screen) { if (screen == Screen.Welcome) welcomes++ }
+    LaunchedEffect(welcomes) {
+        if (welcomes == 0) return@LaunchedEffect
+        kotlinx.coroutines.delay(com.rocha.jancarlauncher.media.MusicResume.DELAY_MS)
+        val last = com.rocha.jancarlauncher.media.LastSource.decode(settings.lastSource.first())
+        val playing = jancarMedia.playState.value?.b == 3 || nowPlaying.state.value.isPlaying
+        if (com.rocha.jancarlauncher.media.MusicResume.shouldResume(settings.resumeMusic.first(), last, autoOverlay.foregroundPackage, playing)) {
+            android.util.Log.i("JancarResume", "retomando a música: $last")
+            when (last) {
+                com.rocha.jancarlauncher.media.LastSource.Jancar -> jancarMedia.play()
+                is com.rocha.jancarlauncher.media.LastSource.Session -> if (nowPlaying.packageName == last.pkg) nowPlaying.play()
+                null -> {}
+            }
+        }
+    }
+
     // "Apagar tela": ao entrar em Off a janela vai ao brilho mínimo; ao sair, volta o brilho do usuário
     // (inclusive uma mudança do modo noturno que ficou adiada enquanto a tela estava apagada).
     var wasOff by remember { mutableStateOf(false) }
@@ -262,6 +288,7 @@ fun AppRoot(
                 onBack = { screen = Screen.Home },
                 sections = listOf(
                     { com.rocha.jancarlauncher.ui.settings.UpdateSection() },
+                    { com.rocha.jancarlauncher.ui.settings.MusicResumeSection() },
                     { com.rocha.jancarlauncher.ui.settings.CrashReportSection() },
                 ),
             )

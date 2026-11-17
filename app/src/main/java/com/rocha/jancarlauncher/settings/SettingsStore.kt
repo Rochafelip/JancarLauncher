@@ -56,6 +56,16 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     val ethanolPriceCents: Flow<Int?> = ds.data.map { it[ethanolPriceKey] }
     suspend fun setGasPriceCents(cents: Int) { ds.edit { it[gasPriceKey] = cents } }
     suspend fun setEthanolPriceCents(cents: Int) { ds.edit { it[ethanolPriceKey] = cents } }
+    /** Retomar a música ao ligar a central (Ajustes); desligado por padrão até o teste no carro. */
+    val resumeMusic: Flow<Boolean> = ds.data.map { it[resumeMusicKey] ?: false }
+    suspend fun setResumeMusic(on: Boolean) { ds.edit { it[resumeMusicKey] = on } }
+    private val resumeMusicKey = booleanPreferencesKey("resume_music")
+
+    /** Última fonte que estava tocando (`media/LastSource.encode`), para retomar ao ligar. */
+    val lastSource: Flow<String?> = ds.data.map { it[lastSourceKey] }
+    suspend fun setLastSource(encoded: String) { ds.edit { it[lastSourceKey] = encoded } }
+    private val lastSourceKey = stringPreferencesKey("last_music_source")
+
     /** Limite do aviso sonoro de velocidade (km/h); null = desligado (o padrão). */
     val speedLimit: Flow<Int?> = ds.data.map { it[speedLimitKey] }
     suspend fun setSpeedLimit(kmh: Int?) { ds.edit { if (kmh == null) it.remove(speedLimitKey) else it[speedLimitKey] = kmh } }
