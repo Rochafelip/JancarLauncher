@@ -31,6 +31,12 @@ object OverlayPolicy {
         val hintDown: Boolean = false,
         /** Aviso grave em vermelho (motor esquentando: "ÁGUA 112 °C"); `null` = some. */
         val warning: String? = null,
+        /** Player embaixo (⏮ ⏯ ⏭): sempre que o cartão aparece e há um player ligado. */
+        val showPlayer: Boolean = false,
+        /** "Título · Artista" do que toca; `null` = a linha some (ex.: música do celular pelo AA). */
+        val track: String? = null,
+        /** ⏯ mostra pausar (tocando) ou tocar; `null` = não se sabe (mostra play/pausa). */
+        val playing: Boolean? = null,
         /** Velocidade acima do limite do aviso sonoro (número em vermelho). */
         val speedOver: Boolean = false,
     ) {
@@ -41,6 +47,7 @@ object OverlayPolicy {
         r: DashModel.Reading, live: ObdClient.Live, mode: DashModel.DriveMode, gear: Int? = null,
         health: DashModel.Health = DashModel.Health(),
         limit: Int? = null,
+        player: com.rocha.jancarlauncher.media.NowPlayingState? = null,
     ): Lines {
         val (now, unit) = ConsumptionText.instant(live)
         val s = GearModel.suggest(gear, r.rpm, r.speed, mode)
@@ -55,6 +62,9 @@ object OverlayPolicy {
             hintDown = s.hint == GearModel.Hint.Down,
             warning = health.coolantC?.takeIf { health.overheat }?.let { "ÁGUA ${it.toInt()} °C" },
             speedOver = SpeedAlertRule.over(r.speed, limit),
+            showPlayer = player != null,
+            track = player?.let { OverlayPlayer.trackLine(it) },
+            playing = player?.takeIf { OverlayPlayer.trackLine(it) != null }?.isPlaying,
         )
     }
 }

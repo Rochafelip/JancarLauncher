@@ -50,4 +50,16 @@ class OverlayPolicyTest {
         assertTrue(OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily, limit = 110).speedOver)
         assertFalse(OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily).speedOver)
     }
+
+    @Test fun player_isAddedWhenTheCardHasData_andKeepsTheCardVisibleOnlyWithCarData() {
+        val r = DashModel.Reading(speed = 60f, rpm = 2000f, fuelLiters = null, outsideTempC = null, odoKm = null)
+        val np = com.rocha.jancarlauncher.media.NowPlayingState("Ela", "Banda", null, true, false)
+        val l = OverlayPolicy.lines(r, ObdClient.Live(), DashModel.DriveMode.Daily, player = np)
+        assertTrue(l.showPlayer)
+        assertEquals("Ela · Banda", l.track)
+        assertEquals(true, l.playing)
+        // Sem dado nenhum do carro o cartão continua sumindo (o player sozinho não segura o cartão).
+        val empty = DashModel.Reading(speed = null, rpm = null, fuelLiters = null, outsideTempC = null, odoKm = null)
+        assertTrue(OverlayPolicy.lines(empty, ObdClient.Live(), DashModel.DriveMode.Daily, player = np).isEmpty)
+    }
 }
