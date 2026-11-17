@@ -113,6 +113,14 @@ fun AppRoot(
     val sessionNow = nowPlaying.state.value
     val nowSource = JancarNowPlaying.pick(sessionNow, jancarNow)
     val shownNow = if (nowSource == NowPlayingSource.Jancar) jancarNow else sessionNow
+    // Publica para o cartão sobre o Android Auto (player ⏮ ⏯ ⏭ embaixo da velocidade).
+    val bridge = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).mediaBridge
+    androidx.compose.runtime.SideEffect {
+        bridge.state = shownNow
+        bridge.source = nowSource
+        bridge.jancar = com.rocha.jancarlauncher.media.Transport(jancarMedia::play, jancarMedia::pause, jancarMedia::next, jancarMedia::previous)
+        bridge.session = com.rocha.jancarlauncher.media.Transport(nowPlaying::play, nowPlaying::pause, nowPlaying::next, nowPlaying::previous)
+    }
     val adbStatus by rememberAdbStatus(tickKey = clock)
     val wifiStatus by rememberWifiStatus(tickKey = clock)
 

@@ -17,6 +17,7 @@ import android.os.SystemClock
 import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -95,7 +96,49 @@ class AutoOverlay(private val app: JancarApp) {
             app.carService.state.value, app.canBus.dashboard.value, app.canBus.cabin.value, app.canBus.lights.value,
         )
         val gear = gearEstimator.update(r.rpm, r.speed, SystemClock.uptimeMillis())
-        return OverlayPolicy.lines(r, app.obd.live.value, mode, gear, app.health.health.value, app.speedAlarm.limit.value)
+        return OverlayPolicy.lines(
+            r, app.obd.live.value, mode, gear, app.health.health.value, app.speedAlarm.limit.value,
+            player = app.mediaBridge.state,
+        )
+    }
+
+    /**
+     * ⏮ (0) ⏯ (1) ⏭ (2) do cartão: Música/Rádio da central pelo serviço de mídia dela; Bluetooth/Spotify pela
+     * sessão; nada visível (música do celular pelo AA) pela tecla de mídia padrão do Android, que vai para quem toca.
+     */
+    private fun playerButton(i: Int) {
+        val b = app.mediaBridge
+        val route = OverlayPlayer.route(b.source, b.state)
+        val t = when (route) {
+            MediaRoute.Jancar -> b.jancar
+            MediaRoute.Session -> b.session
+            MediaRoute.MediaKey -> null
+        }
+        app.log.add("player", "botão $i por $route")
+        runCatching {
+            if (t != null) {
+                when (i) {
+                    0 -> t.previous()
+                    1 -> if (b.state.isPlaying) t.pause() else t.play()
+                    else -> t.next()
+                }
+            } else {
+                mediaKey(
+                    when (i) {
+                        0 -> KeyEvent.KEYCODE_MEDIA_PREVIOUS
+                        1 -> KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+                        else -> KeyEvent.KEYCODE_MEDIA_NEXT
+                    },
+                )
+            }
+        }.onFailure { app.log.add("player", "falhou: ${it.message}") }
+    }
+
+    private fun mediaKey(code: Int) {
+        val am = app.getSystemService(android.media.AudioManager::class.java) ?: return
+        val now = SystemClock.uptimeMillis()
+        am.dispatchMediaKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_DOWN, code, 0))
+        am.dispatchMediaKeyEvent(KeyEvent(now, now, KeyEvent.ACTION_UP, code, 0))
     }
 
     /** Último app que veio para a frente, pelos eventos de uso desde a última consulta. */
@@ -144,6 +187,7 @@ class AutoOverlay(private val app: JancarApp) {
         }
         v.onDrag = { dx, dy -> moveBy(v, dx, dy) }
         v.onDragEnd = { params?.let { prefs.edit().putInt(KEY_X, it.x).putInt(KEY_Y, it.y).apply() } }
+        v.onButton = { playerButton(it) }
         try {
             app.getSystemService(WindowManager::class.java).addView(v, lp)
         } catch (e: RuntimeException) {
@@ -216,7 +260,8 @@ class AutoOverlay(private val app: JancarApp) {
             lines = l
             val shape = old == null || (old.speed == null) != (l.speed == null) || (old.rpm == null) != (l.rpm == null) ||
                 (old.consumption == null) != (l.consumption == null) || (old.gear == null) != (l.gear == null) ||
-                (old.warning == null) != (l.warning == null)
+                (old.warning == null) != (l.warning == null) ||
+                old.showPlayer != l.showPlayer || (old.track == null) != (l.track == null)
             if (shape) requestLayout()
             invalidate()
         }
@@ -235,7 +280,70 @@ class AutoOverlay(private val app: JancarApp) {
             if (l.consumption != null) h += rowH
             if (l.gear != null) h += rowH
             if (l.warning != null) h += rowH
+            if (l.showPlayer) {
+                h += gap + 1 * d + gap
+                if (l.track != null) h += trackH
+                h += btn
+            }
             return h + 12 * d
+        }
+
+        // Player embaixo: linha da música e ⏮ ⏯ ⏭ de 48dp (3 × 48 + 2 × 6 = 156 = largura útil do cartão).
+        private val trackH get() = 22 * sp
+        private val btn = 48 * d
+        private val btnGap = 6 * d
+        private var buttons: List<HitBox> = emptyList()
+        private var pressed: Int? = null
+        var onButton: (Int) -> Unit = {}
+        private val trackP = android.text.TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = 13 * sp; typeface = inter; color = MUTED; textAlign = Paint.Align.LEFT
+        }
+        private val btnBg = Paint(Paint.ANTI_ALIAS_FLAG)
+        private val icon = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+        private val path = android.graphics.Path()
+
+        /** ⏮ (0), ⏯ (1), ⏭ (2) desenhados à mão (o cartão não é Compose). */
+        private fun drawPlayer(canvas: Canvas, l: OverlayPolicy.Lines, top: Float) {
+            var y = top
+            seg.color = Color.argb(0x14, 0xFF, 0xFF, 0xFF)
+            canvas.drawRect(pad, y + gap, width - pad, y + gap + 1 * d, seg)
+            y += gap + 1 * d + gap
+            l.track?.let {
+                val shown = android.text.TextUtils.ellipsize(it, trackP, width - 2 * pad, android.text.TextUtils.TruncateAt.END)
+                canvas.drawText(shown, 0, shown.length, pad, y + trackH * 0.7f, trackP)
+                y += trackH
+            }
+            val boxes = (0..2).map { i -> val x0 = pad + i * (btn + btnGap); HitBox(x0, y, x0 + btn, y + btn) }
+            buttons = boxes
+            boxes.forEachIndexed { i, b ->
+                val cx = (b.left + b.right) / 2; val cy = (b.top + b.bottom) / 2
+                btnBg.color = when {
+                    i == 1 -> if (pressed == 1) Color.rgb(0x5A, 0x8C, 0xBF) else ACCENT
+                    pressed == i -> Color.argb(0x40, 0xFF, 0xFF, 0xFF)
+                    else -> Color.argb(0x18, 0xFF, 0xFF, 0xFF)
+                }
+                canvas.drawCircle(cx, cy, btn / 2, btnBg)
+                icon.color = if (i == 1) Color.WHITE else FG
+                val s = 7 * d
+                path.reset()
+                when (i) {
+                    0 -> { // ⏮
+                        canvas.drawRect(cx - s - 1.5f * d, cy - s, cx - s + 0.5f * d, cy + s, icon)
+                        path.moveTo(cx + s, cy - s); path.lineTo(cx - s + 1 * d, cy); path.lineTo(cx + s, cy + s); path.close()
+                    }
+                    2 -> { // ⏭
+                        canvas.drawRect(cx + s - 0.5f * d, cy - s, cx + s + 1.5f * d, cy + s, icon)
+                        path.moveTo(cx - s, cy - s); path.lineTo(cx + s - 1 * d, cy); path.lineTo(cx - s, cy + s); path.close()
+                    }
+                    else -> if (l.playing == true) { // ❚❚ pausar
+                        canvas.drawRect(cx - 5 * d, cy - s, cx - 1.5f * d, cy + s, icon)
+                        canvas.drawRect(cx + 1.5f * d, cy - s, cx + 5 * d, cy + s, icon)
+                    } else { // ▶ tocar (ou play/pausa quando não se sabe)
+                        path.moveTo(cx - 4 * d, cy - s); path.lineTo(cx + s, cy); path.lineTo(cx - 4 * d, cy + s); path.close()
+                    }
+                }
+                canvas.drawPath(path, icon)
+            }
         }
 
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -332,7 +440,9 @@ class AutoOverlay(private val app: JancarApp) {
                 valueP.color = RED
                 canvas.drawText(it, right, base, valueP)
                 valueP.color = FG
+                y += rowH
             }
+            if (l.showPlayer) drawPlayer(canvas, l, y) else buttons = emptyList()
         }
 
         @SuppressLint("ClickableViewAccessibility")
@@ -341,11 +451,14 @@ class AutoOverlay(private val app: JancarApp) {
                 MotionEvent.ACTION_DOWN -> {
                     downX = e.rawX; downY = e.rawY; lastX = e.rawX; lastY = e.rawY
                     dragging = false
+                    pressed = OverlayPlayer.hit(e.x, e.y, buttons)
+                    if (pressed != null) invalidate()
                 }
                 MotionEvent.ACTION_MOVE -> {
                     // Só começa a arrastar depois de um pouco de movimento: um toque sem querer não tira do lugar.
                     if (!dragging && (abs(e.rawX - downX) > slop || abs(e.rawY - downY) > slop)) {
                         dragging = true
+                        pressed = null
                         lastX = e.rawX; lastY = e.rawY
                         invalidate()
                     }
@@ -356,7 +469,11 @@ class AutoOverlay(private val app: JancarApp) {
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                     if (dragging) onDragEnd()
+                    // Toque (sem arrastar) que começou e terminou no mesmo botão = aperta o botão.
+                    val hit = if (!dragging && e.actionMasked == MotionEvent.ACTION_UP) OverlayPlayer.hit(e.x, e.y, buttons) else null
+                    if (hit != null && hit == pressed) onButton(hit)
                     dragging = false
+                    pressed = null
                     invalidate()
                 }
             }

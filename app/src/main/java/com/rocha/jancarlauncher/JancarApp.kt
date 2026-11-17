@@ -49,6 +49,9 @@ class JancarApp : Application() {
     // Serviço de mídia da Jancar (faixa do app Música); instância única, conectada pelo AppRoot.
     val media: JancarMediaClient by lazy { JancarMediaClient(this, log) }
 
+    // O que a Home sabe da mídia, para o cartão sobre o Android Auto (que não é Compose).
+    val mediaBridge = com.rocha.jancarlauncher.media.MediaBridge()
+
     // Leitor OBD-II (ELM327 Bluetooth): consumo para o Painel; ligado pelo AppRoot o tempo todo.
     val obd: ObdClient by lazy {
         ObdClient(this, settings, log).also { c -> c.onTripFinished = { tripStore.add(it) } }

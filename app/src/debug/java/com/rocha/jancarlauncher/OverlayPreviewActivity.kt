@@ -9,7 +9,8 @@ import com.rocha.jancarlauncher.ui.dash.DashModel
 /**
  * Prévia da faixa sobre o Android Auto (só debug; o emulador não tem o AA): trata outro app como se fosse o AA e
  * usa dados falsos. `adb shell am start -n com.rocha.jancarlauncher/.OverlayPreviewActivity
- * [--es pkg com.android.settings] [--es stage none|near|shift] [--ez off true]` e depois abra o app escolhido.
+ * [--es pkg com.android.settings] [--es stage none|near|shift] [--ez off true]
+ * [--ez noplayer true] [--es track "Título · Artista"] [--ez paused true]` e depois abra o app escolhido.
  */
 class OverlayPreviewActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,6 +29,10 @@ class OverlayPreviewActivity : Activity() {
             AutoOverlay.debugLines = OverlayPolicy.Lines(
                 "62", rpm, rpm.toFloat(), stage, "14,1 km/L",
                 gear = "4", hint = if (stage == DashModel.ShiftStage.None) null else "↑5",
+                // Player embaixo: --ez noplayer true tira; --es track "" = música do celular pelo AA (sem nome); --ez paused true.
+                showPlayer = !intent.getBooleanExtra("noplayer", false),
+                track = (intent.getStringExtra("track") ?: "Garota de Ipanema · Tom Jobim").takeIf { it.isNotEmpty() },
+                playing = if (intent.getStringExtra("track") == "") null else !intent.getBooleanExtra("paused", false),
             )
         }
         finish()
