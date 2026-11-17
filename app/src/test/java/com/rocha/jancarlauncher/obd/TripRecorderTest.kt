@@ -78,4 +78,27 @@ class TripRecorderTest {
         assertEquals(rec.liters, rec.ethanolLiters, 1e-9)
         assertEquals(20.0 / 1.1, rec.kmPerLiter!!, 1e-6)
     }
+
+    @Test fun suspendedBeforeDisconnect_wakeAndDriveSoon_closesYesterdaysTrip() {
+        val r = TripRecorder()
+        val t = r.drive(0, 60, 60f)
+        // A central suspendeu antes da sessão OBD cair: a queda só é vista ao acordar, 9 h depois.
+        val wake = t + 9 * 3_600_000L
+        r.disconnected(wake, wall0 + wake)
+        val closed = r.sample(wake + 60_000, wall0 + wake + 60_000, 20f, 3f, 0.27f, 1.0)
+        assertEquals(wall0 + t, closed!!.endWallMs)
+        assertEquals(1.0, closed.km, 1e-6)
+    }
+
+    @Test fun ignitionOnEngineOff_withoutSpeed_doesNotKeepTripOpen() {
+        val r = TripRecorder()
+        val t = r.drive(0, 60, 60f)
+        // ACC: o ELM responde mas o carro não (velocidade nula); sessões curtas não contam como dado.
+        var x = t
+        var closed: TripRecord? = null
+        repeat(40) { x += 10_000; closed = closed ?: r.sample(x, wall0 + x, null, null, 0.27f, 1.0) }
+        // Fecha 3 min depois do último dado, com o fim nele.
+        assertEquals(wall0 + t, closed!!.endWallMs)
+        assertNull(r.current)
+    }
 }

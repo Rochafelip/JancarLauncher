@@ -24,15 +24,17 @@ data class TripRecord(
  */
 class TripRecorder(private val graceMs: Long = 180_000) {
     private var cur: TripRecord? = null
+    /** Último dado de verdade (velocidade lida): a espera de [graceMs] conta daqui, nunca de quando a queda foi notada. */
     private var lastElapsed = 0L
-    private var disconnectedAt: Long? = null
 
     val current: TripRecord? @Synchronized get() = cur
 
     @Synchronized
     fun sample(elapsedMs: Long, wallMs: Long, speedKmh: Float?, litersPerHour: Float?, ethanol: Float, dtS: Double): TripRecord? {
         val finished = closeIfExpired(elapsedMs)
-        val moving = speedKmh != null && speedKmh > 0f
+        // Sem velocidade (ignição em ACC, ECU desligada) não é dado: não abre nem estende a viagem.
+        if (speedKmh == null) return finished
+        val moving = speedKmh > 0f
         var t = cur
         if (t == null) {
             if (!moving) return finished
@@ -42,22 +44,22 @@ class TripRecorder(private val graceMs: Long = 180_000) {
             val l = (litersPerHour ?: 0f) * dtS / 3600.0
             t = t.copy(
                 movingS = t.movingS + if (moving) dtS else 0.0,
-                km = t.km + (speedKmh ?: 0f) * dtS / 3600.0,
+                km = t.km + speedKmh * dtS / 3600.0,
                 liters = t.liters + l,
                 ethanolLiters = t.ethanolLiters + l * TripCost.ethanolWeight(ethanol),
             )
         }
-        cur = t.copy(endWallMs = wallMs, maxKmh = maxOf(t.maxKmh, speedKmh ?: 0f))
+        cur = t.copy(endWallMs = wallMs, maxKmh = maxOf(t.maxKmh, speedKmh))
         lastElapsed = elapsedMs
-        disconnectedAt = null
         return finished
     }
 
-    /** A sessão OBD caiu (ignição desligada?): a viagem espera [graceMs] para continuar. */
-    @Synchronized
-    fun disconnected(elapsedMs: Long, @Suppress("UNUSED_PARAMETER") wallMs: Long) {
-        if (cur != null && disconnectedAt == null) disconnectedAt = elapsedMs
-    }
+    /**
+     * A sessão OBD caiu. Não muda nada: a espera já conta do último dado. (A queda pode ser notada só ao acordar da
+     * suspensão, horas depois; contar dali juntaria a viagem de ontem com a de hoje.)
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun disconnected(elapsedMs: Long, wallMs: Long) {}
 
     /** Chamado de tempos em tempos: fecha a viagem se a espera passou. */
     @Synchronized
@@ -65,10 +67,8 @@ class TripRecorder(private val graceMs: Long = 180_000) {
 
     private fun closeIfExpired(now: Long): TripRecord? {
         val t = cur ?: return null
-        val since = disconnectedAt ?: lastElapsed
-        if (now - since <= graceMs) return null
+        if (now - lastElapsed <= graceMs) return null
         cur = null
-        disconnectedAt = null
         return t.takeIf { it.km >= Trip.MIN_KM }
     }
 }
