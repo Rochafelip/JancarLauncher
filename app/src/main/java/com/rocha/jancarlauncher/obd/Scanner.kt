@@ -21,7 +21,16 @@ object Scanner {
             val p = Dtc.parse(link.send("07", TIMEOUT_MS), 7)
             pending = p.orEmpty()
             permanent = Dtc.parse(link.send("0A", TIMEOUT_MS), 0x0A)
-            if (c == null || p == null) ERROR else null
+            val m = mil
+            when {
+                c == null || p == null -> ERROR
+                // PID 01 é obrigatório: sem resposta, a central do motor não está falando (ignição desligada?) e o
+                // "NO DATA" dos modos 03/07 não quer dizer "sem códigos".
+                m == null -> ERROR
+                // A central diz que tem códigos confirmados, mas o 03 veio vazio: leitura incompleta.
+                m.count > 0 && confirmed.isEmpty() -> ERROR
+                else -> null
+            }
         } catch (_: Exception) {
             ERROR
         }

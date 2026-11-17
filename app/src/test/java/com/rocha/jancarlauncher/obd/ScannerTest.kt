@@ -38,4 +38,22 @@ class ScannerTest {
         assertTrue(ScanGate.allowed(2f))
         assertFalse(ScanGate.allowed(5f))
     }
+
+    @Test fun ecuSilent_noMilAnswer_isError() {
+        // Ignição desligada: o ELM continua ligado e responde NO DATA a tudo.
+        val r = Scanner.run(FakeLink(emptyMap()), 1L)
+        assertEquals("Não foi possível concluir a leitura", r.error)
+    }
+
+    @Test fun milCountsCodes_butModeO3Empty_isIncomplete() {
+        val link = FakeLink(mapOf("0101" to "410182076500", "03" to "NO DATA"))
+        assertEquals("Não foi possível concluir a leitura", Scanner.run(link, 1L).error)
+    }
+
+    @Test fun cleanCar_noCodes_isNotAnError() {
+        val link = FakeLink(mapOf("0101" to "410100076500", "03" to "NO DATA", "07" to "NO DATA", "0A" to "NO DATA"))
+        val r = Scanner.run(link, 1L)
+        assertNull(r.error)
+        assertEquals(emptyList<String>(), r.confirmed)
+    }
 }
