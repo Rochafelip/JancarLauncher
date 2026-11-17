@@ -38,7 +38,8 @@ import com.rocha.jancarlauncher.ui.theme.JancarTheme
  * - rpm, speed, fuel (--ei): valores dos mostradores (padrão 873 rpm, 0 km/h, 49 L).
  * - obd (--ez): OBD falso conectado (consumo no relógio pequeno e no visor); sem o extra, sem OBD.
  * - mode (--es): Daily | Sport (modo do shift light; o botão do topo também troca).
- * - demo (--ez): roteiro animado de ~32 s em loop (FoxDemo) com tudo funcionando; etiqueta DEMO na tela.
+ * - demo (--ez): roteiro animado de ~32 s em loop (FoxDemo) com tudo funcionando; etiqueta DEMO na tela
+ *   (aceita `--es mode Sport` para começar no BRAVO).
  * - fog (--ez): farol de milha aceso.
  * - headSize, headPower, fogSize, fogPower (--ef): tamanho e intensidade das luzes da foto (1 = o desenho
  *   original; sem o extra vale o padrão de [CarPhoto.TUNING]). Ex.: `--ez lights true --ez fog true --ef fogPower 2.5`.
@@ -80,7 +81,10 @@ class CarPreviewActivity : ComponentActivity() {
         val demo = intent.getBooleanExtra("demo", false)
         setContent {
             JancarTheme(dark = !light) {
-                if (demo) { DemoCar(tuning) { finish() }; return@JancarTheme }
+                if (demo) {
+                    DemoCar(tuning, DashModel.DriveMode.fromName(intent.getStringExtra("mode"))) { finish() }
+                    return@JancarTheme
+                }
                 var mode by remember { mutableStateOf(DashModel.DriveMode.fromName(intent.getStringExtra("mode"))) }
                 // Cor do Fox: --es paint Vermelho|Preto|Branco|... (toque na foto troca na prévia).
                 var paint by remember { mutableStateOf(com.rocha.jancarlauncher.ui.car3d.CarPaint.fromName(intent.getStringExtra("paint"))) }
@@ -102,10 +106,10 @@ class CarPreviewActivity : ComponentActivity() {
 
 /** Modo DEMO: roda o roteiro do [FoxDemo] a ~20 quadros/s, somando o trip, com a etiqueta DEMO por cima. */
 @Composable
-private fun DemoCar(tuning: CarPhoto.Tuning, onBack: () -> Unit) {
+private fun DemoCar(tuning: CarPhoto.Tuning, startMode: DashModel.DriveMode, onBack: () -> Unit) {
     var seconds by remember { mutableStateOf(0.0) }
     var trip by remember { mutableStateOf(Trip(liters = 10.3, km = 133.2)) }
-    var mode by remember { mutableStateOf(DashModel.DriveMode.Daily) }
+    var mode by remember { mutableStateOf(startMode) }
     LaunchedEffect(Unit) {
         val start = System.nanoTime()
         var last = start

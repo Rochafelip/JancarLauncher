@@ -40,6 +40,7 @@ data class CarState(
     val lightMask: Int? = null,          // bit por indice de luz (a confirmar)
     val powerStatus: Int? = null,        // POWER_ON=1, POWER_OFF=2, ...
     val headlightOn: Boolean? = null,    // fio de iluminação do chicote (GPIO); validado no Fox
+    val reverseOn: Boolean? = null,      // fio da ré (GPIO, getCcdStatus: 0 desl., 1/2 lig., -1 desconhecido); não testado
 ) {
     /** Temperatura externa em °C, decodificada de [outsideTempRaw] (ver [decodeOutsideTempC]). */
     val outsideTempC: Float? get() = decodeOutsideTempC(outsideTempRaw)
@@ -94,7 +95,7 @@ class JancarCarClient(context: Context) {
                         }
                     }
                 }
-                CB_ACC, CB_HANDBRAKE, CB_DOOR, CB_LIGHT, CB_HEADLIGHT, CB_OUTSIDE_TEMP, CB_POWER ->
+                CB_ACC, CB_HANDBRAKE, CB_DOOR, CB_LIGHT, CB_HEADLIGHT, CB_OUTSIDE_TEMP, CB_POWER, CB_CCD ->
                     bg.post { refreshSnapshot() }
                 else -> Unit
             }
@@ -204,6 +205,7 @@ class JancarCarClient(context: Context) {
             val temp = readInt(T_GET_OUTSIDE_TEMP)
             val power = readInt(T_GET_POWER)
             val head = readInt(T_GET_HEADLIGHT) // boolean no AIDL = int 0/1
+            val ccd = readInt(T_GET_CCD)
             val next = CarState(
                 speed = speed?.known(), rpm = rpm?.known(), batteryVoltage = batt?.known(),
                 fuelLiters = fuel?.known(), fuelRangeKm = range?.known(),
@@ -211,6 +213,7 @@ class JancarCarClient(context: Context) {
                 handbrakeOn = hb?.let { if (it < 0) null else it == HANDBRAKE_HOLD },
                 accOn = acc?.let { it != 0 }, doorMask = doors, lightMask = lights, powerStatus = power,
                 headlightOn = head?.let { it != 0 },
+                reverseOn = ccd?.let { if (it < 0) null else it == CCD_ON || it == CCD_ALREADY_ON },
             )
             val changed = next != _state.value
             _state.value = next
@@ -221,7 +224,7 @@ class JancarCarClient(context: Context) {
                     TAG,
                     "state=$next raw[speed=$speed rpm=$rpm batt=$batt fuel=$fuel range=$range " +
                         "hb=$hb acc=$acc doors=$doors lights=$lights temp=$temp(${next.outsideTempC}°C) " +
-                        "power=$power head=$head]",
+                        "power=$power head=$head ccd=$ccd]",
                 )
             }
         }.onFailure { Log.w(TAG, "refreshSnapshot falhou", it) }
@@ -279,6 +282,9 @@ class JancarCarClient(context: Context) {
         private const val T_IS_ACC_ON = 52
         private const val T_GET_POWER = 65
         private const val T_GET_HEADLIGHT = 14 // getHeadLightStatus(): boolean
+        private const val T_GET_CCD = 10       // getCcdStatus(): int (ré)
+        private const val CCD_ON = 1
+        private const val CCD_ALREADY_ON = 2
 
         private const val RT_SPEED = 1
         private const val RT_RPM = 3
@@ -297,6 +303,7 @@ class JancarCarClient(context: Context) {
         private const val CB_EXTRA = 14
         private const val CB_POWER = 32
         private const val CB_HEADLIGHT = 7 // onHeadLightChanged(boolean)
+        private const val CB_CCD = 3       // onCcdChanged(int)
         private const val CB_LAST_CODE = 33
     }
 }

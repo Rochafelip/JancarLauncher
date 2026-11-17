@@ -36,6 +36,12 @@
             android:exported="true"
             android:taskAffinity="com.rocha.jancarlauncher.homepreview"
             android:screenOrientation="landscape" />
+        <!-- Sonda da câmera de ré: só no build debug (ver ReverseProbe / ReverseProbeActivity). -->
+        <activity
+            android:name=".ReverseProbeActivity"
+            android:exported="true"
+            android:taskAffinity="com.rocha.jancarlauncher.reverseprobe"
+            android:screenOrientation="landscape" />
         <!-- Troca o tema da Home por adb: só no build debug (ver ThemeSetActivity). -->
         <activity
             android:name=".ThemeSetActivity"

@@ -37,6 +37,25 @@ data class Lights(
 )
 
 /**
+ * Sensores de estacionamento (`com.autoai.canbus.RadarInfo`, ordem do `writeToParcel` descompilado).
+ * No Fox (`RePQProtocol`): traseiro = cmd 0x22, dianteiro = 0x23; cada sensor vem de 0 (encostado) a 10
+ * (nada perto; o byte 0 da caixa também vira 10), máximos fixos em 10. Listas na ordem esquerda → direita
+ * (laterais: frente → trás). `Int.MIN_VALUE` = sem dado. **Ainda não visto no carro.**
+ */
+data class RadarInfo(
+    val frontOnOff: Int, val rearOnOff: Int, val sideOnOff: Int, val distanceUnit: Int,
+    val frontMax: Int, val frontMidMax: Int, val rearMax: Int, val rearMidMax: Int,
+    val front: List<Int>, val rear: List<Int>, val left: List<Int>, val right: List<Int>,
+    val showOnOff: Int, val sideMax: Int, val sideMidMax: Int, val volume: Int, val distanceValue: Float,
+)
+
+/**
+ * Volante (`com.autoai.canbus.SteerWheelInfo`): `eps` = ângulo em graus, ±540 (o PQ escala o valor cru por
+ * 537); `omega` não é preenchido pelo PQ. `Int.MIN_VALUE` = sem dado. **Ainda não visto no carro.**
+ */
+data class SteerWheel(val eps: Int, val omega: Int)
+
+/**
  * Cliente do serviço CAN bus da central (`com.can.activity/com.can.ui.CanPopWind`), via Binder.transact
  * direto (sem AIDL gerado). Instância única por processo -- ver [com.rocha.jancarlauncher.JancarApp.canBus].
  *
@@ -54,11 +73,18 @@ class CanBusClient(context: Context, private val log: com.rocha.jancarlauncher.s
     private val _dashboard = MutableStateFlow<DashBoard?>(null)
     private val _cabin = MutableStateFlow<Cabin?>(null)
     private val _lights = MutableStateFlow<Lights?>(null)
+    private val _radar = MutableStateFlow<RadarInfo?>(null)
+    private val _steering = MutableStateFlow<SteerWheel?>(null)
     private val _connected = MutableStateFlow(false)
 
     val dashboard: StateFlow<DashBoard?> = _dashboard.asStateFlow()
     val cabin: StateFlow<Cabin?> = _cabin.asStateFlow()
     val lights: StateFlow<Lights?> = _lights.asStateFlow()
+    val radar: StateFlow<RadarInfo?> = _radar.asStateFlow()
+    val steering: StateFlow<SteerWheel?> = _steering.asStateFlow()
+
+    /** Códigos de aviso do ICanBusListener que já chegaram e o launcher não lê (log uma vez cada, pra descobrir). */
+    private val seenOtherCodes = mutableSetOf<Int>()
     val connected: StateFlow<Boolean> = _connected.asStateFlow()
 
     @Volatile private var remote: IBinder? = null
@@ -75,18 +101,21 @@ class CanBusClient(context: Context, private val log: com.rocha.jancarlauncher.s
 
         override fun onTransact(code: Int, data: Parcel, reply: Parcel?, flags: Int): Boolean {
             when (code) {
-                L_DASHBOARD, L_CABIN, L_LIGHT -> {
+                L_DASHBOARD, L_CABIN, L_LIGHT, L_RADAR, L_STEER -> {
                     data.enforceInterface(LISTENER)
                     if (data.readInt() != 0) {
                         when (code) {
                             L_DASHBOARD -> _dashboard.value = readDashboard(data)
                             L_CABIN -> _cabin.value = readCabin(data)
                             L_LIGHT -> _lights.value = readLights(data)
+                            L_RADAR -> _radar.value = readRadar(data)
+                            L_STEER -> _steering.value = readSteer(data)
                         }
                     }
                     reply?.writeNoException()
                     return true
                 }
+                in 1..L_LAST -> if (DEBUG && seenOtherCodes.add(code)) Log.d(TAG, "aviso nao lido: codigo $code")
             }
             return super.onTransact(code, data, reply, flags)
         }
@@ -147,6 +176,10 @@ class CanBusClient(context: Context, private val log: com.rocha.jancarlauncher.s
                 .onFailure { Log.w(TAG, "getCabinInfo falhou", it) }
             runCatching { transact(T_GET_LIGHT) {}?.consume { _lights.value = readNullableLights(it) } }
                 .onFailure { Log.w(TAG, "getLightInfo falhou", it) }
+            runCatching { transact(T_GET_RADAR) {}?.consume { _radar.value = if (it.readInt() != 0) readRadar(it) else null } }
+                .onFailure { Log.w(TAG, "getRadarInfo falhou", it) }
+            runCatching { transact(T_GET_STEER) {}?.consume { _steering.value = if (it.readInt() != 0) readSteer(it) else null } }
+                .onFailure { Log.w(TAG, "getSteerWheelInfo falhou", it) }
         }
     }
 
@@ -238,6 +271,25 @@ class CanBusClient(context: Context, private val log: com.rocha.jancarlauncher.s
         return l
     }
 
+    private fun readRadar(p: Parcel): RadarInfo {
+        fun four() = List(4) { p.readInt() }
+        val r = RadarInfo(
+            frontOnOff = p.readInt(), rearOnOff = p.readInt(), sideOnOff = p.readInt(), distanceUnit = p.readInt(),
+            frontMax = p.readInt(), frontMidMax = p.readInt(), rearMax = p.readInt(), rearMidMax = p.readInt(),
+            front = four(), rear = four(), left = four(), right = four(),
+            showOnOff = p.readInt(), sideMax = p.readInt(), sideMidMax = p.readInt(), volume = p.readInt(),
+            distanceValue = p.readFloat(),
+        )
+        if (DEBUG) Log.d(TAG, "radar=$r restante=${p.dataAvail()}")
+        return r
+    }
+
+    private fun readSteer(p: Parcel): SteerWheel {
+        val s = SteerWheel(eps = p.readInt(), omega = p.readInt())
+        if (DEBUG) Log.d(TAG, "volante=$s restante=${p.dataAvail()}")
+        return s
+    }
+
     companion object {
         private const val TAG = "CanBusClient"
         private const val DEBUG = true // desligar depois de calibrar
@@ -258,9 +310,14 @@ class CanBusClient(context: Context, private val log: com.rocha.jancarlauncher.s
         private const val T_GET_CABIN = 14
         private const val T_GET_LIGHT = 17
         private const val T_GET_DASHBOARD = 18
+        private const val T_GET_RADAR = 15
+        private const val T_GET_STEER = 16
 
         private const val L_CABIN = 2
+        private const val L_RADAR = 3
+        private const val L_STEER = 4
         private const val L_LIGHT = 5
         private const val L_DASHBOARD = 6
+        private const val L_LAST = 17 // onCarPropValuesChanged
     }
 }
