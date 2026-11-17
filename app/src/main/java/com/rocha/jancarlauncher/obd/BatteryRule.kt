@@ -13,13 +13,18 @@ class BatteryRule {
     private var highSince: Long? = null
     private var weakSince: Long? = null
     private var current: BatteryAlert? = null
+    private var lastRpm: Float? = null
+    private var lastRpmAt = 0L
 
     fun update(volts: Float?, rpm: Float?, nowMs: Long): BatteryAlert? {
+        // Giro perdido por pouco tempo (adaptador clone falha uma resposta) vale o último: não zera o relógio do motor.
+        if (rpm != null) { lastRpm = rpm; lastRpmAt = nowMs }
+        val rpmNow = rpm ?: lastRpm?.takeIf { nowMs - lastRpmAt <= RPM_HOLD_MS }
         if (volts == null) {
             lowSince = null; highSince = null; weakSince = null; current = null
             return null
         }
-        val running = rpm != null && rpm > RUNNING_RPM
+        val running = rpmNow != null && rpmNow > RUNNING_RPM
         engineOnSince = if (running) engineOnSince ?: nowMs else null
         val warm = engineOnSince?.let { nowMs - it > WARMUP_MS } == true
 
@@ -56,5 +61,7 @@ class BatteryRule {
         const val HIGH_V = 15.0f
         const val WEAK_OFF_V = 12.2f
         const val HYST_V = 0.3f
+        /** Quanto tempo um giro perdido ainda vale o último lido. */
+        const val RPM_HOLD_MS = 3_000L
     }
 }

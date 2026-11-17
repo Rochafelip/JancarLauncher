@@ -52,4 +52,21 @@ class BatteryRuleTest {
         assertNull(r.update(null, 0f, 16_000L))
         assertNull(r.feed(17, 30, 12.0f, 0f))
     }
+
+    @Test fun shortRpmDropouts_doNotResetTheEngineClock() {
+        // Adaptador clone perde uma resposta de giro de vez em quando (um dado a cada segundo; 1 nulo a cada 10).
+        val r = BatteryRule()
+        var out: BatteryAlert? = null
+        for (s in 0..51) {
+            val rpm = if (s % 10 == 5) null else 800f
+            out = r.update(if (s < 31) 14.0f else 12.4f, rpm, s * 1000L)
+        }
+        assertEquals(BatteryAlert.NotCharging, out)
+    }
+
+    @Test fun longRpmSilence_meansEngineStateUnknown_soNoRunningAlert() {
+        val r = BatteryRule()
+        r.feed(0, 30, 14.0f, 800f)
+        assertNull(r.feed(31, 60, 12.4f, null))
+    }
 }
