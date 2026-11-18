@@ -176,6 +176,32 @@ class JancarMediaClient(context: Context, private val log: com.rocha.jancarlaunc
     fun next() = command(T_NEXT)
     fun previous() = command(T_PREV)
 
+    /**
+     * Comandos que valem mesmo sem a conexão normal (launcher parado, AA na frente; Fase 14): sem [connect] só
+     * liga um instante, manda o comando e solta — **sem registrar o callback** que prende a thread de teclas da
+     * central. Com a conexão normal aberta é o mesmo que [play] etc.
+     */
+    fun playAny() = commandAny(T_PLAY)
+    fun pauseAny() = commandAny(T_PAUSE)
+    fun nextAny() = commandAny(T_NEXT)
+    fun previousAny() = commandAny(T_PREV)
+
+    private fun commandAny(code: Int) {
+        if (remote != null) return command(code)
+        val intent = Intent(ACTION).setComponent(ComponentName(PKG, SERVICE))
+        val once = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName, service: IBinder) {
+                bg.post {
+                    runCatching { call(code, service)?.recycle() }.onFailure { Log.w(TAG, "comando avulso $code falhou", it) }
+                    runCatching { appContext.unbindService(this) }
+                }
+            }
+            override fun onServiceDisconnected(name: ComponentName) {}
+        }
+        runCatching { appContext.bindService(intent, once, Context.BIND_AUTO_CREATE) }
+            .onFailure { Log.w(TAG, "bind avulso falhou", it) }
+    }
+
     private fun command(code: Int) {
         bg.post { runCatching { call(code)?.recycle() }.onFailure { Log.w(TAG, "comando $code falhou", it) } }
     }

@@ -78,15 +78,43 @@ fun AppRoot(
     val nowPlaying = rememberNowPlaying()
     // Música da Jancar (IMedia): conexão única enquanto o launcher está aberto.
     val jancarMedia = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).media
-    androidx.compose.runtime.DisposableEffect(jancarMedia) {
-        jancarMedia.connect()
-        onDispose { jancarMedia.disconnect() }
+    // Fase 14: só enquanto o launcher está visível (START..STOP). Com o Android Auto na frente o launcher fica parado
+    // mas registrado, e os avisos síncronos da central (estado a cada segundo) podem prender a thread que processa
+    // as teclas do volante; solto, ela não espera por nós. O cartão sobre o AA manda comandos avulsos (playAny...).
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val appForLog = androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp
+    androidx.compose.runtime.DisposableEffect(jancarMedia, lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> jancarMedia.connect()
+                Lifecycle.Event.ON_STOP -> {
+                    jancarMedia.disconnect()
+                    appForLog.log.add("ciclo", "launcher parou: IMedia/ICar soltos")
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            jancarMedia.disconnect()
+        }
     }
     // Serviço do carro (ICar): conexão única enquanto o launcher está aberto; o farol comanda o modo noturno.
     val carService = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).carService
-    androidx.compose.runtime.DisposableEffect(carService) {
-        carService.connect()
-        onDispose { carService.disconnect() }
+    androidx.compose.runtime.DisposableEffect(carService, lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> carService.connect()
+                Lifecycle.Event.ON_STOP -> carService.disconnect() // Fase 14, como a mídia acima
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            carService.disconnect()
+        }
     }
     // OBD-II sempre conectado enquanto o launcher roda: a média da viagem conta tudo até zerar (escolha do dono).
     val obd = (androidx.compose.ui.platform.LocalContext.current.applicationContext as com.rocha.jancarlauncher.JancarApp).obd
@@ -119,7 +147,7 @@ fun AppRoot(
     androidx.compose.runtime.SideEffect {
         bridge.state = shownNow
         bridge.source = nowSource
-        bridge.jancar = com.rocha.jancarlauncher.media.Transport(jancarMedia::play, jancarMedia::pause, jancarMedia::next, jancarMedia::previous)
+        bridge.jancar = com.rocha.jancarlauncher.media.Transport(jancarMedia::playAny, jancarMedia::pauseAny, jancarMedia::nextAny, jancarMedia::previousAny)
         bridge.session = com.rocha.jancarlauncher.media.Transport(nowPlaying::play, nowPlaying::pause, nowPlaying::next, nowPlaying::previous)
     }
     val adbStatus by rememberAdbStatus(tickKey = clock)

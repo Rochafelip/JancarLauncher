@@ -54,6 +54,8 @@ class AutoOverlay(private val app: JancarApp) {
     private var view: CardView? = null
     private var params: WindowManager.LayoutParams? = null
     private var mode = DashModel.DriveMode.Daily
+    /** Desenho do painel: segue o tema da Home escolhido (`OverlayStyle.of`). */
+    @Volatile private var style = OverlayStyle.Cartao
     private val gearEstimator = GearEstimator()
 
     @Volatile private var foreground: String? = null
@@ -68,6 +70,11 @@ class AutoOverlay(private val app: JancarApp) {
         if (job?.isActive == true) return
         job = scope.launch {
             launch { app.settings.driveMode.collect { mode = DashModel.DriveMode.fromName(it) } }
+            launch {
+                app.settings.homeLayout.collect {
+                    style = OverlayStyle.of(com.rocha.jancarlauncher.ui.home.HomeLayout.fromName(it))
+                }
+            }
             lastQuery = System.currentTimeMillis() - 60 * 60_000L // pega quem já estava na frente
             var lastCheck = 0L
             while (isActive) {
@@ -78,7 +85,7 @@ class AutoOverlay(private val app: JancarApp) {
                 }
                 val show = OverlayPolicy.shouldShow(foreground, Settings.canDrawOverlays(app), debugTarget)
                 val lines = if (show) currentLines() else null
-                if (lines != null && !lines.isEmpty) showView().update(lines) else hideView()
+                if (lines != null && !lines.isEmpty) showView().apply { setStyle(debugStyle ?: style); update(lines) } else hideView()
                 delay(if (view != null) 250 else 1_000)
             }
         }
@@ -119,7 +126,13 @@ class AutoOverlay(private val app: JancarApp) {
             if (t != null) {
                 when (i) {
                     0 -> t.previous()
-                    1 -> if (b.state.isPlaying) t.pause() else t.play()
+                    1 -> {
+                        val wasPlaying = b.state.isPlaying
+                        if (wasPlaying) t.pause() else t.play()
+                        // Sem a conexão de mídia (launcher parado, Fase 14) ninguém atualiza o estado: vira na mão,
+                        // senão o ⏯ seguinte repetiria o mesmo comando.
+                        if (route == MediaRoute.Jancar && !app.media.connected.value) b.state = b.state.copy(isPlaying = !wasPlaying)
+                    }
                     else -> t.next()
                 }
             } else {
@@ -313,8 +326,14 @@ class AutoOverlay(private val app: JancarApp) {
                 canvas.drawText(shown, 0, shown.length, pad, y + trackH * 0.7f, trackP)
                 y += trackH
             }
-            val boxes = (0..2).map { i -> val x0 = pad + i * (btn + btnGap); HitBox(x0, y, x0 + btn, y + btn) }
+            drawButtonRow(canvas, l, pad, y, btn)
+        }
+
+        /** ⏮ ⏯ ⏭ lado a lado a partir de ([x0], [y0]), cada um [size] px; guarda as áreas de toque em [buttons]. */
+        private fun drawButtonRow(canvas: Canvas, l: OverlayPolicy.Lines, x0: Float, y0: Float, size: Float) {
+            val boxes = (0..2).map { i -> val x = x0 + i * (size + btnGap); HitBox(x, y0, x + size, y0 + size) }
             buttons = boxes
+            val d = this.d * (size / btn) // ícones encolhem junto com o botão
             boxes.forEachIndexed { i, b ->
                 val cx = (b.left + b.right) / 2; val cy = (b.top + b.bottom) / 2
                 btnBg.color = when {
@@ -322,7 +341,7 @@ class AutoOverlay(private val app: JancarApp) {
                     pressed == i -> Color.argb(0x40, 0xFF, 0xFF, 0xFF)
                     else -> Color.argb(0x18, 0xFF, 0xFF, 0xFF)
                 }
-                canvas.drawCircle(cx, cy, btn / 2, btnBg)
+                canvas.drawCircle(cx, cy, size / 2, btnBg)
                 icon.color = if (i == 1) Color.WHITE else FG
                 val s = 7 * d
                 path.reset()
@@ -346,13 +365,167 @@ class AutoOverlay(private val app: JancarApp) {
             }
         }
 
+        private var style = OverlayStyle.Cartao
+
+        fun setStyle(s: OverlayStyle) {
+            if (s == style) return
+            style = s
+            requestLayout()
+            invalidate()
+        }
+
+        // ---- Estilo Barra: faixa baixa, tudo numa linha ----
+        private val barRowH get() = 64 * d
+        private val barBtn = 44 * d
+        private val barGap = 14 * d
+        private val barTrackW = 170 * d
+        private val barSpeedW = 118 * d
+        private val barRpmW = 128 * d
+        private val barInfoW = 118 * d
+
+        private fun hasInfo(l: OverlayPolicy.Lines) = l.consumption != null || l.gear != null || l.warning != null
+
+        private fun barWidth(l: OverlayPolicy.Lines): Float {
+            val parts = buildList {
+                if (l.speed != null) add(barSpeedW)
+                if (l.rpm != null) add(barRpmW)
+                if (hasInfo(l)) add(barInfoW)
+                if (l.showPlayer && l.track != null) add(barTrackW)
+                if (l.showPlayer) add(3 * barBtn + 2 * btnGap)
+            }
+            return 2 * 14 * d + parts.sum() + barGap * (parts.size - 1).coerceAtLeast(0)
+        }
+
+        // ---- Estilo Compacto: cartão pequeno ----
+        private val compW = 150 * d
+        private val compBtn = 40 * d
+        private val compSpeedH get() = 36 * sp
+
+        private fun compactHeight(l: OverlayPolicy.Lines): Float {
+            var h = 10 * d
+            if (l.speed != null) h += compSpeedH + 2 * d
+            if (l.rpm != null) h += rowH
+            if (l.showPlayer) h += 6 * d + compBtn
+            return h + 10 * d
+        }
+
         override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
             val l = lines ?: return setMeasuredDimension(0, 0)
-            setMeasuredDimension(w.toInt(), contentHeight(l).toInt())
+            when (style) {
+                OverlayStyle.Cartao -> setMeasuredDimension(w.toInt(), contentHeight(l).toInt())
+                OverlayStyle.Barra -> setMeasuredDimension(barWidth(l).toInt(), barRowH.toInt())
+                OverlayStyle.Compacto -> setMeasuredDimension(compW.toInt(), compactHeight(l).toInt())
+            }
+        }
+
+        private fun drawFrame(canvas: Canvas, radius: Float) {
+            rect.set(0.5f * d, 0.5f * d, width - 0.5f * d, height - 0.5f * d)
+            canvas.drawRoundRect(rect, radius, radius, bg)
+            border.color = if (dragging) ACCENT else Color.argb(0x12, 0xFF, 0xFF, 0xFF)
+            border.strokeWidth = (if (dragging) 2 else 1) * d
+            canvas.drawRoundRect(rect, radius, radius, border)
+        }
+
+        private fun stageColor(l: OverlayPolicy.Lines) = when (l.stage) {
+            DashModel.ShiftStage.Shift -> RED
+            DashModel.ShiftStage.Near -> AMBER
+            DashModel.ShiftStage.None -> FG
+        }
+
+        private fun drawBar(canvas: Canvas, l: OverlayPolicy.Lines) {
+            drawFrame(canvas, 16 * d)
+            val blinkOn = (SystemClock.uptimeMillis() / 500) % 2 == 0L
+            val hidden = l.stage == DashModel.ShiftStage.Shift && !blinkOn
+            val cy = height / 2f
+            var x = 14 * d
+            if (l.speed != null) {
+                val sp40 = text(40f, semibold, if (l.speedOver) RED else FG, Paint.Align.LEFT)
+                canvas.drawText(l.speed, x, cy + 14 * sp, sp40)
+                canvas.drawText("km/h", x + sp40.measureText(l.speed) + 5 * d, cy + 14 * sp, text(12f, inter, MUTED, Paint.Align.LEFT))
+                x += barSpeedW + barGap
+            }
+            if (l.rpm != null) {
+                val n = 10
+                val segGap = 2 * d
+                val segW = (barRpmW - segGap * (n - 1)) / n
+                val lit = ((l.rpmValue ?: 0f) / DashModel.RPM_MAX * n).roundToInt()
+                for (i in 0 until n) {
+                    seg.color = when {
+                        i >= lit || hidden -> Color.argb(0x14, 0xFF, 0xFF, 0xFF)
+                        l.stage == DashModel.ShiftStage.None -> ACCENT
+                        else -> stageColor(l)
+                    }
+                    val x0 = x + i * (segW + segGap)
+                    rect.set(x0, cy - 17 * d, x0 + segW, cy - 11 * d)
+                    canvas.drawRoundRect(rect, 2 * d, 2 * d, seg)
+                }
+                canvas.drawText("rpm", x, cy + 13 * sp, labelL)
+                valueP.color = if (hidden) Color.TRANSPARENT else stageColor(l)
+                canvas.drawText(l.rpm, x + barRpmW, cy + 13 * sp, valueP)
+                valueP.color = FG
+                x += barRpmW + barGap
+            }
+            if (hasInfo(l)) {
+                val small = text(16f, semibold, FG, Paint.Align.LEFT)
+                val rows = listOfNotNull(
+                    l.warning?.let { it to RED },
+                    l.consumption?.let { it to FG },
+                    l.gear?.let { g -> "marcha ${g}ª${l.hint?.let { " $it" } ?: ""}" to FG },
+                ).take(2)
+                rows.forEachIndexed { i, (t, c) ->
+                    small.color = c
+                    val shown = android.text.TextUtils.ellipsize(t, android.text.TextPaint(small), barInfoW, android.text.TextUtils.TruncateAt.END)
+                    canvas.drawText(shown, 0, shown.length, x, cy - 3 * d + i * 22 * sp, small)
+                }
+                x += barInfoW + barGap
+            }
+            if (l.showPlayer) {
+                if (l.track != null) {
+                    val shown = android.text.TextUtils.ellipsize(l.track, trackP, barTrackW, android.text.TextUtils.TruncateAt.END)
+                    canvas.drawText(shown, 0, shown.length, x, cy + 5 * sp, trackP)
+                    x += barTrackW + barGap
+                }
+                drawButtonRow(canvas, l, x, cy - barBtn / 2, barBtn)
+            } else buttons = emptyList()
+        }
+
+        private fun drawCompact(canvas: Canvas, l: OverlayPolicy.Lines) {
+            drawFrame(canvas, 16 * d)
+            val blinkOn = (SystemClock.uptimeMillis() / 500) % 2 == 0L
+            val hidden = l.stage == DashModel.ShiftStage.Shift && !blinkOn
+            val right = width - 14 * d
+            var y = 10 * d
+            if (l.speed != null) {
+                val base = y + compSpeedH * 0.86f
+                val unit = text(12f, inter, MUTED, Paint.Align.RIGHT)
+                canvas.drawText("km/h", right, base, unit)
+                val sp34 = text(34f, semibold, if (l.speedOver) RED else FG, Paint.Align.RIGHT)
+                canvas.drawText(l.speed, right - unit.measureText("km/h") - 5 * d, base, sp34)
+                y += compSpeedH + 2 * d
+            }
+            if (l.rpm != null) {
+                val base = y + rowH * 0.72f
+                canvas.drawText("rpm", 14 * d, base, labelL)
+                valueP.color = if (hidden) Color.TRANSPARENT else stageColor(l)
+                canvas.drawText(l.rpm, right, base, valueP)
+                valueP.color = FG
+                y += rowH
+            }
+            if (l.showPlayer) {
+                y += 6 * d
+                // Os 3 botões centralizados na largura do cartão.
+                val rowW = 3 * compBtn + 2 * btnGap
+                drawButtonRow(canvas, l, (width - rowW) / 2f, y, compBtn)
+            } else buttons = emptyList()
         }
 
         override fun onDraw(canvas: Canvas) {
             val l = lines ?: return
+            when (style) {
+                OverlayStyle.Barra -> return drawBar(canvas, l)
+                OverlayStyle.Compacto -> return drawCompact(canvas, l)
+                OverlayStyle.Cartao -> {}
+            }
             val r = 18 * d
             rect.set(0.5f * d, 0.5f * d, width - 0.5f * d, height - 0.5f * d)
             canvas.drawRoundRect(rect, r, r, bg)
@@ -495,5 +668,6 @@ class AutoOverlay(private val app: JancarApp) {
         /** Só para a prévia de debug: trata outro pacote como se fosse o AA e usa dados falsos. */
         @Volatile var debugTarget: String? = null
         @Volatile var debugLines: OverlayPolicy.Lines? = null
+        @Volatile var debugStyle: OverlayStyle? = null
     }
 }
