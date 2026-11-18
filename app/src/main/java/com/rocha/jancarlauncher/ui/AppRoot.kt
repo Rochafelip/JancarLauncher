@@ -63,6 +63,7 @@ fun AppRoot(
     forceWelcome: Boolean,
 ) {
     val dark by settings.dark.collectAsState(initial = null)
+    val uiSizeName by settings.uiSize.collectAsState(initial = null)
     // Tema (arranjo) da Home, escolhido na galeria.
     val homeLayoutName by settings.homeLayout.collectAsState(initial = null)
     // Versões das outras telas (abas da galeria), para todas as telas lerem via LocalScreenStyles.
@@ -260,6 +261,7 @@ fun AppRoot(
         return
     }
 
+    com.rocha.jancarlauncher.ui.theme.UiScaleProvider(com.rocha.jancarlauncher.ui.theme.UiScale.Size.fromName(uiSizeName)) {
     JancarTheme(isDark) {
     androidx.compose.runtime.CompositionLocalProvider(com.rocha.jancarlauncher.ui.theme.LocalScreenStyles provides screenStyles) {
         val toggleTheme: () -> Unit = { scope.launch { settings.setDark(!isDark) } }
@@ -312,6 +314,7 @@ fun AppRoot(
             Screen.Settings -> com.rocha.jancarlauncher.ui.settings.SettingsScreen(
                 onBack = { screen = Screen.Home },
                 sections = listOf(
+                    { com.rocha.jancarlauncher.ui.settings.UiSizeSection() },
                     { com.rocha.jancarlauncher.ui.settings.UpdateSection() },
                     { com.rocha.jancarlauncher.ui.settings.MusicResumeSection() },
                     { com.rocha.jancarlauncher.ui.settings.CrashReportSection() },
@@ -327,6 +330,7 @@ fun AppRoot(
             )
             }
         }
+    }
     }
     }
 }

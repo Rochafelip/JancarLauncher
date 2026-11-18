@@ -211,7 +211,7 @@ fun DockButton(item: HomeItem, modifier: Modifier = Modifier, height: Dp = 68.dp
     Pressable(onClick = item.onClick, shape = RoundedCornerShape(16.dp), modifier = modifier.height(height), description = item.label) { pressed, focused ->
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             JIcon(item.icon, if (pressed || focused) c.accent else c.icon, 28.dp)
-            BasicText(item.label, style = JancarType.tileLabel.copy(color = c.fg, fontSize = 19.sp))
+            BasicText(item.label, style = JancarType.tileLabel.copy(color = c.fg, fontSize = 18.sp), maxLines = 1, softWrap = false)
         }
     }
 }
@@ -285,16 +285,16 @@ val READY_LAYOUTS: Set<HomeLayout> = HomeLayout.entries.toSet()
 /** A · o arranjo de sempre: relógio e botões em cima, "Tocando agora", atalhos e os 4 blocos embaixo. */
 @Composable
 private fun LayoutAtual(p: HomeParts) {
-    Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 40.dp, bottom = 36.dp)) {
+    Column(Modifier.fillMaxSize().padding(start = 64.dp, end = 64.dp, top = 24.dp, bottom = 22.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Top) {
-            p.Clock()
+            p.Clock(timeSize = 80)
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 p.StatusLine()
                 p.TopButtons()
             }
         }
         // Barra (64dp): com o Cartão a Home não cabe nos ~534dp da central (a barra da Jancar ocupa o topo).
-        p.Player(card = false, modifier = Modifier.padding(top = 18.dp).width(560.dp))
+        p.Player(card = false, modifier = Modifier.padding(top = 10.dp).width(560.dp))
         Spacer(Modifier.weight(1f))
         Box(Modifier.padding(bottom = 22.dp)) { p.Chips() }
         p.Tiles()
@@ -372,7 +372,7 @@ fun CompactTile(item: HomeItem, modifier: Modifier = Modifier, height: Dp = 110.
         if (topLeft) {
             Column(Modifier.fillMaxSize().padding(horizontal = 18.dp, vertical = 16.dp), verticalArrangement = Arrangement.SpaceBetween) {
                 JIcon(item.icon, tint, iconSize)
-                BasicText(item.label, style = JancarType.tileLabel.copy(color = c.fg, fontSize = 19.sp))
+                BasicText(item.label, style = JancarType.tileLabel.copy(color = c.fg, fontSize = 18.sp), maxLines = 1, softWrap = false)
             }
         } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -570,7 +570,7 @@ private fun BoxScope.LayoutCentral(p: HomeParts) {
 /** F · o arranjo de sempre com o resumo do carro no lugar do "Tocando agora". */
 @Composable
 private fun LayoutCarro(p: HomeParts) {
-    Column(Modifier.fillMaxSize().padding(start = 48.dp, end = 48.dp, top = 30.dp, bottom = 30.dp)) {
+    Column(Modifier.fillMaxSize().padding(start = 48.dp, end = 48.dp, top = 20.dp, bottom = 20.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 p.Clock(timeSize = 72)
@@ -584,9 +584,9 @@ private fun LayoutCarro(p: HomeParts) {
             }
         }
         Spacer(Modifier.weight(1f))
-        Box(Modifier.padding(bottom = 18.dp)) { p.Chips() }
+        Box(Modifier.padding(bottom = 12.dp)) { p.Chips() }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-            p.apps.forEach { CompactTile(it, Modifier.weight(1f), height = 124.dp, iconSize = 32.dp) }
+            p.apps.forEach { CompactTile(it, Modifier.weight(1f), height = 104.dp, iconSize = 32.dp) }
         }
     }
 }

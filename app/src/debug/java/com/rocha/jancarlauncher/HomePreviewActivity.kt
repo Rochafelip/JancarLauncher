@@ -39,8 +39,10 @@ class HomePreviewActivity : ComponentActivity() {
         }
         val actions = UiActions(this, app.launchController, SystemSettingsOpener(ContextSettingsStarter(this)))
         setContent {
+            androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(top = top.dp)) {
+            com.rocha.jancarlauncher.ui.theme.UiScaleProvider(com.rocha.jancarlauncher.ui.theme.UiScale.Size.fromName(intent.getStringExtra("size"))) {
             JancarTheme(dark = !light) {
-                androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.padding(top = top.dp)) {
+                androidx.compose.foundation.layout.Box {
                 HomeScreen(
                     clock = ClockInfo("18:41", "Terça-feira, 17 de novembro"),
                     isDark = !light,
@@ -57,6 +59,8 @@ class HomePreviewActivity : ComponentActivity() {
                     layout = layout,
                 )
                 }
+            }
+            }
             }
         }
     }

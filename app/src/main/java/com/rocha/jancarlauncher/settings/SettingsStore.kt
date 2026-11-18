@@ -22,6 +22,11 @@ class SettingsStore(private val ds: DataStore<Preferences>) {
     private val driveModeKey = stringPreferencesKey("drive_mode")
     private val fuelBlendKey = stringPreferencesKey("fuel_blend")
     private val homeLayoutKey = stringPreferencesKey("home_layout")
+    private val uiSizeKey = stringPreferencesKey("ui_size")
+
+    /** Tamanho da interface (nome do `UiScale.Size`); null = nunca escolheu (o padrão). */
+    val uiSize: Flow<String?> = ds.data.map { it[uiSizeKey] }
+    suspend fun setUiSize(name: String) { ds.edit { it[uiSizeKey] = name } }
 
     /**
      * Versões das outras telas (aba da galeria): uma chave por tela, valor = nome da opção em `ScreenStyles`.

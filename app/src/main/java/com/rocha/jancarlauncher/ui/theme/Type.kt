@@ -29,7 +29,7 @@ object JancarType {
     val chip = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 16.sp)
     val nowPlayingTitle = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 22.sp)
     val nowPlayingArtist = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W400, fontSize = 17.sp)
-    val appName = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 18.sp)
+    val appName = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 16.sp)
     val appTag = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 13.sp, letterSpacing = 0.6.sp)
     val h1 = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 30.sp, letterSpacing = (-0.3).sp)
     val panelTitle = TextStyle(fontFamily = Inter, fontWeight = FontWeight.W500, fontSize = 18.sp)

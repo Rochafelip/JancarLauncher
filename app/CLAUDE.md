@@ -174,3 +174,7 @@ Origem dos dados (lido no código descompilado): CAN do Fox → caixa Raise (`VW
   conexão aberta pelo **AppRoot** o tempo todo (farol → modo noturno; loga só quando algo muda). Instâncias únicas; quem só exibe dados usa `CarStateDetails`/`VehicleInfoDetails`, nunca um segundo
   `connect()`/`disconnect()` (derrubaria a conexão de quem abriu). Diagnóstico: toque longo no Painel.
 - Usa `kotlinx-coroutines-core` como dependência principal (antes só existia em `testImplementation`).
+
+## Tamanho da interface (2026-11-18)
+
+Pedido do dono: "botões muito pequenos numa tela touch de 7 polegadas ... adaptar a qualquer tamanho de tela". `ui/theme/UiScale` + `UiScaleProvider` (no `AppRoot`) trocam a `LocalDensity` e escalam dp e sp juntos: **automática** (área de referência 1024×534 dp; outra tela cresce/encolhe na proporção, 1024×600 = 1,0) × **do usuário** (Ajustes › Tamanho da interface: Normal 1,0 / **Grande 1,12 (padrão)** / Extra 1,3, `SettingsStore.uiSize`; o Extra é limitado para a área efetiva não ficar menor que 780×410 dp). Ícones internos dos botões também subiram (topo 30dp, chips 22, blocos 48, transporte 30). Como o Grande reduz a área efetiva para ~477 dp de altura, os arranjos A e F e o dock foram apertados; **conferir cada tema novo/alterado com `HomePreviewActivity --ei top 66` (usa o mesmo `UiScaleProvider`, `--es size Normal|Grande|Extra`)**. Verificado só no emulador; Extra grande não foi revisado arranjo por arranjo.

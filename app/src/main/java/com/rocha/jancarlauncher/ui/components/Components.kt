@@ -104,7 +104,7 @@ fun JIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = Dimens.MinTouch,
-    iconSize: Dp = 18.dp,
+    iconSize: Dp = 24.dp,
     /** Toque longo (ex.: botão de tema da Home abre a galeria de temas). */
     onLongClick: (() -> Unit)? = null,
     shape: Shape = RoundedCornerShape(Dimens.RadiusButton),
@@ -136,7 +136,7 @@ fun QuickChip(icon: ImageVector, label: String, onClick: () -> Unit, modifier: M
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            JIcon(icon, colors.icon, 18.dp)
+            JIcon(icon, colors.icon, 22.dp)
             BasicText(label, style = JancarType.chip.copy(color = colors.fg))
         }
     }
@@ -160,11 +160,11 @@ fun MainTile(
         onLongClick = onLongClick,
     ) { pressed, focused ->
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 36.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            JIcon(icon, if (pressed || focused) colors.accent else colors.icon, 40.dp)
+            JIcon(icon, if (pressed || focused) colors.accent else colors.icon, 48.dp)
             BasicText(label, style = JancarType.tileLabel.copy(color = colors.fg))
         }
     }
@@ -220,7 +220,7 @@ fun AppTile(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            JIcon(icon, colors.icon, 30.dp)
+            JIcon(icon, colors.icon, 36.dp)
             BasicText(
                 name,
                 style = JancarType.appName.copy(color = colors.fg, textAlign = TextAlign.Center),
