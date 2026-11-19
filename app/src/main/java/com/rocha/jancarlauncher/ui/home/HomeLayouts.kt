@@ -256,7 +256,7 @@ fun HomeLayout.veil(): List<Pair<Float, Float>> = when (this) {
     HomeLayout.Trilho -> listOf(0f to .78f, .30f to .10f, .65f to .05f, 1f to .72f)
     HomeLayout.Widgets -> listOf(0f to .75f, .40f to .30f, .65f to .20f, 1f to .80f)
     HomeLayout.Oito -> listOf(0f to .80f, .32f to .20f, .58f to .10f, 1f to .82f)
-    HomeLayout.Pilulas -> listOf(0f to .78f, .30f to .15f, .70f to .15f, 1f to .78f)
+    HomeLayout.Pilulas -> listOf(0f to .78f, .36f to .52f, .55f to .15f, .70f to .15f, 1f to .78f)
     HomeLayout.Atual -> listOf(0f to .82f, .32f to .66f, .55f to .40f, 1f to .75f)
 }
 
@@ -689,9 +689,9 @@ private fun BoxScope.LayoutPilulas(p: HomeParts) {
     SideScrim(left = false, from = .34f, to = .58f)
     Box(Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 30.dp)) { p.Clock(timeSize = 84) }
     // Player à esquerda, embaixo do relógio (as pílulas ficam à direita).
-    p.Player(card = false, modifier = Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 190.dp).width(460.dp))
-    Column(Modifier.align(Alignment.TopEnd).padding(end = 36.dp, top = 26.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    p.Player(card = false, modifier = Modifier.align(Alignment.TopStart).padding(start = 44.dp, top = 190.dp).width(400.dp))
+    Column(Modifier.align(Alignment.TopEnd).padding(end = 32.dp, top = 20.dp), horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             JIconButton(JIcons.Palette, "Escolher tema", p.onOpenThemes, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
             JIconButton(JIcons.ThemeToggle, "Alternar tema claro/escuro (segure para escolher o tema da Home)", p.onToggleTheme, size = 52.dp, iconSize = 20.dp, onLongClick = p.onOpenThemes, shape = CircleShape)
             JIconButton(JIcons.Brightness, "Ajustar brilho", p.onToggleBrightness, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
@@ -699,14 +699,14 @@ private fun BoxScope.LayoutPilulas(p: HomeParts) {
             JIconButton(JIcons.Gauge, "Painel de velocidade", p.onOpenDash, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
             JIconButton(JIcons.Power, "Apagar tela", p.onScreenOff, size = 52.dp, iconSize = 20.dp, shape = CircleShape)
         }
-        p.apps.forEach { Pill(it) }
+        p.apps.forEach { Pill(it, width = 260.dp, height = 58.dp) }
     }
-    Row(Modifier.align(Alignment.BottomStart).padding(start = 44.dp, bottom = 30.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(Modifier.align(Alignment.BottomStart).padding(start = 44.dp, bottom = 20.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         p.shortcuts.forEach { item ->
-            Pressable(onClick = item.onClick, shape = CircleShape, modifier = Modifier.height(52.dp), description = item.label) { _, _ ->
-                Row(Modifier.padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Pressable(onClick = item.onClick, shape = CircleShape, modifier = Modifier.height(48.dp), description = item.label) { _, _ ->
+                Row(Modifier.padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     JIcon(item.icon, JTheme.colors.icon, 18.dp)
-                    BasicText(if (item.key == "wifi" && p.wifi.connected) p.wifi.ssid ?: item.label else item.label, style = JancarType.chip.copy(color = JTheme.colors.fg), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 160.dp))
+                    BasicText(if (item.key == "wifi" && p.wifi.connected) p.wifi.ssid ?: item.label else item.label, style = JancarType.chip.copy(color = JTheme.colors.fg), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.widthIn(max = 110.dp))
                 }
             }
         }
