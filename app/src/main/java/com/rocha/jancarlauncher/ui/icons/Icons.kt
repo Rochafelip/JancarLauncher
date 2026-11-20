@@ -142,6 +142,7 @@ object JIcons {
         line("M4 16V11l2-5h12l2 5v5"); line("M4 16a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2"); line("M15 16a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2"); line("M4 11h16")
     }
     val Scrcpy = icon("Scrcpy") { rect(2f, 5f, 14f, 10f, 1.5f); line("M18 9l4-2v10l-4-2") }
+    val Games = icon("Games") { rect(2f, 7f, 20f, 11f, 5f); line("M7 10v5"); line("M4.5 12.5h5"); dot(15.5f, 11.5f, 1.1f); dot(18f, 14f, 1.1f) }
     val Obd = icon("Obd") { line("M4 15a8 8 0 0 1 16 0"); line("M12 15l4-5"); dot(12f, 15f, 1.3f) }
 
     // Card "Tocando agora"

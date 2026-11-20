@@ -6,7 +6,7 @@ import com.rocha.jancarlauncher.launch.Kind
 import com.rocha.jancarlauncher.launch.PackageGateway
 import com.rocha.jancarlauncher.launch.SettingsActions
 
-enum class DrawerIcon { Vlc, NewPipe, FDroid, Lightning, Gallery, Video, Folder, Bluetooth, BtMusic, Eq, Vehicle, Scrcpy, Obd }
+enum class DrawerIcon { Vlc, NewPipe, FDroid, Lightning, Gallery, Video, Folder, Bluetooth, BtMusic, Eq, Vehicle, Scrcpy, Obd, Games }
 
 /**
  * Um item da gaveta. Exatamente um destes: [target] (app), [settingsAction] (tela de Settings) ou nenhum
@@ -19,6 +19,8 @@ data class DrawerEntry(
     val icon: DrawerIcon,
     val target: AppTarget? = null,
     val settingsAction: String? = null,
+    /** Outros pacotes do mesmo app (ex.: o RetroArch de 32 bits tem outro nome); vale o primeiro instalado. */
+    val altPkgs: List<String> = emptyList(),
 )
 
 object DrawerCatalog {
@@ -40,12 +42,23 @@ object DrawerCatalog {
         DrawerEntry("vehicle", "Veículo", Kind.System, DrawerIcon.Vehicle, AppTargets.VEHICLE),
         DrawerEntry("scrcpy", "Scrcpy", Kind.App, DrawerIcon.Scrcpy, AppTargets.SCRCPY),
         DrawerEntry("obd", "OBD-II", Kind.App, DrawerIcon.Obd, AppTargets.OBD),
+        // Jogos retrô: só abre o RetroArch (instalado por fora, jogos no pendrive).
+        DrawerEntry("retroarch", "Jogos", Kind.App, DrawerIcon.Games, app("retroarch", "Jogos", "com.retroarch"), altPkgs = listOf("com.retroarch.ra32", "com.retroarch.aarch64")),
     )
+
+    /** Pacotes que valem para o item: o principal e os alternativos. */
+    private fun packages(entry: DrawerEntry): List<String> = listOfNotNull(entry.target?.pkg) + entry.altPkgs
 
     fun isAvailable(entry: DrawerEntry, gateway: PackageGateway): Boolean {
         if (entry.settingsAction != null) return true
-        val pkg = entry.target?.pkg ?: return false
-        return gateway.isInstalled(pkg) && gateway.isEnabled(pkg)
+        return packages(entry).any { gateway.isInstalled(it) && gateway.isEnabled(it) }
+    }
+
+    /** O item apontando para o pacote que está instalado (o principal se nenhum estiver). */
+    fun resolved(entry: DrawerEntry, gateway: PackageGateway): DrawerEntry {
+        val target = entry.target ?: return entry
+        val pkg = packages(entry).firstOrNull { gateway.isInstalled(it) && gateway.isEnabled(it) } ?: return entry
+        return if (pkg == target.pkg) entry else entry.copy(target = target.copy(pkg = pkg))
     }
 
     fun installedCount(gateway: PackageGateway): Int = entries.count { isAvailable(it, gateway) }

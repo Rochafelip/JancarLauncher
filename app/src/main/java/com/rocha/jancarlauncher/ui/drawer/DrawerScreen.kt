@@ -60,13 +60,14 @@ private fun DrawerIcon.vector(): ImageVector = when (this) {
     DrawerIcon.Vehicle -> JIcons.Vehicle
     DrawerIcon.Scrcpy -> JIcons.Scrcpy
     DrawerIcon.Obd -> JIcons.Obd
+    DrawerIcon.Games -> JIcons.Games
 }
 
 /** Grupos da versão "Por grupos" (ids do `DrawerCatalog`). */
 private val GROUPS = listOf(
     "MÍDIA" to listOf("video", "vlc", "newpipe", "gallery", "bt_music", "eq"),
     "CARRO" to listOf("vehicle", "obd", "bluetooth"),
-    "FERRAMENTAS" to listOf("files", "fdroid", "lightning", "scrcpy"),
+    "FERRAMENTAS" to listOf("files", "fdroid", "lightning", "scrcpy", "retroarch"),
 )
 
 /** Um app da gaveta pronto para desenhar: ícone, nome, etiqueta e se está instalado. */
@@ -91,7 +92,7 @@ fun DrawerScreen(
     // Recalculado cada vez que a gaveta abre (apps podem ter sido instalados/desativados).
     val availability = remember(gateway) { DrawerCatalog.entries.associate { it.id to DrawerCatalog.isAvailable(it, gateway) } }
     val installed = availability.values.count { it }
-    val items = DrawerCatalog.entries.map { e -> DrawerItem(e, availability.getValue(e.id)) { actions.openDrawerEntry(e) } }
+    val items = DrawerCatalog.entries.map { e -> DrawerItem(e, availability.getValue(e.id)) { actions.openDrawerEntry(DrawerCatalog.resolved(e, gateway)) } }
     // Versão escolhida na galeria (aba Gaveta).
     val style = screenStyles().drawer
 
