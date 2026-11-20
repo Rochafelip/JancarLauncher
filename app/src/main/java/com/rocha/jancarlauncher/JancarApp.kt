@@ -78,10 +78,14 @@ class JancarApp : Application() {
     // Faixa do Painel por cima do Android Auto/CarPlay; ligada pelo AppRoot.
     val autoOverlay: AutoOverlay by lazy { AutoOverlay(this) }
 
+    // Teclas do volante (aviso da central), só leitura; Ajustes › Teclas do volante.
+    val wheelKeys: com.rocha.jancarlauncher.wheel.WheelKeyMonitor by lazy { com.rocha.jancarlauncher.wheel.WheelKeyMonitor(this, log) }
+
     override fun onCreate() {
         super.onCreate()
         CrashRestarter.install(this)
         ScreenStateTracker(this, wakeTracker).register()
         speedAlarm.start()
+        wheelKeys.register()
     }
 }

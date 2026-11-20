@@ -345,6 +345,7 @@ fun AppRoot(
                     { com.rocha.jancarlauncher.ui.settings.UiSizeSection() },
                     { com.rocha.jancarlauncher.ui.settings.UpdateSection() },
                     { com.rocha.jancarlauncher.ui.settings.MusicResumeSection() },
+                    { com.rocha.jancarlauncher.ui.settings.WheelKeysSection() },
                     { com.rocha.jancarlauncher.ui.settings.CrashReportSection() },
                 ),
             )
